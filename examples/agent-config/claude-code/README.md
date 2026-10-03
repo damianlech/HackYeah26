@@ -16,7 +16,7 @@ What each key does (verified against code.claude.com docs on 2026-10-03, see `re
 - `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1` makes the `/model` picker call our `GET /v1/models`, which returns **only the models the caller's groups may use**. It is still filtered by `availableModels`.
 - `allowManagedMcpServersOnly` + `managed-mcp.json` mean only our MCP proxy routes load, so every agent→MCP call is governed.
 - `permissions.disableBypassPermissionsMode: "disable"` (a nested **string**) rejects `--dangerously-skip-permissions`.
-- `statusLine` shows `budget 41% · models: qwen3:8b, qwen3:4b` inside Claude Code.
+- `statusLine` shows `budget 41% · models: ollama/qwen3:8b, ollama/qwen3:4b` inside Claude Code.
 - `CLAUDE_CODE_MAX_CONTEXT_TOKENS` is required for local models, because Claude Code otherwise assumes 200K context.
 - **Do not** set `forceLoginMethod`. It blocks `apiKeyHelper` credentials.
 

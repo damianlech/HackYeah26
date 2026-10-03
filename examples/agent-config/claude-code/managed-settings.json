@@ -5,16 +5,16 @@
     "CLAUDE_CODE_API_KEY_HELPER_TTL_MS": "240000",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "32768",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "qwen3:8b",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen3:4b"
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "ollama/qwen3:8b",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "ollama/qwen3:4b"
   },
   "apiKeyHelper": "/usr/local/bin/aictl token",
   "allowedProviders": [
     "customEndpoint"
   ],
   "availableModels": [
-    "qwen3:8b",
-    "qwen3:4b"
+    "ollama/qwen3:8b",
+    "ollama/qwen3:4b"
   ],
   "allowManagedMcpServersOnly": true,
   "allowedMcpServers": [

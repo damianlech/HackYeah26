@@ -302,9 +302,10 @@ rm -rf *-fp32                                   # keep only INT8 in the kit (re-
 #   protectai-v2-int8/LICENSE  (Apache-2.0)   + NOTICE: "Converted to ONNX and INT8-quantized by <team>, <date>"
 #   minilm-l12-ml-int8/LICENSE (Apache-2.0)   + NOTICE: same
 #   pg2-86m-int8/LICENSE       (Llama 4 Community License) + "Built with Llama"
-find . -type f ! -name SHA256SUMS | sort | xargs shasum -a 256 > SHA256SUMS
+find . -mindepth 2 -type f | sort | xargs shasum -a 256 > SHA256SUMS   # every file inside the model dirs
 shasum -a 256 -c SHA256SUMS
 tar czf protectai-v2-int8.tgz protectai-v2-int8 && tar czf minilm-l12-ml-int8.tgz minilm-l12-ml-int8
+shasum -a 256 *.tgz > SHA256SUMS.assets                               # the release archives, kept separate
 ```
 
 ### 3.4 File layout in the repo (C proposes, L commits at H0)
@@ -397,6 +398,7 @@ npm install -D vite@8 tailwindcss@4 @tailwindcss/vite            # (verify Vite 
 npx shadcn@latest init                                           # needs the network (verify)
 npx shadcn@latest add dashboard-01                               # pulls the block from the shadcn registry: network
 npm run build
+mkdir -p ~/aicl-kit/ui-scaffold
 cp -R components.json src/components ~/aicl-kit/ui-scaffold/    # keep the generated files; the registry is online-only
 tar -C ~ -czf ~/aicl-kit/npm-cache.tgz .npm/_cacache
 ```
