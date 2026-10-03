@@ -1,5 +1,7 @@
 # Gate pipeline (L2 audit layer): review
 
+> **One-liner:** *No AI request leaves the firm without clearance.* The pitch kit, with the judge summary, click path and Q&A, is in **[`PITCH.md`](PITCH.md)**.
+
 > **Verdict: build it.** A line of gates that each answer allow / deny / modify is the right core. It's easy to explain,
 > easy to test and easy to split across 6 people. It is also exactly the "audit layer" the judges asked about.
 > It has about a dozen holes, but each has a small fix. The five that would actually bite in the demo:

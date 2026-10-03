@@ -1,7 +1,7 @@
 # Mandate: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
 
 > **Current direction (after talking to the judges):** the 3-layer proxy, with L2 as an admin-built **pipeline of gates** (allow / deny / modify).
-> Start with **[`pipeline/README.md`](pipeline/README.md)**: a one-sitting review with holes, fixes, the gate list, diagrams, the latency benchmark and a builder mockup.
+> Pitch kit (one-liner, judge summary, demo click path): **[`pipeline/PITCH.md`](pipeline/PITCH.md)**. Review: **[`pipeline/README.md`](pipeline/README.md)**: a one-sitting review with holes, fixes, the gate list, diagrams, the latency benchmark and a builder mockup.
 > Everything below is the earlier brainstorm. Use it as reference.
 
 > **Agents get mandates, not keys.**
