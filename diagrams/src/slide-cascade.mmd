@@ -1,0 +1,43 @@
+---
+config:
+  flowchart:
+    wrappingWidth: 400
+---
+%% Slide: hybrid detection cascade (simplified from VISION-SPEC §5.1-5.2; p95 targets, re-measured on the demo Mac)
+flowchart TB
+  subgraph PIPE["one request through the cascade"]
+    direction LR
+    REQ(["request"])
+    T0["T0 · policy<br/>≤ 2 ms<br/>identity · model · budget"]
+    X["rejected early<br/>401 · 403 · 429<br/>zero upstream calls"]
+    T1["T1 · deterministic<br/>≤ 5 ms<br/>signatures · PII · secrets<br/>tool args · provenance"]
+    T2["T2 · semantic encoders<br/>≤ 120 ms<br/>injection classifier + kNN"]
+    UP["LLM upstream"]
+    T3["T3 · guard LLM (P1)<br/>≤ 1.5 s, alongside upstream"]
+    OUT["OUT · stream holdback<br/>≤ 150 ms added TTFT<br/>links · PII · canary"]
+    RES(["response"])
+    REQ --> T0 --> T1 --> T2 --> UP --> OUT --> RES
+    T0 -.-> X
+    T2 -.-> T3
+    T3 -.->|"first token waits"| OUT
+  end
+
+  subgraph RULES["how verdicts combine"]
+    direction TB
+    V{{"most restrictive wins<br/>block › ask › redact › flag › allow"}}
+    R["detectors only add restrictions<br/>a 'safe' score never lifts a block"]
+    L["blue = deterministic, fails closed<br/>amber = detectors, failure taints the run"]
+  end
+
+  PIPE --> RULES
+
+  classDef det fill:#e8f1fb,stroke:#2b6cb0,stroke-width:2px,color:#222
+  classDef sem fill:#fff4e5,stroke:#d9822b,stroke-width:2px,color:#222
+  classDef rule fill:#f5f5f5,stroke:#555,color:#222
+  classDef io fill:#ffffff,stroke:#555,color:#222
+  classDef stop fill:#fdecec,stroke:#c53030,color:#222
+  class T0,T1,OUT det
+  class T2,T3 sem
+  class V,R,L rule
+  class REQ,RES,UP io
+  class X stop

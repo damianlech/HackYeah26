@@ -1,0 +1,323 @@
+# =====================================================================================================================
+# examples/policy.yaml: annotated sample of `policy/policy.yaml` (schema aicl.policy/v1)
+# Canonical source: design/VISION-SPEC.md §6.2 (values), §6.3 (profiles), §6.4 (adherence), §6.5 (hot reload),
+# §6.6 (tampering). If this file and the spec ever disagree, the spec wins. The schema is FROZEN AT H1.
+#
+# THE single source of truth for the data plane (both gateway replicas gw-1 and gw-2 load it).
+#   * Save the file and both replicas apply it in < 2 s (watchfiles on the directory + a 1 s sha256 poll).
+#   * An invalid edit is REJECTED and the last-known-good (LKG) version stays active. The console header turns red
+#     and shows the YAML path and the error. Unknown keys are rejected (pydantic extra="forbid" at every level).
+#   * Controls are OPT-OUT: an absent control, or `enabled: false`, is disabled (shown red, posture drops, a
+#     `control_weakened` finding is raised).
+#   * Permissions are OPT-IN: a missing `models`, `tools`, `destinations.trusted` or agent grant DENIES.
+#     Deleting `models:` blocks every model; it never opens everything.
+#   * Hard floors live in CODE and cannot be expressed here: audit always on, no admin routes on the data plane,
+#     MCP upstreams from the registry only, annotations only raise risk, detectors only add restrictions, run minting
+#     needs a user credential, Ollama admin APIs never proxied for agents, the fence is a network property.
+#   * Pre-parse limits: > 1 MB, > 10k nodes, YAML anchors/aliases (YAML bombs) or invalid UTF-8 → rejected.
+#   * In `deployment: demo` every hand edit is labelled "unsigned local change" in the header and the audit log.
+#
+# PLACEHOLDERS: every value that starts with `PLACEHOLDER:` (key hashes, public keys) is written by `make keys`.
+# They are NOT real keys or hashes. Never commit real secrets; fixtures are generated at runtime.
+#
+# ---------------------------------------------------------------------------------------------------------------------
+# HOW JUDGES CAN POKE THIS FILE (each row is a test in tests/integration/test_live_edits.py and a rehearsed demo beat)
+# ---------------------------------------------------------------------------------------------------------------------
+#  1. Switch the AI detectors off (demo beat 5): set `enabled: false` on C09_signatures, C10_injection,
+#     C11_content_safety and C16_tool_results, then save. → Header shows `v18 · 2/2 replicas · applied 0.6 s`,
+#     posture drops, LLM01/ASI01 turn amber, the self-test marks those cases GAP (amber, not FAIL). Re-run the S4
+#     scenario: the hijacked agent's email to audit@evil.test is STILL DENIED by C24/C33 (dest_class: untrusted).
+#     "Detectors are evidence. Authority is the guarantee."
+#  2. `profile: strict` → PII is blocked instead of redacted, injection adherence 99%, stream_mode buffer,
+#     unknown destinations denied. Self-test shows PASS(changed) where verdicts legitimately moved.
+#  3. `controls.C07_pii.mode: block` → the PESEL prompt is now blocked, not redacted (one control overrides its knob).
+#  4. Typo a key, e.g. `enabeld: false` under any control → REJECTED (unknown key), LKG kept, red header with the
+#     YAML path. It never silently disables anything. A YAML bomb (anchors/aliases) is rejected the same way.
+#  5. Add a non-RE2 or ReDoS regex rule to policy/feeds/local.yaml (sample: examples/policy-local-feed.yaml), e.g. a
+#     lookahead `(?!x)` or a backreference `(a)\1` → REJECTED at compile, LKG kept. Python `re` is never used on
+#     editable patterns. (§6.6 also lists the classic ReDoS shape `(a+)+$`: RE2 itself accepts it and runs it in
+#     linear time, so rejecting it needs the compiler's nested-quantifier lint.)
+#  6. Relax C24 (demo beat 6): `controls.C24_taint.untrusted_destination: monitor` → applied in < 2 s, but raises a
+#     critical `control_weakened` finding, caps posture at 70 and the self-test shows "S4 EXPOSED since v19".
+#     Revert → green again.
+#  7. Lower adherence: in C10_injection replace `adherence: profile` with `adherence: 85` (or remove `adherence` and
+#     set `block_at: 0.95`; exactly one of the two) → applied, `control_weakened`, the Controls page shows the new
+#     block_at and the calibrated recall/FPR it implies (§6.4).
+#  8. Entitlements and kill switch: `budgets.seats.groups.interns.daily_tokens: 50` → ola's next request gets
+#     429 billing_error with the reset time; `identities.agents.support-bot.enabled: false` → 403 agent_disabled on
+#     every edge; delete the whole `models:` section → every model call returns 400 model_not_allowed.
+# =====================================================================================================================
+
+schema: aicl.policy/v1
+deployment: demo           # demo: unsigned edits allowed, labelled "unsigned local change" | prod (P2): signed bundles only
+profile: balanced          # permissive | balanced | strict. Every knob set to `profile` inherits from here (§6.3)
+
+# ---------------------------------------------------------------- strictness profiles (§6.3)
+# One word switches the whole posture. Each knob below is consumed wherever a control says `profile`:
+#
+#   knob                     consumed by                                   permissive      balanced (default)   strict
+#   pii_action               C07 entities set to `profile` (PESEL, IBAN)   mask            redact               block
+#   secrets_action           C06 `mode: profile`                           redact          redact               block
+#   injection_adherence      C10 `adherence: profile` (→ block_at, §6.4)   85% (~0.95)     95% (~0.80)          99% (~0.50)
+#   semantic_fail_user       C10/C11 `fail: profile`, user prompt          open + flag     taint + DEGRADED     closed
+#   semantic_fail_untrusted  C10/C16 `fail:` on untrusted input            taint           taint                closed
+#   unknown_destination      C24 sink to a destination of unknown origin   allow + flag    ask (P0: block)      deny
+#   tainted_sink             C24 tainted run → trusted/derived dest        allow + flag    allow + flag         ask
+#   unknown_tool             C14 tool not in the registry                  ask             deny                 deny
+#   output_links             C12 link to a non-allowlisted host            flag            strip                block
+#   topic_action             C11 banned topic                              flag            block                block
+#   ledger_local             C03 Valkey down, LOCAL model                   open, capped    open, capped 10%     closed
+#   stream_mode              output.stream_mode                            hold            hold                 buffer
+#
+# Not knobs (same in every profile): trifecta (tainted ∧ private_read ∧ unknown) = deny; a destination seen only in
+# untrusted content = deny; homoglyph spoof = deny + critical. Audit backpressure follows the profile name directly
+# (strict: 503 "no audit, no AI"; otherwise drop L1 snippets, keep L0). While C23 approvals are off (P1), `ask`
+# returns a block with "approval required".
+profiles:
+  permissive: {pii_action: mask,   secrets_action: redact, injection_adherence: 85, semantic_fail_user: open,
+               semantic_fail_untrusted: taint, unknown_destination: allow_flag, tainted_sink: allow_flag,
+               unknown_tool: ask,  output_links: flag,  topic_action: flag,  ledger_local: fail_open_capped, stream_mode: hold}
+  balanced:   {pii_action: redact, secrets_action: redact, injection_adherence: 95, semantic_fail_user: taint,
+               semantic_fail_untrusted: taint, unknown_destination: ask, tainted_sink: allow_flag,
+               unknown_tool: deny, output_links: strip, topic_action: block, ledger_local: fail_open_capped, stream_mode: hold}
+  strict:     {pii_action: block,  secrets_action: block,  injection_adherence: 99, semantic_fail_user: closed,
+               semantic_fail_untrusted: closed, unknown_destination: deny, tainted_sink: ask,
+               unknown_tool: deny, output_links: block, topic_action: block, ledger_local: fail_closed, stream_mode: buffer}
+
+# ---------------------------------------------------------------- identities & groups (the team's SSO/LDAP idea; C01, C26)
+# Who may call. Three kinds of principals: users (humans, via JWT or virtual key), services and AGENTS. Agents are
+# principals in their own right: own key, owner, cost centre, kill switch. Effective rights of an agent acting in a
+# user's run = user ∩ agent. Only a USER credential can mint a run (POST /v1/runs, C33); agent keys cannot.
+# Keys are stored as sha256 only; `key_hint` is the non-secret prefix the console shows.
+identities:
+  issuers:                                  # P0: static demo IdP generated by `make keys`. Prod: Entra ID / Keycloak JWKS URL
+    - name: demo-idp
+      jwks_file: /policy/keys/demo-idp.jwks.json
+      audience: aicl
+      groups_claim: groups
+      group_map:                            # IdP / LDAP group (DN or CN) -> policy group
+        "cn=grp-gm-quant,ou=groups,dc=bank,dc=example": quant-analysts
+        "cn=grp-support,ou=groups,dc=bank,dc=example":  support
+        "cn=grp-interns,ou=groups,dc=bank,dc=example":  interns
+  users:                                    # hashed virtual keys for judges, services and the demo; humans can also use JWTs
+    alice: {key_sha256: "PLACEHOLDER:9f2c…", key_hint: "vk_alice_…", groups: [quant-analysts, support]}
+    ola:   {key_sha256: "PLACEHOLDER:41aa…", key_hint: "vk_ola_…",   groups: [interns]}
+    judge: {key_sha256: "PLACEHOLDER:1ab4…", key_hint: "vk_judge_…", groups: [judges]}
+  services:
+    svc-selftest: {key_sha256: "PLACEHOLDER:7c2e…", groups: [selftest]}     # live self-test traffic; excluded from KPIs
+  agents:                                   # agents are principals: own key, owner, cost centre, kill switch (C26)
+    support-bot:
+      key_sha256: "PLACEHOLDER:77e0…"
+      enabled: true                         # false = kill switch: 403 on every edge within one reload
+      owner: alice
+      cost_centre: CC-4410
+      models: ["ollama/qwen3:8b", "mock/*"] # intersected with the run user's group models
+      tools: [web_fetch, crm_get_customer, bankdb_query, bankdb_transfer, mail_send_email,
+              facts_get_fact, vault_admin_get_credentials]   # the last one is the C31 honeypot decoy
+      max_risk: L3                          # risk ceiling L0-L5 (C14/C15); tools above it are hidden and denied
+      canary: true                          # C27 appends a canary line to this agent's system prompts
+
+# Names mirror LDAP CNs. Per group: which models (C02, globs over the `models:` catalog), the tool risk ceiling,
+# banned topics (C11), audit capture level (judges get L2 = the redacted forwarded prompt for "sent vs model saw").
+groups:                                     # names mirror LDAP CNs; effective rights = user ∩ agent
+  quant-analysts: {models: ["ollama/qwen3:8b", "sim/gpt-4.1"], max_risk: L3}
+  support:        {models: ["ollama/qwen3:8b"], max_risk: L3, banned_topics: [investment_advice]}
+  interns:        {models: ["ollama/qwen3:4b"], max_risk: L1}
+  judges:         {models: ["ollama/*", "sim/*", "mock/*"], max_risk: L5, capture: L2, canary: true}
+  selftest:       {models: ["mock/*"], max_risk: L5}
+
+# ---------------------------------------------------------------- models catalog & routing (C02)
+# Default deny: a model id not in this catalog, or not granted to the caller's groups, gets
+# 400 model_not_allowed with a hint naming the group that grants it. GET /v1/models is filtered per caller.
+# `kind`: local (chargeback per compute-second) | external_simulated (labelled SIMULATED commercial pricing) | test.
+upstreams:
+  ollama_agent: {base_url: "http://host.docker.internal:11434/v1", dialect: openai, offline_fallback: mock}  # make demo-offline → mock-llm, header badge "LLM: mock"
+  ollama_guard: {base_url: "http://host.docker.internal:11435"}            # P1: C11 guard-LLM lane (separate instance)
+  mock:         {base_url: "http://mock-llm:9100/v1", dialect: openai}
+models:                                     # anything not listed is denied
+  "ollama/qwen3:8b": {upstream: ollama_agent, served_as: "qwen3:8b", kind: local, context: 16384, max_output: 4096,
+                      price: {usd_per_compute_s: 0.0007}}                  # chargeback rate for local GPU time
+  "ollama/qwen3:4b": {upstream: ollama_agent, served_as: "qwen3:4b", kind: local, context: 8192, max_output: 2048,
+                      price: {usd_per_compute_s: 0.0004}}
+  "sim/gpt-4.1":     {upstream: mock, kind: external_simulated, max_output: 8192,      # SIMULATED commercial API
+                      price: {usd_per_mtok_in: 2.00, usd_per_mtok_out: 8.00}, on_breach: block}  # P1: downgrade_to: "ollama/qwen3:8b"
+  "mock/scripted":   {upstream: mock, kind: test, max_output: 4096, price: {usd_per_mtok_in: 0.10, usd_per_mtok_out: 0.40}}
+unknown_model_price: {usd_per_mtok_in: 5.00, usd_per_mtok_out: 25.00}      # nothing is ever free
+
+# ---------------------------------------------------------------- budgets (C03/C04/C05, §7)
+# Hard budgets, reserved BEFORE the upstream call (one all-or-nothing Valkey Lua call over every scope) and settled
+# after it. Scopes: org (monthly) → pool = each of the caller's groups (monthly) → seat = per-user daily cap →
+# agent (daily) → run (per-run caps). A request is admitted only if EVERY applicable scope has room; an agent acting
+# in a user's run charges both the user's seat and the agent's cap. Units: tokens, integer micro-USD, local
+# compute-seconds (wall clock at P0), tool units. Breach → 429 billing_error + `x-should-retry: false` + reset time,
+# with zero upstream calls. The cross-replica race test admits exactly N (200 fired at a cap worth 50 → 50).
+budgets:
+  enforcement: enforce                      # enforce | shadow (count "would have blocked"); there is no "off"
+  periods: {timezone: UTC, week_starts: monday}
+  estimation: {input_chars_per_token: 2, abort_output_chars_per_token: 3}   # chars/4 undercounts Polish by 22-44% (R7)
+  warn_at: [0.75, 0.95]                     # budget_threshold event + console toast + x-aicl-budget-remaining header
+  on_ledger_down: {external: fail_closed, local: profile, local_cap_pct_of_seat: 10}   # sim/* → 503 spend_limit_unavailable
+  org:   {monthly_usd: 5000}
+  pools: {support: {monthly_usd: 500}, quant-analysts: {monthly_usd: 2000}}
+  seats:                                    # per-user cap: user override, else the MOST RESTRICTIVE group cap
+    resolve: most_restrictive
+    groups:
+      quant-analysts: {daily_usd: 20, daily_tokens: 400000,  daily_compute_s: 1800}
+      support:        {daily_usd: 5,  daily_tokens: 200000,  daily_compute_s: 900}
+      interns:        {daily_tokens: 2000, daily_compute_s: 120}             # demo beat 1: ola hits 429 at 2,000 tokens
+      judges:         {daily_usd: 50, daily_tokens: 2000000, daily_compute_s: 3600}
+  agents: {support-bot: {daily_usd: 3, daily_tool_units: 500}}
+  run:    {max_usd: 0.50, max_llm_calls: 30, max_tool_calls: 40, identical_tool_calls: 3, max_wall_s: 600}   # C05 circuit breakers
+  limits: {rpm_per_principal: 60, concurrency_per_principal: 3, max_input_chars: 32000,                     # C04 hygiene
+           max_tokens_clamp: 4096, max_n: 1, strip_params: [options, keep_alive, num_ctx, num_predict]}
+
+# ---------------------------------------------------------------- controls: opt-out; R1 ids; `profile` = inherit
+# One entry per control from the catalog (spec §4). Key = `<ID>_<short name>`; the ID is what the audit log, the
+# coverage grid and the self-test use. Common fields:
+#   enabled  true | false (false = disabled: red, posture drop, control_weakened)
+#   mode     block | redact | mask | modify | monitor | profile   (monitor = count "would have blocked", never enforce)
+#   fail     open | closed | taint | profile   (C32: what happens when the detector itself errors or times out)
+# Deliberately NOT listed here:
+#   * floors that cannot be disabled: C01 identity, C13 egress fence, C25 audit, C30 policy engine, C33 run tokens,
+#     C35 admin-plane separation (they live in code and in the network topology);
+#   * C02 (the `models:` catalog + group/agent grants), C03 (`budgets:`), C19 (`feed:`), C26 (identities.agents.<id>
+#     .enabled), C32 (the `fail:` field on each control);
+#   * P1/P2/out of scope: C21 A2A, C22 memory guard, C28 slopsquatting (P2), C29 RAG ACL (out of scope), C34 MCP
+#     protocol hardening (P1).
+#
+# What "adherence %" means (§6.4), for SEMANTIC controls only (C10, and C11's kNN lane):
+#   adherence N% = the target recall on a held-out calibration attack set, i.e. the share of known attacks the
+#   control must catch. The compiler picks the HIGHEST threshold whose measured recall is >= N%, then reports the
+#   expected false-positive rate on the calibration benign set with a Wilson 95% CI, e.g. in the reload log:
+#     C10 adherence 95% -> block_at 0.81 (engine pg2-86m; recall 95.4% [93.1-97.0], FPR 2.1% [1.2-3.6]; calibration 2026-10-04, provisional=false)
+#   Higher adherence = lower block_at = more attacks caught AND more false positives. At P0 the calibration files
+#   (policy/calibration/*.json) ship marked `provisional: true` and the Controls page shows the raw block_at next to
+#   the %. Deterministic controls have no adherence; they have MODES (block / redact / mask / allow per entity).
+controls:
+  C04_limits:          {enabled: true}                                     # numbers live in budgets.limits
+  C05_breakers:        {enabled: true}                                     # numbers live in budgets.run
+  # C06 secrets (~30 gitleaks-derived RE2 patterns + entropy gate) in prompts, system prompts, tool args/results, output.
+  # Redacts to [SECRET:<kind>] under balanced; strict blocks.
+  C06_secrets:         {enabled: true, mode: profile, entropy_min_bits: 3.5, scan_system_prompts: true}
+  # C07 PII with checksum validation (PESEL, IBAN mod-97, PAN Luhn, NIP mod-11, email, phone). Placeholders:
+  # [PL_PESEL], [IBAN], [PAN], [EMAIL]. Per-entity action; `profile` entities follow pii_action. EMAIL is allowed on
+  # purpose: whether an email may RECEIVE data is C24's question, not C07's. A number failing its checksum is untouched.
+  C07_pii:             {enabled: true, mode: profile, scan_tool_args: true,
+                        entities: {PL_PESEL: profile, IBAN: profile, PAN: block, NIP: redact, EMAIL: allow, PHONE: mask}}
+  # C08 normaliser: builds the views every other detector scans (strip invisible chars, decode Unicode tags, NFKC,
+  # confusables skeleton, leet/diacritic fold, bounded base64/hex/url decode). The stripped text is what gets forwarded.
+  C08_normalize:       {enabled: true, views: [stripped, tag_decoded, nfkc, skeleton, folded, decoded],
+                        decode_depth: 2, decode_max_kb: 64}
+  C09_signatures:      {enabled: true, min_severity: medium}               # rules arrive via the signed feed (§8)
+  # C10 semantic injection: windowed classifier (protectai-v2 default, PG2-86M when present) + multilingual kNN.
+  # score >= block_at → block a user prompt / redact span + taint a tool result; score in the escalate band →
+  # flag + taint the run. `fail: profile` → balanced taints on detector errors (never fails open on untrusted input).
+  C10_injection:       {enabled: true, mode: block, adherence: profile,    # or `block_at: 0.80` (exactly one of the two)
+                        escalate_band_pct: 15,                             # [block_at − 0.15, block_at) → flag + taint
+                        fail: profile, engines: {classifier: auto, knn: multilingual-minilm-l12}}
+  # C11 content safety, NOT gated on the injection score: deterministic EN+PL topic pack (feed SIG-0018) + harm kNN
+  # (feed SIG-0019). The guard-LLM lane runs in parallel with upstream and is a P1 flag.
+  C11_content_safety:  {enabled: true, mode: profile, topics: [malware_creation, weapons, self_harm, investment_advice],
+                        knn_harm_threshold: 0.78,
+                        guard_llm: {enabled: false, model: "llama-guard3:1b", lane: ollama_guard,   # P1 flag
+                                    parallel_with_upstream: local_only, deadline_ms: 1500, fail: profile}}
+  # C12 output channel closure: structural URL extraction from markdown/HTML/autolinks in the stream, host allowlist
+  # (output.url_allowlist), query-entropy flag. Kills EchoLeak-style image exfiltration.
+  C12_output_links:    {enabled: true, mode: profile, query_entropy_max_bits: 3.5}
+  C14_tool_mediation:  {enabled: true, unknown_tool: profile}              # same policy for LLM tool_calls and MCP tools/call
+  C15_mcp_pins:        {enabled: true, max_risk: L3, scan_descriptions: true, cross_server_refs: quarantine}
+  C16_tool_results:    {enabled: true, mode: redact, taint_on_flag: true, fail: taint}   # untrusted_source results ALWAYS taint
+  C17_code_guard:      {enabled: true, mode: block}                        # feed regex pack (SIG-0017): curl|sh, /dev/tcp/, eval(…
+  C18_artifacts:       {enabled: true, allow_formats: [safetensors, pickle, torch_zip], pickle: allowlist,
+                        on_parse_error: block, on_unknown_format: block}  # allowlist-first, fail-closed (nullifAI lesson)
+  C20_infra_endpoints: {enabled: true}                                     # Ray / Langflow / Ollama admin / TorchServe: hard exclusions
+  C23_approvals:       {enabled: false, ttl_s: 300}                        # P1 flag. While off, `ask` → block "approval required"
+  # C24 THE GUARANTEE (run taint + Rule of Two + destination provenance, §5.6). `trifecta` and
+  # `untrusted_destination` are deny in every profile; relaxing them is allowed but audited as control_weakened
+  # (critical) and the self-test reports "S4 EXPOSED since vN".
+  C24_taint:           {enabled: true, trifecta: deny, untrusted_destination: deny, unknown_destination: profile,
+                        tainted_sink: profile, derived_trusted: true, fallback_run_ttl_s: 1800}
+  C27_canary:          {enabled: true, ngram_overlap: {enabled: false, n: 8}}   # n-gram is P1
+  C31_honeypot:        {enabled: true, on_hit: kill_run_and_quarantine_agent}
+  C36_multimodal:      {enabled: true, agents: deny, users: allow_unscanned}
+
+# ---------------------------------------------------------------- tools registry: ONE policy for LLM tool_calls AND MCP tools/call
+# C14. Labels drive the C24 sink matrix: untrusted_source (its results taint the run), trusted_source (destinations in
+# its results become derived-trusted), private (reading it sets private_read), sink / destructive (destination args
+# are checked). web_fetch is both a source AND a sink: its URL host is a destination and its query string is DLP-scanned.
+tools:                                      # unlisted tool = invisible + denied (permissions opt-in)
+  web_fetch:        {server: web, labels: [untrusted_source, sink], risk: L2, cost_units: 1,
+                     validators: {ssrf: {allow_private: false}, dlp_args: true, query_entropy_max_bits: 3.5}}
+  crm_get_customer: {server: crm, labels: [trusted_source], risk: L1, derive_destinations: [email, phone]}
+  bankdb_query:     {server: bankdb, labels: [private], risk: L2,
+                     validators: {sql: {allow: [select], tables: [customers, transactions], force_limit: 100}}}  # LIMIT added → verdict modify
+  bankdb_transfer:  {server: bankdb, labels: [destructive, sink], risk: L5,
+                     validators: {amount: {ask_above: 1000, deny_above: 50000, currency: PLN}, iban: {destination: true}}}
+  mail_send_email:  {server: mail, labels: [sink], risk: L3, validators: {email: {external_bcc: deny}}}
+  fs_read_file:     {server: filesystem, labels: [private], risk: L1,
+                     validators: {path: {root: /sandbox, deny: ["**/.ssh/**", "**/.env", "**/mcp.json"]}}}
+  facts_get_fact:   {server: facts, labels: [untrusted_source], risk: L1}
+  vault_admin_get_credentials: {server: vault, honeypot: true, risk: L1}  # C31 decoy: listed, any call kills the run
+
+# C15. MCP servers run in sandbox containers with no egress; the gateway reaches them over Streamable HTTP, strips the
+# agent's Authorization and injects a per-backend credential (no token passthrough). Tool definitions are pinned
+# (JCS sha256); a changed definition (rug pull) is quarantined with a diff in the console.
+mcp:
+  servers:                                  # registry only (floor); credentials injected, agent tokens stripped
+    filesystem: {url: "http://mcp-tools:7001/mcp", trust: trusted,   credential_env: MCP_FS_TOKEN}
+    mail:       {url: "http://mcp-tools:7002/mcp", trust: trusted,   credential_env: MCP_MAIL_TOKEN}
+    bankdb:     {url: "http://mcp-tools:7003/mcp", trust: trusted,   credential_env: MCP_BANKDB_TOKEN}
+    web:        {url: "http://mcp-tools:7004/mcp", trust: untrusted, credential_env: MCP_WEB_TOKEN}
+    crm:        {url: "http://mcp-tools:7005/mcp", trust: trusted,   credential_env: MCP_CRM_TOKEN}
+    facts:      {url: "http://mcp-untrusted:7101/mcp", trust: untrusted}
+    vault:      {url: "http://mcp-untrusted:7102/mcp", trust: untrusted}
+  pins: {on_first_sight: pin_and_audit, on_change: quarantine, recheck_on_call: true, list_cache_ttl_s: 0}
+  risk_floors: {"delete_*": L5, "drop_*": L5, "*transfer*": L5}
+
+# C24 positive allowlist. A sink destination is allowed only if it came from the user's run task (POST /v1/runs),
+# matches `trusted`, or was derived from a trusted_source tool. Chat content never mints destinations, whatever its role.
+destinations:                               # C24: the positive allowlist (permissions opt-in)
+  trusted: ["*@bank.example", "intranet.bank.example", "docs.bank.example", "web.sandbox"]
+  internal_domains: [bank.example]
+  derive_from_task: [email, url_host, iban, phone]
+
+# C12 + streaming (§5.5): release all but the last 32 chars; hold longer while a trigger is open (links, secret
+# prefixes, digit runs >= 9, the canary prefix), up to 1 KB.
+output:
+  url_allowlist: [intranet.bank.example, cdn.bank.example]
+  holdback: {min_chars: 32, max_hold_chars: 1024}         # built-in triggers (§5.5) + feed-supplied prefixes
+  stream_mode: profile
+
+# C19 signed external feed (§8). Gateways hold PUBLIC keys only; the private key lives in the `feed` service.
+# Accept a bundle only if the signature verifies, serial > last serial (persisted in Valkey), not expired, every rule
+# compiles and every rule's test vectors pass. Local overrides are unsigned, tighten-only, tagged origin local-unsigned.
+feed:
+  url: http://feed:9000/bundle
+  poll_s: 3
+  public_keys: {aicl-feed-2026: "ed25519:PLACEHOLDER:MCowBQYDK2VwAyEA…"}   # gateways hold public keys only
+  max_stale_h: 168
+  local_override: {path: /policy/feeds/local.yaml, mode: tighten_only}   # demo only: allow_disable: true (audited as control_weakened)
+
+# C25. One hash-chained aicl.audit/v1 event per decision, per replica; control signs chain heads into the witness volume.
+# Capture levels: L0 metadata only (allows), L1 post-redaction snippet <= 512 chars (non-allows), L2 redacted
+# forwarded prompt (judges), L3 raw content (never used in the demo).
+audit:
+  capture: {allow: L0, non_allow: L1}       # per-group override: groups.<g>.capture (judges: L2 = full REDACTED forwarded prompt)
+  pseudonymize: hmac                        # HMAC key is a gateway secret, never in the audit volume
+  on_backpressure: profile                  # strict: 503 "no audit, no AI" | else drop L1 snippets, keep L0
+  checkpoint: {every_events: 1000, every_s: 60}            # signed by control into the witness volume
+  retention: {metadata_days: 400, snippets_days: 180}
+
+# Posture score (§9.3) = 100 × Σ w·Enabled·Mode·Verified·Health / Σ w, recomputed on every reload from what the
+# replicas actually LOADED. A disabled weight-4 (critical) control caps the score at 70.
+posture:
+  weights: {critical: 4, high: 3, medium: 2, low: 1}       # per-control severity from contracts/frameworks.yaml; override: controls.<id>.weight
+  mode_factors: {block: 1.0, redact: 0.9, mask: 0.9, modify: 0.9, ask: 0.85, monitor: 0.4, off: 0.0}
+  critical_gate: {enabled: true, cap: 70}
+
+# Semantic tier (T2) tuning, §5.3: sliding 512-token windows with 64-token overlap beat the padding bypass; content
+# beyond the window cap produces an `unscanned_tail` finding (balanced: taint + flag, strict: block).
+cascade:
+  t2: {window_tokens: 512, stride_tokens: 448, max_windows_prompt: 8, max_windows_tool_result: 16,
+       deadline_ms_base: 150, deadline_ms_per_window: 60, cache_entries: 50000}
+  speculative_dispatch: false               # T2 finishes before upstream, so "blocked content never reached upstream" stays testable

@@ -1,0 +1,49 @@
+---
+config:
+  flowchart:
+    wrappingWidth: 400
+---
+%% Slide: Mandate in one picture (simplified from VISION-SPEC §3.2-3.3)
+flowchart TB
+  subgraph FENCE["agents network · internal, no route out"]
+    AG["AI agents<br/>base_url + MCP URL"]
+  end
+  CT["control<br/>console · self-test · audit checkpoints"]
+
+  LB["lb · the only host agents can reach"]
+
+  subgraph GW["gateway × 2 replicas · stateless"]
+    LLM["LLM edge<br/>/v1/chat/completions"]
+    BR{{"one policy brain, shared by both edges<br/>policy.yaml · hot reload &lt; 2 s"}}
+    MCP["MCP edge<br/>/mcp/{server}"]
+  end
+
+  OL["Ollama on the Mac<br/>Metal, local-first"]
+  MK["mock-llm<br/>simulated commercial"]
+  GD["guard<br/>semantic detectors"]
+  VK[("valkey<br/>budgets · runs · taint")]
+  FD["feed<br/>signed threat intel"]
+  MS["MCP servers<br/>sandboxed, no egress"]
+
+  AG ==> LB
+  CT -.->|"self-test as a real caller"| LB
+  LB ==> LLM
+  LB ~~~ BR
+  LB ==> MCP
+  LLM ==> OL
+  LLM ==> MK
+  BR --> GD
+  BR --> VK
+  BR -->|"polls signed bundle"| FD
+  MCP ==>|"creds injected"| MS
+
+  classDef fence fill:#fff4e5,stroke:#d9822b,color:#222
+  classDef brain fill:#e8f1fb,stroke:#2b6cb0,stroke-width:2px,color:#222
+  classDef edge fill:#f2f7fc,stroke:#2b6cb0,color:#222
+  classDef side fill:#f5f5f5,stroke:#888,color:#222
+  classDef ext fill:#ffffff,stroke:#555,color:#222
+  class AG fence
+  class BR brain
+  class LLM,MCP,LB edge
+  class GD,FD,VK,CT side
+  class OL,MK,MS ext

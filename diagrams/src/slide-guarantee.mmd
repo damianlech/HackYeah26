@@ -1,0 +1,46 @@
+---
+config:
+  flowchart:
+    wrappingWidth: 400
+---
+%% Slide: the C24 guarantee (simplified from VISION-SPEC §5.6, balanced profile)
+flowchart LR
+  subgraph SRC["where did the destination come from?"]
+    U["user task<br/>POST /v1/runs"]
+    P["policy allowlist<br/>*@bank.example"]
+    D["trusted_source tool<br/>crm: jan.nowak@client"]
+    W["untrusted content<br/>web page: audit@evil.test"]
+  end
+
+  CALL["sink tool call<br/>mail_send_email(to=…)"]
+  C24{"C24 provenance<br/>deterministic, no ML"}
+  DET["detectors C09 C10 C11 C16<br/>switched OFF by a judge"]
+
+  ALLOW["ALLOW<br/>+ flag if run is tainted"]
+  ASK["ASK<br/>tainted run read private data,<br/>or destination unknown"]
+  DENY["DENY<br/>untrusted or spoofed destination<br/>every profile · detectors on or off"]
+
+  U -->|"user"| C24
+  P -->|"policy"| C24
+  D -->|"derived"| C24
+  W -->|"untrusted"| C24
+  CALL --> C24
+  DET -.->|"can only add taint<br/>never lift a deny"| C24
+  C24 -->|"user · policy · derived"| ALLOW
+  C24 -->|"needs approval"| ASK
+  C24 ==>|"audit@evil.test"| DENY
+
+  classDef trusted fill:#e9f7ef,stroke:#2f855a,color:#222
+  classDef untrusted fill:#fdecec,stroke:#c53030,color:#222
+  classDef neutral fill:#f5f5f5,stroke:#555,color:#222
+  classDef off fill:#ffffff,stroke:#999,stroke-dasharray:5 4,color:#777
+  classDef allow fill:#e9f7ef,stroke:#2f855a,stroke-width:2px,color:#222
+  classDef ask fill:#fff8e1,stroke:#b7791f,stroke-width:2px,color:#222
+  classDef deny fill:#fdecec,stroke:#c53030,stroke-width:3px,color:#222
+  class U,P,D trusted
+  class W untrusted
+  class CALL,C24 neutral
+  class DET off
+  class ALLOW allow
+  class ASK ask
+  class DENY deny
