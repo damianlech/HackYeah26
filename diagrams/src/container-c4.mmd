@@ -1,0 +1,60 @@
+flowchart LR
+  subgraph HOST["Mac host: operator zone"]
+    BR["Browser<br/>console SPA"]
+    CLI["Judge curl / OpenAI SDK<br/>Claude Code clip (P1)"]
+    ED["Judge's editor<br/>policy/policy.yaml<br/>feed/rules/*.yaml"]
+    OLA["Ollama native, Metal<br/>:11434 agent lane<br/>:11435 guard lane (P1)"]
+  end
+
+  subgraph AGN["network agents (internal: true)"]
+    AG["demo-agent<br/>Container: Python<br/>scripted S1-S8 or live qwen3:8b"]
+    FP["fence-probe<br/>Container: sh, curl"]
+  end
+
+  subgraph EDGE["network edge (bridge, 127.0.0.1:8080)"]
+    LB["lb<br/>Container: Caddy 2<br/>round robin, SSE flush, no admin routes"]
+  end
+
+  subgraph CORE["network core (internal: true)"]
+    GW1["gw-1<br/>Container: FastAPI data plane<br/>LLM edge + MCP edge + aicl.core<br/>also on sandbox and upstream"]
+    GW2["gw-2<br/>same image, stateless"]
+    GD["guard<br/>Container: ONNX Runtime<br/>windowed classifier + multilingual kNN"]
+    VK[("valkey<br/>requirepass + ACL<br/>budgets, runs, taint, pins,<br/>versions, heartbeats, feed serial")]
+    FD["feed<br/>Container: FastAPI + Ed25519<br/>external threat intel, private key"]
+  end
+
+  subgraph ADM["network admin (bridge, 127.0.0.1:3000)"]
+    CT["control<br/>Container: FastAPI + DuckDB + SPA<br/>report API, SSE, self-test, posture,<br/>checkpoint signer, Playground, exports"]
+  end
+
+  subgraph SBX["network sandbox (internal: true, no egress)"]
+    MT["mcp-tools<br/>filesystem, mail, bankdb, web, crm"]
+    MU["mcp-untrusted<br/>facts: poison + rug pull<br/>vault: honeypot"]
+  end
+
+  subgraph UPS["network upstream (bridge)"]
+    MK["mock-llm<br/>OpenAI SSE + Ollama native<br/>sim/* priced aliases"]
+  end
+
+  AUD[("volume audit<br/>gw-1 and gw-2 JSONL chains")]
+  WIT[("volume witness<br/>signed checkpoints, control only")]
+
+  AG -->|"only route: base_url + MCP URL"| LB
+  FP -.->|"must fail: valkey, control, guard, mcp, mock,<br/>host.docker.internal:11434, internet"| LB
+  CLI --> LB
+  LB --> GW1 & GW2
+  GW1 & GW2 --> GD
+  GW1 & GW2 --> VK
+  GW1 & GW2 -->|"poll /bundle 3 s"| FD
+  GW1 & GW2 -->|"Streamable HTTP, creds injected"| MT & MU
+  GW1 & GW2 --> MK
+  GW1 & GW2 -->|"host.docker.internal"| OLA
+  GW1 & GW2 -->|"background writer"| AUD
+  BR --> CT
+  CT -->|"read-only tail + DuckDB"| AUD
+  CT -->|"sign chain heads"| WIT
+  CT --> VK
+  CT -->|"Playground + self-test as real principals"| LB
+  CT -->|":9090 metrics + state"| GW1 & GW2
+  ED -.->|"bind mount, read-only in gateways"| GW1 & GW2
+  ED -.->|"make feed-publish"| FD

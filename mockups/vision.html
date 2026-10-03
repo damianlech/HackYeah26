@@ -1,0 +1,319 @@
+<title>Mandate Vision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a briefing document. Sticky section index on wide screens, single reading column, dense tables where the content is a matrix. */
+:root{
+  --bg:#f4f6f8; --surface:#ffffff; --ink:#111823; --muted:#556170; --line:#d9dfe6;
+  --accent:#0d6b5a; --accent-soft:#e2f1ed; --seal:#7a1f2b;
+  --ok:#1a7f45; --ok-soft:#e3f3e9; --warn:#a15c00; --warn-soft:#fbefd9; --bad:#b42318; --bad-soft:#fbe5e3;
+  --code-bg:#eef1f4;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1319; --surface:#151c24; --ink:#e7ecf1; --muted:#9aa7b4; --line:#2a3440;
+  --accent:#4cc3a6; --accent-soft:#163a33; --seal:#e07a87;
+  --ok:#5bd08a; --ok-soft:#173526; --warn:#f0b357; --warn-soft:#3a2d14; --bad:#ff8a7e; --bad-soft:#3d1c1a;
+  --code-bg:#1c2530; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1319; --surface:#151c24; --ink:#e7ecf1; --muted:#9aa7b4; --line:#2a3440;
+  --accent:#4cc3a6; --accent-soft:#163a33; --seal:#e07a87;
+  --ok:#5bd08a; --ok-soft:#173526; --warn:#f0b357; --warn-soft:#3a2d14; --bad:#ff8a7e; --bad-soft:#3d1c1a;
+  --code-bg:#1c2530; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.toc{display:none}}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px}
+.toc b{display:block;font-family:var(--f-display);font-variation-settings:"wdth" 112;letter-spacing:.04em;text-transform:uppercase;font-size:11px;color:var(--muted);margin-bottom:8px}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+.toc a:hover,.toc a:focus-visible{color:var(--ink);border-left-color:var(--accent);outline:none}
+main{min-width:0}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(34px,6vw,56px);font-variation-settings:"wdth" 118;font-weight:800;letter-spacing:-.01em}
+h2{font-size:24px;font-variation-settings:"wdth" 112;font-weight:750;margin-bottom:6px}
+h3{font-size:16px;font-weight:700;margin-bottom:4px}
+p{margin:0 0 10px;max-width:68ch}
+.eyebrow{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.03em}
+.lede{font-size:18px;max-width:62ch;color:var(--ink)}
+.tag{font-family:var(--f-display);font-variation-settings:"wdth" 110;font-weight:700;color:var(--seal);font-size:20px;margin:6px 0 14px}
+header.hero{padding-bottom:28px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:3px 8px;color:var(--muted)}
+.chip strong{color:var(--ink);font-weight:500}
+section{padding-block:34px 4px;scroll-margin-top:16px}
+section > .sub{color:var(--muted);margin-bottom:16px;max-width:70ch}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.grid3,.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.pillar .n{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.pillar .see{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--muted)}
+.rubric{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr) 56px;gap:10px;align-items:center;font-size:14px}
+@media (max-width:560px){.bar{grid-template-columns:minmax(0,1fr) 56px}.bar .track{grid-column:1 / -1;order:3}}
+.track{height:10px;background:var(--code-bg);border-radius:2px;overflow:hidden}
+.fill{height:100%;background:var(--accent)}
+.bar .w{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-variation-settings:"wdth" 108;font-weight:650;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:var(--surface);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td code,p code,li code{font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:11.5px;font-weight:500;padding:1px 7px;border-radius:999px;white-space:nowrap}
+.allow{background:var(--ok-soft);color:var(--ok)} .ask{background:var(--warn-soft);color:var(--warn)} .deny{background:var(--bad-soft);color:var(--bad)}
+.survives{color:var(--ok);font-weight:600}.moves{color:var(--warn);font-weight:600}.dies{color:var(--bad);font-weight:600}
+.cascade{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+@media (max-width:820px){.cascade{grid-template-columns:minmax(0,1fr)}}
+.stage{padding:12px;border-right:1px solid var(--line);min-width:0}
+.stage:last-child{border-right:0}
+@media (max-width:820px){.stage{border-right:0;border-bottom:1px solid var(--line)}.stage:last-child{border-bottom:0}}
+.stage .t{font-family:var(--f-mono);font-size:12px;color:var(--accent)}
+.stage .ms{font-family:var(--f-mono);font-size:20px;font-variant-numeric:tabular-nums;margin:2px 0}
+.stage p{font-size:13px;color:var(--muted);margin:0}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto}
+pre.mermaid{margin:0;background:transparent;font-size:13px}
+.beats{list-style:none;margin:0;padding:0;display:grid;gap:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
+.beats li{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.beats li:last-child{border-bottom:0}
+.beats .time{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.beats .star{color:var(--seal);font-weight:700}
+.beats .ctl{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.timeline{position:relative;margin-top:6px;padding-left:18px;border-left:2px solid var(--line);display:grid;gap:10px}
+.timeline div{position:relative}
+.timeline div::before{content:"";position:absolute;left:-25px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.timeline div.gate::before{background:var(--seal);border-color:var(--seal)}
+.timeline .h{font-family:var(--f-mono);font-size:12px;color:var(--muted);display:inline-block;min-width:64px}
+.lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.lanes{grid-template-columns:minmax(0,1fr)}}
+.lane .l{font-family:var(--f-display);font-variation-settings:"wdth" 120;font-weight:800;font-size:28px;color:var(--accent);line-height:1}
+.lane p{font-size:13.5px;margin:6px 0 0}
+.lane .gate{font-size:12.5px;color:var(--seal);margin-top:6px}
+ol.q{margin:0;padding-left:20px;display:grid;gap:6px}
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--warn);padding:6px 10px;background:var(--surface);margin-top:12px}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Sections">
+    <b>Briefing</b>
+    <a href="#task">The task</a>
+    <a href="#pillars">Three pillars</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#cascade">Detection cascade</a>
+    <a href="#guarantee">The guarantee</a>
+    <a href="#first-idea">Our first idea</a>
+    <a href="#demo">Demo storyline</a>
+    <a href="#team">Team &amp; timeline</a>
+    <a href="#questions">Open questions</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="eyebrow">HackYeah 2026 · Goldman Sachs partner task "AI Control Layer" · team briefing · working name</div>
+      <h1>Mandate</h1>
+      <div class="tag">Agents get mandates, not keys.</div>
+      <p class="lede">A self-hosted AI control layer. Every agent→LLM and agent→MCP call passes one policy brain that redacts, blocks, budgets and audits it, and the exfiltration guarantee still holds when every AI detector is switched off.</p>
+      <div class="chips">
+        <span class="chip">canonical spec <strong>design/VISION-SPEC.md</strong></span>
+        <span class="chip">code namespace <strong>aicl</strong></span>
+        <span class="chip">6 Python devs · ~24 h</span>
+        <span class="chip">P0 ≈ <strong>82</strong> person-hours</span>
+        <span class="chip">runs offline on Apple Silicon</span>
+      </div>
+    </header>
+
+    <section id="task">
+      <h2>What the judges score</h2>
+      <p class="sub">Six formal requirements: a central policy, deterministic and AI guardrails, budgets for paid and local models, historical-exploit signatures from an external feed, reporting for two audiences, and a self-testing suite. Judges type their own prompts, edit our config live and run our tests.</p>
+      <div class="panel rubric" role="list">
+        <div class="bar" role="listitem"><span>Robustness &amp; quality of guardrails</span><span class="track"><span class="fill" style="width:100%;display:block"></span></span><span class="w">30%</span></div>
+        <div class="bar" role="listitem"><span>Architecture &amp; performance</span><span class="track"><span class="fill" style="width:66.7%;display:block"></span></span><span class="w">20%</span></div>
+        <div class="bar" role="listitem"><span>Security reporting</span><span class="track"><span class="fill" style="width:66.7%;display:block"></span></span><span class="w">20%</span></div>
+        <div class="bar" role="listitem"><span>Self-testing suite</span><span class="track"><span class="fill" style="width:50%;display:block"></span></span><span class="w">15–20%</span></div>
+        <div class="bar" role="listitem"><span>Practicality &amp; scalability</span><span class="track"><span class="fill" style="width:50%;display:block"></span></span><span class="w">10–15%</span></div>
+      </div>
+      <p class="note">The two task PDFs disagree on the last two weights (CRITERIA 15/15, RULES 20/10). Ask the organizers at H0. Either way, testing is worth 15–20%, so it can't be left to the last hours.</p>
+    </section>
+
+    <section id="pillars">
+      <h2>Three pillars</h2>
+      <p class="sub">Five independent designs were scored by three judge personas. These pillars are what the canonical spec kept.</p>
+      <div class="grid3">
+        <div class="panel pillar"><div class="n">01</div><h3>Authority beats detection</h3><p>Detectors produce evidence. Deterministic authority produces the guarantee: data may only go where the user's task, the policy or a trusted tool says. Chat content never mints authority.</p><div class="see">Judge disables every AI detector and hijacks the agent. The email to <code>audit@evil.test</code> is still denied.</div></div>
+        <div class="panel pillar"><div class="n">02</div><h3>Evidence is computed</h3><p>Posture, OWASP/ATLAS coverage, self-test status and latency come from what the gateways actually loaded, never from a hand-typed number.</p><div class="see">Judge edits <code>policy.yaml</code>: 2/2 replicas apply it in under 2 s, posture drops, the self-test shows GAP.</div></div>
+        <div class="panel pillar"><div class="n">03</div><h3>It ships and survives poking</h3><p>Hermetic <code>make test</code>, <code>make demo-offline</code> with no model and no Wi-Fi, and the demo storyline itself runs as a test.</p><div class="see">A mentor runs <code>make test</code> alone and gets a green control × case matrix in about 2 minutes.</div></div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <p class="sub">The chokepoint is a network property: agents live on an internal network whose only reachable host is our load balancer. The admin plane, tools and state sit in their own zones.</p>
+      <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph AGN["agents network, internal"]
+    AG["Agents: demo bot, Claude Code, SDK apps"]
+  end
+  subgraph DP["data plane"]
+    LB["lb, Caddy"]
+    GW["gateway x2, stateless: LLM edge + MCP edge, one policy brain"]
+  end
+  subgraph CORE["core services"]
+    GD["guard: ONNX classifier + kNN"]
+    VK[("Valkey: budgets, runs, taint, pins")]
+    FD["feed: signed threat intel"]
+  end
+  subgraph SBX["sandbox, no egress"]
+    MCP["MCP servers: mail, bankdb, web, crm"]
+  end
+  CT["control: console, self-test, posture, audit checkpoints"]
+  OL["Ollama on the Mac + simulated paid models"]
+  POL[["policy.yaml, hot reload under 2 s"]]
+  AG -->|"only route"| LB --> GW
+  GW --> GD
+  GW --> VK
+  GW --> FD
+  GW --> MCP
+  GW --> OL
+  POL -.-> GW
+  CT -.-> GW
+</pre>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <div class="panel"><h3>Data plane</h3><p>Two stateless FastAPI replicas behind Caddy. OpenAI-compatible <code>/v1/chat/completions</code>, filtered <code>/v1/models</code>, <code>/v1/me</code>, <code>/v1/runs</code>, and <code>/mcp/{server}</code>. Python, because Go was only ~1.5× cheaper per stream in our bench.</p></div>
+        <div class="panel"><h3>Control plane</h3><p>A separate <code>control</code> service on an admin network: report API over DuckDB, SSE, live self-test, posture, signed audit checkpoints, Playground. If it dies, enforcement continues.</p></div>
+      </div>
+    </section>
+
+    <section id="cascade">
+      <h2>Hybrid detection cascade</h2>
+      <p class="sub">Cheap first, expensive only when needed. The most restrictive verdict wins and detectors can only add restrictions. Semantic failures fail to taint, never open. Budgets are targets until re-measured on the demo Mac at H2.</p>
+      <div class="cascade">
+        <div class="stage"><div class="t">T0 · policy</div><div class="ms">≤ 2 ms</div><p>authN, run token, kill switch, model allowlist, parameter hygiene, budget reserve</p></div>
+        <div class="stage"><div class="t">T1 · deterministic</div><div class="ms">≤ 5 ms</div><p>multi-view normaliser, PII checksums, secrets, RE2 signatures, tool validators, destination provenance</p></div>
+        <div class="stage"><div class="t">T2 · semantic</div><div class="ms">≤ 120 ms</div><p>multilingual injection classifier in sliding windows + exemplar kNN (EN+PL)</p></div>
+        <div class="stage"><div class="t">T3 · guard LLM (P1)</div><div class="ms">≤ 1.5 s</div><p><code>llama-guard3:1b</code> in parallel with the upstream call, gating the first token</p></div>
+        <div class="stage"><div class="t">OUT · stream</div><div class="ms">≤ 150 ms</div><p>trigger-aware holdback: links, secrets, digit runs, canary. Never a TCP reset.</p></div>
+      </div>
+    </section>
+
+    <section id="guarantee">
+      <h2>The guarantee: destination provenance</h2>
+      <p class="sub">Every destination an agent writes to (email, URL host, IBAN) is classified by where it came from. Membership is a set lookup over canonical values, so paraphrasing and laundering gain nothing. Balanced profile, external sinks:</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Destination came from</th><th>Clean run</th><th>Tainted run</th><th>Tainted + private data read</th></tr></thead>
+          <tbody>
+            <tr><td>User task (<code>/v1/runs</code>) or policy allowlist</td><td><span class="pill allow">allow</span></td><td><span class="pill allow">allow + flag</span></td><td><span class="pill ask">ask</span></td></tr>
+            <tr><td>A <code>trusted_source</code> tool (e.g. CRM)</td><td><span class="pill allow">allow</span></td><td><span class="pill allow">allow + flag</span></td><td><span class="pill ask">ask</span></td></tr>
+            <tr><td>Unknown</td><td><span class="pill ask">ask</span></td><td><span class="pill ask">ask</span></td><td><span class="pill deny">deny · trifecta</span></td></tr>
+            <tr><td>Seen only in untrusted content (web page, tool result)</td><td><span class="pill deny">deny</span></td><td><span class="pill deny">deny</span></td><td><span class="pill deny">deny</span></td></tr>
+            <tr><td>Homoglyph spoof of a trusted destination</td><td><span class="pill deny">deny + critical</span></td><td><span class="pill deny">deny + critical</span></td><td><span class="pill deny">deny + critical</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Until human approvals (C23) land in P1, <code>ask</code> returns a block with "approval required". Run tokens are HMAC-signed by the gateway and minted only with a user credential. A forged or missing token falls into a sticky fallback run that keeps its taint.</p>
+    </section>
+
+    <section id="first-idea">
+      <h2>What happened to our first idea</h2>
+      <p class="sub">Forked Squid + an SSO/LDAP budget service. The instincts were right. The place where inspection happens had to move.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Part of the plan</th><th>Verdict</th><th>Where it lives now</th></tr></thead>
+          <tbody>
+            <tr><td>Fork Squid, AI analysis in C++</td><td class="dies">dies</td><td>GPLv2+ derivative, no HTTP/2, needs TLS MITM on every client, ICAP buffers or skips streams</td></tr>
+            <tr><td>A forced chokepoint</td><td class="survives">survives, stronger</td><td>internal Docker network + fence probe; K8s default-deny NetworkPolicy</td></tr>
+            <tr><td>Blocking unwanted tools</td><td class="moves">moves</td><td>mediated at the LLM edge (tool_calls) and MCP edge with one tool policy (C14)</td></tr>
+            <tr><td>SSO/LDAP groups → models &amp; budgets</td><td class="survives">survives, the spine</td><td>JWT <code>groups</code> claim → policy groups, plus virtual keys. Keycloak/LDAP live is P2.</td></tr>
+            <tr><td>User sees their limits</td><td class="survives">survives</td><td><code>GET /v1/me</code> and a per-user filtered <code>/v1/models</code></td></tr>
+            <tr><td>Managed agent settings</td><td class="survives">survives, as config</td><td>Claude Code <code>managed-settings.json</code> + <code>managed-mcp.json</code> bundle; the fence is the real boundary</td></tr>
+            <tr><td>Docker now, Kubernetes later</td><td class="survives">survives</td><td>2 replicas + Valkey in compose; K8s mapping and kustomize (P1)</td></tr>
+            <tr><td>Squid at all</td><td class="moves">P2</td><td>stock, unmodified, as a shadow-AI sensor for non-LLM egress</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="demo">
+      <h2>Demo storyline</h2>
+      <p class="sub">Seven minutes, split screen: terminal on the left, console on the right. Agentic beats use the scripted agent by default so they're deterministic. <span class="star" style="color:var(--seal)">★</span> marks the 3-minute cut.</p>
+      <ol class="beats">
+        <li><span class="time">0:00 <span class="star">★</span></span><span>Hook: SR 26-2 (Fed, OCC, FDIC, April 2026) leaves agentic AI out of model-risk guidance. Your agents have keys. We give them mandates.</span></li>
+        <li><span class="time">0:30 <span class="star">★</span></span><span>Intern asks for a model they aren't granted → <code>400 model_not_allowed</code>; runs out of budget → <code>429 billing_error</code>. Fence probe: forbidden targets unreachable. <span class="ctl">C01 C02 C03 C13</span></span></li>
+        <li><span class="time">1:10 <span class="star">★</span></span><span>Playground: PESEL, IBAN, AWS key redacted; a number with a bad checksum left alone. <span class="ctl">C06 C07 C08</span></span></li>
+        <li><span class="time">1:40</span><span>Polish jailbreak in base64 + zero-width chars blocked; Unicode-tag hidden sentence revealed; system-prompt leak caught by a canary. <span class="ctl">C08 C09 C10 C27</span></span></li>
+        <li><span class="time">2:20 <span class="star">★</span></span><span>Support bot reads a poisoned ticket and tries to mail customer data to <code>audit@evil.test</code> → denied, and the console shows where the address came from. <span class="ctl">C16 C24 C33</span></span></li>
+        <li><span class="time">3:00 <span class="star">★</span></span><span>Judge switches off every AI detector in <code>policy.yaml</code>. The model now follows the injection, yet the mail is still denied. Detectors are evidence; authority is the guarantee. <span class="ctl">C30 C24</span></span></li>
+        <li><span class="time">3:50</span><span>Judge relaxes C24 → "S4 EXPOSED"; typo key and ReDoS regex → rejected, last-known-good kept. <span class="ctl">C30 C32</span></span></li>
+        <li><span class="time">4:20</span><span>Poisoned MCP tool quarantined; rug pull shows a diff; honeypot call kills the run. <span class="ctl">C15 C31 C26</span></span></li>
+        <li><span class="time">4:50</span><span>Malicious pickle blocked, truncated pickle fails closed; Ray RCE request denied; new feed rule live in under 5 s; tampered bundle rejected. <span class="ctl">C18 C19 C20</span></span></li>
+        <li><span class="time">5:30</span><span>Runaway loop stopped; race tile: 200 fired, 50 admitted, 0% overshoot across 2 replicas. <span class="ctl">C03 C04 C05</span></span></li>
+        <li><span class="time">6:00 <span class="star">★</span></span><span>Audit tamper caught at the exact seq; guard stopped → DEGRADED, exfiltration still denied; Run self-test. <span class="ctl">C25 C32</span></span></li>
+        <li><span class="time">6:40 <span class="star">★</span></span><span>Adoption and scale: one base_url, one MCP URL, managed settings, K8s mapping, permissive licences, offline. Residual-risk slide.</span></li>
+      </ol>
+    </section>
+
+    <section id="team">
+      <h2>Team lanes and checkpoints</h2>
+      <p class="sub">One lane per person, one owner per file. Contracts freeze at H1. Checkpoints are binding; if one is red, the lead's pre-decided fallback applies.</p>
+      <div class="lanes">
+        <div class="panel lane"><div class="l">L</div><h3>Lead / integrator</h3><p>contracts, compose and fence, test harness, control skeleton, live self-test, posture, storyline test, submission</p><div class="gate">gate: detectors-off invariant suite</div></div>
+        <div class="panel lane"><div class="l">A</div><h3>Gateway core</h3><p>app, mock LLM, policy engine + hot reload, identity, run tokens, pipeline, streaming holdback, 2 replicas</p><div class="gate">gate: run tokens, replicas</div></div>
+        <div class="panel lane"><div class="l">B</div><h3>Detection, feed, audit</h3><p>audit chain + verify, secrets, PII, normaliser views, destination extractor, signature engine, signed feed</p><div class="gate">gate: destination extractor by H7</div></div>
+        <div class="panel lane"><div class="l">C</div><h3>Models, budgets, semantic</h3><p>Valkey Lua ledger, parameter hygiene, guard sidecar (ONNX), multilingual kNN, topic pack, artifact gate</p><div class="gate">gate: cross-replica race test</div></div>
+        <div class="panel lane"><div class="l">D</div><h3>Agents, MCP, taint</h3><p>MCP edge, sandboxed demo servers, tool validators, C24 taint + provenance, pins, honeypot</p><div class="gate">gate: owns the H12 guarantee</div></div>
+        <div class="panel lane"><div class="l">F</div><h3>Console UI</h3><p>Claude Design brief → visual system; header + 4 P0 pages (Overview, Threats + drawer, Controls &amp; Self-test, Playground)</p><div class="gate">first live row at IC1 (H5)</div></div>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <div class="panel">
+          <h3>Checkpoints</h3>
+          <div class="timeline">
+            <div><span class="h">H1:00</span>contracts frozen, fence probe on every Mac</div>
+            <div><span class="h">H2:30</span>MCP spike go/no-go (FastMCP 4 or thin proxy)</div>
+            <div><span class="h">H5:00</span>IC1 walking skeleton green</div>
+            <div><span class="h">H8:00</span>IC2 streaming, ledger, 2 replicas, runs, one MCP block</div>
+            <div><span class="h">H11:00</span>placeholder submission</div>
+            <div class="gate"><span class="h">H12:00</span>IC3 + gate: detectors-off test, fence, race test green</div>
+            <div><span class="h">H15:00</span>IC4: P0 complete</div>
+            <div><span class="h">H16:00</span>feature freeze, rc1</div>
+            <div><span class="h">H17:30</span>clean-room offline run on the hot spare</div>
+            <div class="gate"><span class="h">H21:00</span>final submission</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Never cut</h3>
+          <p>The guarantees (fence, taint + provenance, run tokens, admin isolation, detectors-off test); C01–C10, C12, C14–C17, C19, C20, C25, C26, C30, C32; hermetic <code>make test</code>; live self-test; header + Threats + Playground; storyline test; offline mode; two replicas and the race test.</p>
+          <h3 style="margin-top:12px">Cut first</h3>
+          <p>P1 items from the bottom of the ranked list, then console extras, then the guard-LLM lane, then obfuscation breadth, then artifact-gate depth.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="questions">
+      <h2>Open questions for the team</h2>
+      <p class="sub">Defaults apply if nobody answers by the time shown. Full list in <code>docs/06-open-questions.md</code>.</p>
+      <ol class="q">
+        <li><b>Deadline wording.</b> RULES PDF says 11:00 PM Oct 3 → 11:00 PM Oct 4. AM or PM? Which weights apply? Can a submission be edited? Ask at H0.</li>
+        <li><b>Name.</b> Keep Mandate or choose another candidate (Remit, Writ, Countersign, Tollgate). Decide by H11.</li>
+        <li><b>Lanes.</b> Who takes L, A, B, C, D and F?</li>
+        <li><b>Demo hardware.</b> Primary Mac, hot spare, LAN cable, fence-probe result on both.</li>
+        <li><b>Prompt Guard 2 access.</b> Request gated Hugging Face access now. Without it we ship the ungated, English-only protectai model.</li>
+        <li><b>Repo visibility.</b> Public at H20 after <code>gitleaks</code>, or earlier.</li>
+      </ol>
+    </section>
+
+    <footer>
+      Sources: <code>design/VISION-SPEC.md</code> (canonical), <code>design/proposals</code>, <code>design/judging</code>, <code>research/R1–R9</code>, <code>research/FACT-CHECK.md</code>. Console mockup: <a href="https://claude.ai/artifact/UaYuSmfY1PiRhrtHtshxod">AICL Console</a>. Numbers marked as budgets are targets until measured on the demo Mac.
+    </footer>
+  </main>
+</div>

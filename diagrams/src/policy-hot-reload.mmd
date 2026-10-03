@@ -1,0 +1,29 @@
+sequenceDiagram
+  autonumber
+  actor J as Judge
+  participant F as policy/policy.yaml (bind mount)
+  participant G1 as gw-1
+  participant G2 as gw-2
+  participant VK as valkey
+  participant CT as control
+  participant UI as console
+  J->>F: set controls.C10_injection.enabled false and save
+  F-->>G1: watchfiles event or 1 s sha poll
+  F-->>G2: watchfiles event or 1 s sha poll
+  G1->>G1: limits check, parse, schema extra=forbid, RE2 compile, rule vectors, build CompiledPolicy
+  alt invalid edit
+    G1->>G1: keep last-known-good v17
+    G1-)CT: policy_change rejected with YAML path and error
+    CT-)UI: SSE policy_rejected - red header, v17 still active
+  else valid edit
+    G1->>VK: version for new sha via Lua get-or-incr = v18
+    G1->>G1: atomic swap of the CompiledPolicy reference
+    G1->>VK: heartbeat gw-1 = v18, sha, loaded_at
+    G2->>VK: heartbeat gw-2 = v18, sha, loaded_at
+    G1-)CT: policy_change applied v18 in chain gw-1
+    CT->>VK: read heartbeats - 2 of 2 replicas on v18
+    CT->>CT: diff v17 to v18 - control_weakened C10 - recompute posture and coverage
+    CT-)UI: SSE policy_reloaded v18, 2 of 2 replicas, 0.6 s, posture 91 to 79, LLM01 amber
+    CT->>G1: canary self-test through lb as svc-selftest on mock models
+    CT-)UI: SSE selftest_progress then selftest_finished - C10 cases GAP, S4 still PASS
+  end

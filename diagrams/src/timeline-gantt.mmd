@@ -1,0 +1,64 @@
+gantt
+  title Mandate build plan, H0 = official start
+  dateFormat HH:mm
+  axisFormat H%H
+  section Milestones
+  CF contracts frozen + fence probe   :milestone, m0, 01:00, 2m
+  Latency measured on demo Mac        :milestone, m1, 02:00, 2m
+  D1 MCP go or no-go                  :milestone, m2, 02:30, 2m
+  IC1 walking skeleton                :milestone, m3, 05:00, 2m
+  IC2 cross-lane                      :milestone, m4, 08:00, 2m
+  Placeholder submission              :milestone, m5, 11:00, 2m
+  IC3 + H12 gate                      :milestone, m6, 12:00, 2m
+  IC4 P0 complete                     :milestone, m7, 15:00, 2m
+  Feature freeze rc1                  :milestone, m8, 16:00, 2m
+  Clean-room offline run              :milestone, m9, 17:30, 2m
+  Final submission                    :milestone, m10, 21:00, 2m
+  section L lead
+  Repo contracts CI networks fence    :l1, 00:00, 120m
+  Case runner make test skeleton      :l2, 02:00, 180m
+  Control skeleton SSE header         :l3, 05:00, 120m
+  Playground endpoint                 :l7, 07:00, 60m
+  Live self-test                      :l5, 08:00, 150m
+  Invariant cases and gate buffer     :l4, 10:30, 90m
+  Posture coverage storyline test     :l6, 12:00, 240m
+  Clean room README PDF submit        :l9, 16:00, 330m
+  Sleep                               :crit, ls, 21:30, 150m
+  section A core
+  App mock-llm policy engine          :a1, 01:00, 270m
+  Identity runs lb basic stream       :a3, 05:30, 150m
+  Pipeline holdback C12 tool hook     :a5, 08:00, 240m
+  Canary P0 fixes P1 bench            :a7, 12:00, 240m
+  Clean-room fixes video              :a8, 16:00, 180m
+  Sleep                               :crit, as, 19:00, 150m
+  section B guards feed audit
+  Audit chain verify secrets          :b1, 01:00, 210m
+  Signatures normaliser destinations  :b3, 04:30, 270m
+  Threat queries feed service         :b5, 09:00, 180m
+  PII integrity exports P1 OCSF       :b6, 12:00, 240m
+  Sleep                               :crit, bs, 16:00, 180m
+  Cases docs rehearsal                :b8, 19:00, 120m
+  section C models and money
+  Ledger Lua latency spike            :c1, 01:00, 240m
+  Hygiene doctor guard sidecar        :c2, 05:00, 240m
+  kNN topic pack race test            :c4, 09:00, 180m
+  Artifact gate spend P1 guard LLM    :c5, 12:00, 240m
+  Clean-room fixes eval               :c7, 16:00, 180m
+  Sleep                               :crit, cs, 19:00, 150m
+  section D agents and MCP
+  MCP spike core demo servers         :d1, 01:00, 180m
+  Tools core and MCP call path        :d3, 04:00, 240m
+  Taint provenance run state          :d4, 08:00, 180m
+  Gate buffer                         :d9, 11:00, 60m
+  Pins honeypot servers validators    :d5, 12:00, 180m
+  P1 approvals C34                    :d6, 15:00, 60m
+  Sleep                               :crit, ds, 16:00, 180m
+  Cases rehearsal                     :d8, 19:00, 120m
+  section F console
+  Brief and Claude Design             :f1, 00:30, 90m
+  Scaffold header Threats live        :f2, 02:00, 210m
+  Sleep                               :crit, fs, 05:30, 180m
+  Drawer and Playground               :f3, 08:30, 330m
+  Overview spend panel                :f6, 14:00, 60m
+  Controls and Self-test              :f7, 15:00, 60m
+  CSS screenshots video slides        :f8, 16:00, 300m

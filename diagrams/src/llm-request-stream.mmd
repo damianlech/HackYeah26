@@ -1,0 +1,40 @@
+sequenceDiagram
+  autonumber
+  participant AG as demo-agent (agent key)
+  participant LB as lb (Caddy)
+  participant GW as gw-1
+  participant VK as valkey
+  participant GD as guard
+  participant UP as Ollama or mock-llm
+  participant AU as audit chain gw-1
+  participant CT as control
+  AG->>LB: POST /v1/chat/completions stream=true, tools, X-AICL-Run token
+  LB->>GW: forward, round robin
+  GW->>GW: T0 authn vk_support_bot, verify run token HMAC and agent binding, kill switch, model allowlist
+  GW->>GW: T0 hygiene - clamp max_tokens and n, strip options, size cap, multimodal deny for agents
+  GW->>VK: EVALSHA reserve over org, pool, seat, agent, run + concurrency lease
+  VK-->>GW: ok, lease ttl 600 s
+  GW->>GW: T1 on new messages only - views, C06 and C07 redact, C09, C11 topic pack, unvouched role tool content taints run
+  GW->>GD: POST /v1/inspect, all windows of all distinct views in one batch
+  GD-->>GW: C10 max score 0.07 over views, kNN 0.21, 46 ms
+  GW->>UP: forward redacted body in place, include_usage=true, canary line in system prompt
+  opt C11 guard-LLM lane enabled (P1)
+    GW->>UP: llama-guard3 on guard lane, in parallel, first token waits for its verdict
+  end
+  loop each SSE chunk
+    UP-->>GW: delta
+    GW->>GW: trigger-aware holdback - C12 links, C06 and C07, C27 canary, redact in place
+    GW-->>AG: released text
+  end
+  UP-->>GW: tool_call deltas buffered in full, then usage chunk
+  GW->>VK: read run state - tainted, private_read, trusted and derived destinations
+  GW->>GW: C14 validators + C24 sink matrix on the buffered tool_call
+  alt allowed
+    GW-->>AG: tool_call chunk, finish_reason tool_calls
+  else denied
+    GW-->>AG: assistant text Blocked by policy C24, ref evt id, finish_reason stop
+  end
+  GW-->>AG: SSE comment aicl-timing upstream and total, then DONE
+  GW->>VK: settle actual minus reserved under asyncio.shield, compute_ms = wall clock
+  GW-)AU: one decision event, background writer, seq + prev_hash
+  AU-)CT: control tails the file, SSE decision to the console

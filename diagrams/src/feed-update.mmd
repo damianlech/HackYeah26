@@ -1,0 +1,29 @@
+sequenceDiagram
+  autonumber
+  actor A as Threat-intel analyst or judge
+  participant R as feed/rules/90-judge.yaml
+  participant FD as feed service (private key)
+  participant GW as gw-1 and gw-2
+  participant VK as valkey
+  participant CT as control
+  participant UI as console
+  A->>R: add rule SIG-9001 with positive and negative vectors
+  A->>FD: make feed-publish - explicit step, never on save
+  FD->>FD: schema, RE2 compile, run vectors, serial 43, JCS of feed block, Ed25519 sign
+  FD-->>A: published serial 43, rules sha, key aicl-feed-2026
+  loop every 3 s
+    GW->>FD: GET /bundle with If-None-Match
+  end
+  FD-->>GW: 200 signed bundle serial 43
+  GW->>GW: verify signature against pinned key_id
+  GW->>VK: read last_serial for key = 42
+  GW->>GW: 43 is newer, not expired, compile, run every rule vector, atomic swap
+  GW->>VK: last_serial = 43, survives gateway restarts
+  GW-)CT: feed_update applied serial 43, 1 rule added
+  CT-)UI: header feed 43 verified, toast, canary self-test
+  Note over GW,UI: the next matching request is blocked with rule_id SIG-9001
+  alt tampered bundle, rolled-back serial or expired
+    GW->>GW: reject, keep serial 42 rules
+    GW-)CT: feed_update rejected - signature_invalid or rollback or expired
+    CT-)UI: red feed badge, previous rules stay active
+  end
