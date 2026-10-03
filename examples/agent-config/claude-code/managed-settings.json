@@ -1,0 +1,21 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://gateway.core:8080",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+    "CLAUDE_CODE_API_KEY_HELPER_TTL_MS": "240000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "32768",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "qwen3:8b",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen3:4b",
+    "HTTPS_PROXY": "http://squid.agents:3128",
+    "NO_PROXY": "gateway.core,keycloak.core,localhost,127.0.0.1"
+  },
+  "apiKeyHelper": "/usr/local/bin/aictl token",
+  "allowedProviders": ["customEndpoint"],
+  "availableModels": ["qwen3:8b", "qwen3:4b"],
+  "allowManagedMcpServersOnly": true,
+  "allowedMcpServers": [{ "serverUrl": "http://gateway.core:8080/mcp/*" }],
+  "permissions": { "disableBypassPermissionsMode": "disable" },
+  "skipWebFetchPreflight": true,
+  "statusLine": { "type": "command", "command": "/usr/local/bin/aictl status --short", "refreshInterval": 30 }
+}

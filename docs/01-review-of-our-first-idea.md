@@ -79,11 +79,14 @@ flowchart LR
 
 ## 6. Reality check: someone already ships the governance half
 
-Anthropic documents a Claude gateway with OIDC device login, group-based model allowlists and per-user/group spend limits (the research found it under the name "Claude apps gateway". **Name, features and URL still need verifying**, see `research/FACT-CHECK.md`). That **validates** the original idea: identity + model allowlists + spend caps is what a vendor builds first. It also means our pitch can't stop there. Lead with what such a vendor gateway does not do:
+Anthropic ships the **Claude apps gateway** (<https://code.claude.com/docs/en/claude-apps-gateway>, verified 2026-10-03, see `research/FACT-CHECK.md`). It is a self-hosted gateway built into the `claude` binary (`claude gateway --config gateway.yaml`, needs PostgreSQL). It offers OIDC login including device flow, IdP groups mapped to model allowlists and managed policies, per-user/group/org spend caps (daily/weekly/monthly), a `429 billing_error` + `x-should-retry: false` contract, warnings at 75%/95%, and fail-open by default. **It supports no SAML and no LDAP, has no service-token flow for CI, and has no Helm chart.**
+
+That **validates** the original idea: identity + model allowlists + spend caps is what a vendor builds first, and we should **copy its error contract** (400 for an ungranted model, 429 `billing_error` for budgets). It also means our pitch can't stop there. Lead with what such a vendor gateway does not do:
 
 - **vendor-neutral**: Anthropic + OpenAI dialects + local Ollama + MCP + (A2A),
 - **hybrid guardrails** with visible decision traces,
 - **historical-exploit signatures** from an external signed feed,
 - **local-compute budgets** (GPU-seconds), not only dollars,
 - **evidence-grade reporting** (hash-chained audit, OCSF export, posture score),
-- a **self-testing** control layer that re-tests itself on every policy change.
+- a **self-testing** control layer that re-tests itself on every policy change,
+- **LDAP groups and non-human principals** (agents/CI with their own identity and budgets), **fail-closed** option per control, and a K8s story.

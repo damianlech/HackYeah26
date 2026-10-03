@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "filesystem": { "type": "http", "url": "http://gateway.core:8080/mcp/filesystem" },
+    "mail":       { "type": "http", "url": "http://gateway.core:8080/mcp/mail" },
+    "bankdb":     { "type": "http", "url": "http://gateway.core:8080/mcp/bankdb" },
+    "web":        { "type": "http", "url": "http://gateway.core:8080/mcp/web" }
+  }
+}
