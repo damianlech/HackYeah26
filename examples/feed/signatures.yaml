@@ -172,7 +172,7 @@ feed:
       match:
         field: gguf.metadata.tokenizer.chat_template
         pattern: '\{[{%][^}]{0,512}__(globals|class|mro|subclasses|builtins|init)__'
-      metadata: {tier: P1, control: C18, owasp: ["LLM04:2026", "ASI05"], atlas: ["AML.T0010.003", "AML.T0011.000"], references: ["https://research.jfrog.com/model-threats/gguf-ssti/", "https://nvd.nist.gov/vuln/detail/CVE-2024-34359"]}
+      metadata: {tier: P2, control: C18, owasp: ["LLM04:2026", "ASI05"], atlas: ["AML.T0010.003", "AML.T0011.000"], references: ["https://research.jfrog.com/model-threats/gguf-ssti/", "https://nvd.nist.gov/vuln/detail/CVE-2024-34359"]}
       tests:
         positive: ["chat_template: {% set x = cycler.__init__.__globals__ %}", "chat_template: {{ ''.__class__.__mro__ }}"]
         negative: ["chat_template: {{ messages[0].content }}", "chat_template: {% for m in messages %}{{ m['role'] }}{% endfor %}"]
@@ -233,7 +233,7 @@ feed:
           - tool_matches: {name_regex: '(read_private_repo|read_db|list_files|bankdb_query)', scope: private}
           - tool_matches: {name_regex: '(create_pr|post_message|send_email|insert_row|mail_send_email)', scope: external}
         window: 10
-      metadata: {tier: P1, control: C24, owasp: ["LLM01:2026", "LLM03:2026", "ASI01", "ASI02", "MCP06:2025"], atlas: ["AML.T0086", "AML.T0051.001"], references: ["https://invariantlabs.ai/blog/mcp-github-vulnerability", "https://simonwillison.net/2025/Jul/6/supabase-mcp-lethal-trifecta/"]}   # LLM03:2026 = LLM06:2025
+      metadata: {tier: P2, control: C24, owasp: ["LLM01:2026", "LLM03:2026", "ASI01", "ASI02", "MCP06:2025"], atlas: ["AML.T0086", "AML.T0051.001"], references: ["https://invariantlabs.ai/blog/mcp-github-vulnerability", "https://simonwillison.net/2025/Jul/6/supabase-mcp-lethal-trifecta/"]}   # LLM03:2026 = LLM06:2025
       tests:
         positive: ["[web_fetch(untrusted)] -> [bankdb_query(private)] -> [mail_send_email(external)]"]
         negative: ["[bankdb_query(private)] -> [summarize] (no external sink)"]
@@ -267,7 +267,7 @@ feed:
           - {ecosystem: npm, name: postmark-mcp, version_range: ">=1.0.16"}   # silently BCCs every email from v1.0.16
           - {ecosystem: npm, name: nx, versions: ["21.5.0", "21.6.0", "21.7.0", "21.8.0", "20.9.0", "20.10.0", "20.11.0", "20.12.0"]}
           - {ecosystem: pypi, name: huggingface-cli}   # slopsquat PoC name
-      metadata: {control: C19, owasp: ["LLM04:2026", "ASI04", "MCP04:2025"], atlas: ["AML.T0010.001", "AML.T0109", "AML.T0060"], references: ["https://thehackernews.com/2025/09/first-malicious-mcp-server-found.html", "https://github.com/nrwl/nx/security/advisories/GHSA-cxm3-wv7p-598c"]}
+      metadata: { tier: P1,control: C19, owasp: ["LLM04:2026", "ASI04", "MCP04:2025"], atlas: ["AML.T0010.001", "AML.T0109", "AML.T0060"], references: ["https://thehackernews.com/2025/09/first-malicious-mcp-server-found.html", "https://github.com/nrwl/nx/security/advisories/GHSA-cxm3-wv7p-598c"]}
       tests:
         positive: ["npm install postmark-mcp@1.0.16"]
         negative: ["npm install postmark@4.0.5"]
