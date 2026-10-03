@@ -14,9 +14,9 @@ Build a **lightweight, flexible AI Control Layer**: a gateway, proxy, middleware
 | R1 | **Centralized policy engine**: a single config source with controls, sensitivity thresholds (*Block vs Redact or adherence %*), allowed LLM models, resource/financial budgets | One `policy.yaml`, schema-validated, **hot-reloaded**, versioned. Per-control `mode` (block / redact / ask / monitor / off) and `threshold`. Model catalog plus allowlists per group. Budgets. | Judge edits the file and the behaviour changes within seconds. The dashboard shows the new version and a diff. |
 | R2a | **Deterministic controls**: e.g. PII/secrets pattern matching, authn/access checks | Regexes with checksum validators (PESEL, IBAN, Luhn), secrets rules, normalizer (unicode/encodings), identity, model/tool allowlists, argument validators | Test cases plus the playground show exact rule ids. |
 | R2b | **Semantic controls**: AI-based where possible | Local classifier (prompt injection / jailbreak), embedding similarity to known attacks, guard LLM for gray zones / content policy | Ad-hoc prompts that regex can't catch still get blocked, and you can see the score and threshold. |
-| R3 | **Budget & resource governance** for *external commercial APIs and local models*: resource access, compute time, token spend | Tokens + money (price table) + **GPU compute-seconds for Ollama**. Hierarchical budgets (org/team/user/agent/session). Reserve-then-settle. Loop / denial-of-wallet breakers. | A tiny budget gets exhausted, then a clean 429 with a reason. Burn-down chart. A local-model budget in seconds. |
+| R3 | **Budget & resource governance** for *external commercial APIs and local models*: resource access, compute time, token spend | Tokens + money (price table) + **local compute-seconds for Ollama** (wall clock at P0). Hierarchical budgets (org/team/user/agent/session). Reserve-then-settle. Loop / denial-of-wallet breakers. | A tiny budget gets exhausted, then a clean 429 with a reason. Burn-down chart. A local-model budget in seconds. |
 | R4 | **Historical attack mitigation**: malicious code execution, unsafe deserialization, supply-chain exploits on model repos; *signatures fed from an externally managed system* | A signed, versioned **signature feed** served by a separate "threat-intel" service and hot-reloaded. Pickle/model artifact scanning (fail-closed). Tool-argument code guard. AI-infra endpoint rules (Ray, Ollama, Langflow CVEs). | Judge adds a signature to the feed and it blocks within seconds. Malicious pickle is blocked. Rug-pulled MCP tool is quarantined. |
-| R5 | **Security reporting & auditing**: real-time metrics (blocks, budget usage) for management; **exportable audit logs** for security teams | Live dashboard (SSE). Append-only **hash-chained** audit log. Exports (JSONL / CSV / OCSF). Posture score. OWASP/ATLAS mapping on every event. | Two audiences, two views. Export works. Tampering is detected. |
+| R5 | **Security reporting & auditing**: real-time metrics (blocks, budget usage) for management; **exportable audit logs** for security teams | Live dashboard (SSE). Append-only **hash-chained** audit log. Exports (JSONL / CSV; OCSF-shaped at P1 #4). Posture score. OWASP/ATLAS mapping on every event. | Two audiences, two views. Export works. Tampering is detected. |
 | R6 | **Self-testing suite**: automated positive (allowed) and negative (blocked/redacted) tests, *including budget limits and exploit mitigation* | `make test` that is **hermetic** (mock LLM, no Ollama needed), YAML case library, coverage matrix, plus a **live self-test** inside the product that reacts to policy changes | One command, green summary, a control × case matrix. Mutation test: disable a control and see tests fail. |
 | D1 | Deliver a functional layer + **simple architecture diagram** | Mermaid / PNG in README and slides | — |
 | D2 | **Sample configuration**: documented policy file showing *different strictness/adherence levels and budget rules* | `policy.yaml` with `permissive / balanced / strict` profiles plus group overrides, heavily commented | — |
@@ -27,7 +27,7 @@ Build a **lightweight, flexible AI Control Layer**: a gateway, proxy, middleware
 
 - *"agent to agent, app to agent, agent to MCP, agent to model"*. Most teams will build only an LLM proxy. Covering **MCP** (tool calls) properly is a cheap differentiator, and **A2A** at least in the design.
 - *"signatures of such attacks can be fed from some externally managed system"*. A feed served by a **separate** container, with a version and a signature. A YAML file inside the gateway is not enough.
-- *"resilient enough to manage budgets for both external commercial APIs and locally hosted models"*. We need a local-compute unit (seconds of GPU time from Ollama's `eval_duration`) as well as tokens × price. No paid keys are given, so external providers are **simulated** (price table + mock upstream). We have to say that openly.
+- *"resilient enough to manage budgets for both external commercial APIs and locally hosted models"*. We need a local-compute unit (wall-clock seconds from dispatch at P0; Ollama's `eval_duration` exists only on the native `/api/chat`, so native durations are P1 #11, FACT-CHECK A2) as well as tokens × price. No paid keys are given, so external providers are **simulated** (price table + mock upstream). We have to say that openly.
 - *"Judges may modify the configuration files/feeds … how changes are reflected, can they adjust in real-time"*. **Hot reload is a judged feature.** So are invalid edits: keep the last-known-good config and show the error.
 - *"You should be able to produce performance telemetry"*. Per-stage latency (Prometheus + `Server-Timing` header) and a benchmark report.
 - *"Judges will execute the automated test suite provided by the team"*. In phase 1 the mentors may do this **without us**. The README must make it a one-liner that works offline.
@@ -61,28 +61,56 @@ Build a **lightweight, flexible AI Control Layer**: a gateway, proxy, middleware
 - **No paid AI services are provided.** Everything must run on our own machines (Ollama, OSS libraries). Our laptops are Apple Silicon with 32 GB+. **Docker on macOS gets no Metal GPU**, so run Ollama natively on the host and reach it from containers via `host.docker.internal:11434`.
 - **Prizes:** PLN 6,000 / 5,000 / 4,000. IP stays with the authors.
 
-## 5. What "done" looks like on Sunday evening (deliverable checklist)
+## 5. What "done" looks like at submission (deliverable checklist)
 
-- [ ] `README.md` starts with: *what it is (3 lines)*, the architecture diagram, **`make demo`** and **`make test`** (both run offline, with the mock LLM).
-- [ ] Gateway running in docker-compose: LLM proxy (OpenAI + Anthropic dialects), MCP proxy, policy hot reload, budgets, audit, metrics.
+> Superseded for scope by spec v1.1 §13.2 (P0) and §13.3 (P1). Submission is at **H15 (09:00) in plan (a)**, the default until the deadline is confirmed, or **H23 in plan (b)** (spec §13.4). Not P0: the Anthropic dialect (P1 #10), console toggles and the full Spend page (P1 #6), `make bench` numbers (P1 #1), OCSF (P1 #4). Local compute at P0 is wall-clock time (FACT-CHECK A2). The floor is the spec §13.6 never-cut list; under plan (a) expect little beyond it.
+
+- [ ] `README.md` starts with: *what it is (3 lines)*, the architecture diagram, **`make test`** and **`make demo-offline`** (both offline, with the mock LLM), plus **`make demo`** (native Ollama).
+- [ ] Gateway running in docker-compose: LLM proxy (OpenAI dialect; Anthropic is P1 #10), MCP proxy, policy hot reload, budgets, audit, metrics.
 - [ ] `policy.yaml` documented, with ≥ 3 strictness profiles, group overrides and budget rules.
 - [ ] Signature feed service, with ≥ 15 rules across several rule types, signed and hot-reloaded.
-- [ ] Dashboard: posture, threats with decision trace, spend, controls (live toggles), playground, self-test, audit export.
-- [ ] Test suite: ≥ 1 positive and ≥ 1 negative case per control, plus budget, exploit, hot-reload and perf. HTML report. Coverage matrix.
-- [ ] Benchmark numbers (overhead p50/p95 per stage) in the README and slides.
+- [ ] Dashboard: posture, threats with decision trace, spend (an Overview panel at P0; full page P1), controls (read-only at P0; toggles P1), playground, self-test, audit export.
+- [ ] Test suite: ≥ 1 positive and ≥ 2 negative cases per control, plus budget, exploit, hot-reload and fence suites. JUnit/HTML report. Coverage matrix.
+- [ ] Per-stage timings (`Server-Timing`, Prometheus) at P0; benchmark numbers (overhead p50/p95) in the README and slides only if `make bench` (P1 #1) shipped.
 - [ ] ≤ 10-slide PDF: problem → architecture → controls → live-demo screenshots → reporting → testing results → scalability → team.
 - [ ] Backup demo video (3–4 min) in case the live demo or Wi-Fi fails.
 - [ ] License table for every dependency.
-- [ ] Submitted **at least 1 h before the deadline**.
+- [ ] Submitted **at least 1 h before the deadline** (plan (a): 2 h; plan (b): 6 h).
 
 ## 6. Traceability: requirement → feature → test → slide
 
+Test paths are in the `aicl` build repo (spec §3.9, §10.2). Slide numbers follow the deck in `docs/05` §2.3.
+
 | Req | Feature (see `design/VISION-SPEC.md`) | Test family | Slide |
 |---|---|---|---|
-| R1 | policy engine + hot reload + last-known-good + versions/diff | `tests/policy/` reload, invalid-policy, mutation | 4 |
-| R2a | normalizer, PII/secrets, signatures, allowlists, arg validators | `cases/*.yaml` deterministic | 5 |
-| R2b | PI classifier, semantic signatures, guard LLM (gray zone) | `cases/semantic.yaml` + `make eval` (precision/recall) | 5 |
-| R3 | ledger (tokens, $, GPU-seconds), reserve/settle, loop breaker | `tests/budget/` incl. concurrency race | 6 |
-| R4 | signature feed, artifact gate, code guard, infra endpoint rules, MCP pinning | `tests/exploits/` | 6 |
-| R5 | audit chain, exports, dashboard, posture | `tests/audit/` verify, export schema | 7 |
-| R6 | hermetic suite + live self-test | the suite itself | 8 |
+| R1 | policy engine + hot reload + last-known-good + versions | `tests/integration/test_live_edits.py` (reload, invalid policy, tamper); mutation kill rate (P1 #8) | 2, 4 |
+| R2a | normaliser, PII/secrets, signatures, allowlists, arg validators | `tests/cases/*.yaml` deterministic | 4 |
+| R2b | PI classifier, kNN, topic pack (guard LLM P1 #2) | `tests/cases/*.yaml` semantic + `make eval` (P1 #3) | 4 |
+| R3 | ledger (tokens, micro-USD, local compute-s as wall clock at P0), reserve/settle, loop breaker | budget cases in `tests/cases/` + `tests/integration/test_budget_race.py` | 5 |
+| R4 | signature feed, artifact gate, code guard, infra endpoint rules, MCP pinning | feed suite + Exploit Museum E1-E10 cases | 6 |
+| R5 | audit chain, exports (JSONL/CSV; OCSF-shaped P1 #4), dashboard, posture | audit suite (completeness, verify, checkpoints) | 7 |
+| R6 | hermetic suite + live self-test | the suite itself: `tests/{unit,cases,integration,invariants,fence,e2e}/` | 8 |
+| D1 | functional layer + architecture diagram | `diagrams/src/slide-architecture.mmd` (spec §3.3); walking skeleton | 2 |
+| D2 | documented sample policy with strictness levels and budget rules | `examples/policy.yaml` → `policy/policy.yaml` (spec §6.2-6.3) | 4 |
+| D3 | dashboard: header + 4 P0 pages (spec §9.5) | storyline test (`tests/e2e/test_demo_storyline.py`) | 7 |
+| D4 | executable test suite incl. budget limits and exploit mitigation | `make test` | 8 |
+| Submission | ≤ 10-slide PDF; title, team, members, description | `docs/05` §2, §5; `make submission-check` | all |
+
+**The four edges** (spec §3.6):
+
+| Edge | Where it is governed | Demo beat | Slide |
+|---|---|---|---|
+| agent→LLM | LLM edge, spec §3.5(a) | 2, 3 | 2, 4 |
+| agent→MCP | MCP edge, spec §3.5(b) | 4, 7 | 2, 3 |
+| app→agent | `POST /v1/runs` with a user credential (C33) | 4 | 2, 3 |
+| agent→agent | thin, P1 #14; residual T16 (ASI07 partial) | — | 2, 10 |
+
+**What judges will do** (section 2 above):
+
+| Judge behaviour | Our answer | Demo beat / Q&A | Slide |
+|---|---|---|---|
+| Run our test suite | `make test` + the raw `docker compose` command (spec §10.1, §10.7) | 10 | 8 |
+| Type ad-hoc prompts | Playground through the data plane (spec §9.5) | 2, 3 | 4 |
+| Edit config and feeds live | poke matrix, spec §10.8 | 5, 6, 8 | 2, 6 |
+| Ask for performance telemetry | `Server-Timing` per stage, Prometheus; `reports/perf.md` only if P1 #1 shipped | Q&A #10 (`docs/05` §4.1) | 9 |
+| Review architecture, dashboards and logs | spec §3, §9.1-9.2, §9.5 | 1, 10 | 2, 7 |

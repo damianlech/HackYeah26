@@ -2,7 +2,7 @@
 
 > **Purpose:** keep good ideas without letting them leak into P0. Nothing here is built before IC4 (H15) unless the spec says so.
 > **Sources:** `design/VISION-SPEC.md` §13.3 (P1 ranks and P2 list) and the tier notes in §3-§11; the cut lists in `design/proposals/P1`-`P5`; the judging memos `design/judging/J1`-`J3`; the "so what" build lists in `research/R1`-`R9`; `research/FACT-CHECK.md`. The spec wins over everything else.
-> **Related:** open decisions about these items are in `docs/06-open-questions.md` (C3, C11, C13, C15).
+> **Related:** open decisions about these items are in `docs/06-open-questions.md` (C3, C11, C13; the former C15 is now decided in its §5).
 
 ---
 
@@ -13,7 +13,7 @@
 | Status | Meaning |
 |---|---|
 | **P1 #n** | Ranked P1 item in spec §13.3. Built H12-H16 in rank order, behind a flag, only on a lane that was green at IC3/IC4. |
-| **P1 (no rank)** | The spec calls it P1 somewhere in its text but never ranks it. Treated as P2 until L says otherwise (`docs/06` C15). |
+| **P1 (no rank)** | None left since spec v1.1: the former items (GGUF scan, `window` view + ROT13, SIG-0011, Policy diff / Audit query, role stripping, `models.*.fallback`) are now P2. |
 | **P2** | Spec §13.3 or a P2 tier note. A slide or roadmap item, built only if everything else is green. |
 | **cut** | A proposal or research note suggested it, and the spec or the judges dropped it. Not planned for the event. |
 | **future** | A research idea the spec does not mention. Goes to the post-hackathon roadmap (§5). |
@@ -37,8 +37,8 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | 5 | P1 #5 C23 approvals | D + F | 2.5 h | C24 green at the H12 gate | Approval card; a retry token bound to the args hash, single use, TTL 300 s; approver ≠ requester |
 
 **Rules after that:**
-- Lanes work in parallel. A green lane takes its own highest-ranked item, so the per-lane queues are A: 1 → 10 → 13 → 15 · B: 4 → 13 · C: 2 → 3 → 11 · D: 5 → 9 → 12 → 14 · L: 3 → 6 → 7 → 8 → 12 → 16 · F: 5 → 6 → 7.
-- The spec expects ranks 1-6 to ship (about 13 h). Cut from the bottom (spec §13.6), never the reverse.
+- Lanes work in parallel. A green lane takes its own highest-ranked item, so the per-lane queues are A: 1 → 10 → 13 → 15 · B: 4 → 6 → 13 → 17 · C: 2 → 3 → 11 · D: 5 → 9 → 12 → 14 · L: 3 → 6 → 7 → 8 → 12 → 16 · F: 5 → 6 → 7.
+- Realistically there is no P1 in the base plan: P0 fills H1-H16, so P1 starts only where a lane finishes early. Plan (b)'s extra 2 h buys about 12 h (ranks 1-5); plan (a) builds no P1 (spec §13.3). Cut from the bottom (spec §13.6), never the reverse.
 - Feature freeze is H16. After that: fixes, cases, docs, policy and feed content, and CSS only.
 - Nothing marked P2, cut or future starts during the event unless every P1 rank is done or abandoned.
 
@@ -53,17 +53,18 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | P1 #3 | `make eval` + calibration | TPR/FPR/F1 with Wilson CIs on held-out sets + the team's Polish slice; writes `policy/calibration/*.json` | Test H · Rep M (J1 must-fix 13) | 2.0 h (spec) | Datasets cached before the event; Polish slice | Wide CIs on small sets; dataset licences | spec §10.5; R8 §10-11 |
 | P1 #4 | OCSF-shaped export | OCSF 1.9.0 API Activity 6003, Detection Finding 2004, Entity Management 3004, `record_integrity` | Rep M | 1.5 h (spec); 2-3 h (R9) | B7 export path | Not validator-checked, so "OCSF-shaped" only | spec §9.6; R9 §2.8; FACT-CHECK C6 |
 | P1 #5 | C23 approvals | `ask` becomes an approval card; retry token bound to the args hash; one approver ≠ requester | Rob M · Rep M (ASI09 partial → green) | 2.5 h (spec); 3 h (R6) | C24 `ask` cells; console card (F) | Demo needs a second identity; client timeouts (use retry-token mode) | spec §3.5(b); R6 §2.8 |
-| P1 #6 | Spend + Agents & MCP pages, console toggles | Full Spend page; inventory, quarantine diff, re-pin and kill switch; `PATCH` toggles through the single-writer path | Rep M · Prac M | 3.5 h (spec) | L read APIs; `If-Match` + atomic rename | F is the bottleneck; two writers to `policy.yaml` if done wrong (J3) | spec §9.5, D14 |
+| P1 #6 | Spend + Agents & MCP pages, console toggles | Full Spend page; inventory, quarantine diff, re-pin and kill switch; `PATCH` toggles through the single-writer path; + `/api/feed` (B). Owners F + L + B | Rep M · Prac M | 4.0 h (spec) | L read APIs; `If-Match` + atomic rename | F is the bottleneck; two writers to `policy.yaml` if done wrong (J3) | spec §9.5, D14 |
 | P1 #7 | Exploit Museum cards + replay | One card per exhibit E1-E10 with Replay through the data plane | Rep M · Test M | 1.5 h (spec) | Scripted-agent library; `/api/scenarios/{id}/replay` | Low | spec §8.5; P1 §5 |
-| P1 #8 | Mutation kill rate + entitlement matrix | Disable each control in turn and expect a NEG case to fail; group × model and agent × tool tests generated from the policy | Test H | 1.5 h (spec) | Green `make test` | ~5 min run; survivors need triage | spec §10.1; R8 §3.9; P3 §10 |
+| P1 #8 | Mutation kill rate + entitlement matrix + obfuscation mutators | Disable each control in turn and expect a NEG case to fail; group × model and agent × tool tests generated from the policy; + the obfuscation mutators (from L2 in v1.1) | Test H | 2.0 h (spec) | Green `make test` | ~5 min run; survivors need triage | spec §10.1; R8 §3.9; P3 §10 |
 | P1 #9 | C34 MCP protocol hardening | Header/body desync, batch rejection, JSON depth and schema-bomb limits, elicitation secret fields, sampling deny | Rob M | 1.0 h (spec) | `docs/06` C4 (middleware or thin proxy) | Low | spec §4; R6 §2.14-2.15 |
 | P1 #10 | Anthropic `/v1/messages` + managed-settings clip | Anthropic dialect with `tool_result`-inside-`role:user` treated as tool content; recorded Claude Code clip | Prac M · Rob M | 2.5 h (spec) | A5 streaming; Claude Code ≥ 2.1.285 | Mid-stream `event: error` handling unverified (R7 §7); slow on local models | spec §3.6; R5 §5; FACT-CHECK B3 |
-| P1 #11 | Native Ollama durations + `downgrade` | Compute from `/api/chat` durations instead of wall clock; reroute to a local model on a model cap breach | Arch M · Prac M (residual T15) | 1.5 h (spec) | A second upstream dialect | Two code paths for one upstream | spec §7.1, §7.4; FACT-CHECK A2 |
+| P1 #11 | Native Ollama durations + `downgrade` | Compute from `/api/chat` durations instead of wall clock; reroute to a local model on a model cap breach; + the `mock-llm` Ollama-native endpoint (A). Owners C + A | Arch M · Prac M (residual T15) | 2.0 h (spec) | A second upstream dialect | Two code paths for one upstream | spec §7.1, §7.4; FACT-CHECK A2 |
 | P1 #12 | Live `qwen3:8b` agent + promote-to-case | Real model drives S1-S8; a Playground/Threats event becomes a YAML regression case | Test M · Rep L | 1.5 h (spec) | Warm Ollama | Flaky local tool calling (spec R12) | spec §3.2 #11; P4 §7.2; J1 §5 |
 | P1 #13 | C27 n-gram + C16 datamark | System-prompt n-gram overlap check; datamark spotlighting toggle on tool results | Rob L | 1.0 h (spec) | C27 canary; C16 | Datamarking can hurt task quality (R6 §7); n-gram false positives | spec §4 C16/C27; R6 §6 |
 | P1 #14 | Thin agent→agent | `kyc-agent` exposed as an MCP tool; the caller's run token is forwarded so the callee inherits taint | Rob M (ASI07 stays partial) | 1.5 h (spec) | C33 run tokens | Taint inheritance edge cases | spec §3.6, D29 |
 | P1 #15 | `/v1/guard` + `/v1/decide` + `PreToolUse` hook | Content-inspection API and PDP API so Envoy, Kong, Apigee and a Claude Code hook (OWASP ACS verdicts) reuse our brain | Prac H (J2 stage Q7: "we run Envoy and Apigee") | 2.0 h (spec) | `aicl.core` `decide()` | API surface creep; client config is not a boundary (R5) | spec §11.2, §2.4; FACT-CHECK B5; P4 H1 |
 | P1 #16 | kustomize + kubeconform | Deployment, HPA, PDB, default-deny NetworkPolicy, ConfigMap directory mount; validated in CI | Prac M | 1.0 h (spec); 1.5 h (R7) | Final compose | None on stage | spec §3.8; R7 §4 |
+| P1 #17 | `package_ioc` rule type | SIG-0013 (`postmark-mcp`) and the bad `nx` versions as package IOCs; skipped and listed until then. Owner B | Rob L · Rep L (MCP04 package IOCs) | 0.5 h (spec) | B3 signature engine | Low | spec §8.4, §13.3 |
 
 ---
 
@@ -79,7 +80,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | Access matrix + explain-access | Group × model/tool matrix, "explain access for user X", unused entitlements, recertification CSV | Prac M · Rep M | part of 7 h (J3) | Entitlement generator (P1 #8) | F time | P3 §9.2 | cut |
 | Request access + personal keys | Request-access button routed to the group owner; mint an 8 h personal key | Prac M | n/a | My AI page, C23 | Low | P3 §4.2 | cut |
 | Downstream `act` tokens | Gateway as a mini-STS: per-call tokens for MCP upstreams carrying who acts for whom | Rob L · Prac M | 1-2 h (R5) | Per-backend credential injection (P0) | Low | R5 §6.4; P3 §4.1 | future |
-| Server-side role field stripping | `control` strips fields per role (Security, Management, Developer) instead of the UI-only switch | Rep L · Prac M | n/a | Per-user admin identity (`docs/06` B6) | Low | spec §11.1, §11.6 | P1 (no rank) |
+| Server-side role field stripping | `control` strips fields per role (Security, Management, Developer) instead of the UI-only switch | Rep L · Prac M | n/a | Per-user admin identity (`docs/06` B6) | Low | spec §11.1, §11.6 | P2 |
 | Claude Code `statusLine` + model discovery | `aictl status --short` shows "budget 41% · 3 models"; gateway model discovery fills the `/model` picker | Prac M (the team's "user sees their limit") | 1 h (R5) | P1 #10 | `availableModels` with non-Claude IDs unverified (R5 §10) | R5 §5; P3 §4.2 | future |
 | SPIFFE IDs, Keycloak agent delegation, MCP ID-JAG | Workload identity for agents; `may_act`/`act` delegation; standards-track SSO for MCP access | Prac M (pitch) | n/a | A real IdP | Keycloak delegation is a preview feature | R5 §6.6; R6 §6 | future |
 
@@ -110,7 +111,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | gpt-oss-safeguard policy reasoner | Async "bring your own policy text" model with a rationale in the audit event | Rep M · Rob L | n/a | ~14 GB model (assumed size, R4) | RAM and latency on a laptop | R4 §4 | future |
 | Presidio NER for names | Person-name detection for `pl` + `en` | Rob M | 2 h (J3) | Presidio + spaCy models | `pl` language trap, image weight, false positives; spaCy `pl_core_news_*` is GPL-3.0 | P3 §5; R8 §2.1; P4 C07 | cut |
 | Pseudonymise + rehydrate | `<PL_PESEL_1>`-style placeholders mapped back in the response, request-scoped | Prac M · Rob L | ~1.5 h est. (logic exists in the mockup) | C07 | Rehydration can put PII back into output | spec §11.6, D36; brief §11 | P2 |
-| Cross-message window + ROT13 | Scan the last 3 user/tool messages as one view; add a ROT13 decoder to C08 | Rob M (split-across-turns payloads) | ~1 h est. | C08 | More windows raise T2 latency | spec §5.3 | P1 (no rank) |
+| Cross-message window + ROT13 | Scan the last 3 user/tool messages as one view; add a ROT13 decoder to C08 | Rob M (split-across-turns payloads) | ~1 h est. | C08 | More windows raise T2 latency | spec §5.3 | P2 |
 | Honeytoken | A fake key planted in the sandbox filesystem; any use trips the C31 kill path | Rob M (ASI10 detection) | ~0.5 h est. | C31, `filesystem` server | Low | P4 §3 C31 | future |
 | Slopsquatting check (C28) | Flag package names in output that are missing from a local index | Rob L (LLM07:2026 partial) | ~1-2 h est. | An offline package-name index | Stale index gives false positives | R1 §9; R2 e6; spec §4 | P2 |
 | RAG access control (C29) | Per-user filtering of retrieved documents | Rob L (LLM09 partial) | n/a | A RAG demo | Scope | R1 §9; spec §4 | out of scope |
@@ -126,7 +127,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | Delegation sub-mandates | `/v1/mandates/{id}/delegate`: child ⊆ parent, budget share, depth limit | Rob M · Prac L | n/a | P1 #14; Lua over all ancestors | Scope | P4 §2.6 M5 | cut (thin P1 #14 instead) |
 | Mandate Authority service + Mandates page | A separate authority service and a mandate-tree view per run | Rep M | 3 h service + 8 h pages incl. sparring and diff views (J3) | Pub/sub to PEPs | No versioned pull, so stale PEPs go unnoticed (J2) | P4 §2, §7.2; J2 §4 | cut (Run tab in the drawer instead) |
 | Biscuit tokens | Offline-attenuable tokens for cross-organisation A2A | Prac L | n/a | — | Datalog learning curve | P4 §12 | future |
-| `tool_sequence` rule (SIG-0011) | A named toxic-flow detection on run state (C24 already enforces the guarantee) | Rob L | n/a ("fiddly", R2) | Run state | Low | spec §8.4; R2 §2.7 | P1 (no rank) |
+| `tool_sequence` rule (SIG-0011) | A named toxic-flow detection on run state (C24 already enforces the guarantee) | Rob L | n/a ("fiddly", R2) | Run state | Low | spec §8.4; R2 §2.7 | P2 |
 | MRTR/elicitation approvals | Approval asked in the agent's own terminal via MCP elicitation | Prac M | n/a | P1 #5; 2026-07-28 clients | Asks the same user, so it is not four-eyes | R6 §2.8 | future |
 | Docker MCP Gateway sandbox | Run third-party stdio servers in locked-down containers (`--block-network`, `--block-secrets`) | Rob M | n/a | Docker Desktop or CE | A second policy store | R6 §1.7; R3 §4 | future |
 | Unmodified OSS agent (goose) | An off-the-shelf agent governed by config only, as a video | Prac M | ~2 min video (R6) | P1 #10-style config | Slow local models | R6 §6 | future |
@@ -135,7 +136,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 
 | Idea | What it is | Value | Cost | Depends on | Risk | Source | Status |
 |---|---|---|---|---|---|---|---|
-| HF scanning mirror + GGUF template scan | `/hf/` mirror via `HF_ENDPOINT` with quarantine; Jinja `chat_template` scan (SIG-0008 as regex) | Rob M · Rep L | 2 h (P5); 3-4 h (R5) | C18; mock-hf fixtures | hf-xet may ignore `HF_ENDPOINT` (R5 §10) | spec §3.6, §8.4; P1 §1.1; P5 | P2 (GGUF scan also P1 (no rank), `docs/06` C15) |
+| HF scanning mirror + GGUF template scan | `/hf/` mirror via `HF_ENDPOINT` with quarantine; Jinja `chat_template` scan (SIG-0008 as regex) | Rob M · Rep L | 2 h (P5); 3-4 h (R5) | C18; mock-hf fixtures | hf-xet may ignore `HF_ENDPOINT` (R5 §10) | spec §3.6, §8.4; P1 §1.1; P5 | P2 |
 | Guarded `/ollama/api/pull` | An operator-only model-pull route with a source allowlist | Rob L | 1 h (J3) | C20 | Must not weaken the floor "Ollama admin APIs are never proxied for agents" | P1 §1.1 | cut |
 | YARA-X rule type | `yara` feed rules for artifacts | Rob L | n/a | yara-x (BSD-3) | Low | spec §8.4; R2 §2.3 | P2 |
 | Model-signing verification | Verify OpenSSF/sigstore model signatures in C18 | Rob M (provenance only; signing ≠ safety, T9) | n/a | sigstore `model-transparency` | Low | R2 sources | future |
@@ -150,7 +151,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | Anomaly baseline | Cost and token-velocity anomalies (EWMA z-score; > 2× own p95 and > org p99) | Rep M · Rob L | 2 h (R7) | History; on demo day it can only be seeded and labelled | False positives; no real baseline in 24 h | R7 §5; R9 §1.7; spec C26 | P2 |
 | Weighted fair queue | Fair share per principal on a shared local model | Arch M | 2-3 h (R7) | Guard lane (P1 #2) | Low | R7 §1.11, §5 | future |
 | KEDA autoscaling | Scale gateways on in-flight streams | Prac L | 1-2 h (R7) | P1 #16 | Low | spec §3.8; R7 §4.4 | P2 |
-| Model `fallback` on upstream errors | Route to a fallback model on 5xx or a full Ollama queue | Prac L · Arch L | n/a | Upstream client | Low | spec §5.4 | P1 (no rank) |
+| Model `fallback` on upstream errors | Route to a fallback model on 5xx or a full Ollama queue | Prac L · Arch L | n/a | Upstream client | Low | spec §5.4 | P2 |
 
 ### 4.7 Audit, reporting and console
 
@@ -167,7 +168,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | Feed push webhook | Push instead of the 3 s poll | Arch L | ~0.5 h est. | Feed service | Low | spec §8.2 | P2 |
 | Grafana perf dashboard | Provisioned dashboard for SREs | Arch L | 1.5 h (R9) | Prometheus | AGPL; our licence check fails on it (spec R19) | R9 §4 | cut |
 | ATLAS Navigator layer export | Coverage as a Navigator layer JSON | Rep L | n/a | Coverage grid | Layer format unverified (R1 §12.4) | R1 §12.4 | future |
-| Policy diff/YAML + Audit query pages | Side-by-side policy diff; free audit query | Rep M | n/a (`/api/policy/diff` is P1 in §11.3) | L APIs | F time | spec §9.5, §11.3 | P1 (no rank) |
+| Policy diff/YAML + Audit query pages | Side-by-side policy diff; free audit query | Rep M | n/a (`/api/policy/versions` + `/api/policy/diff` are P2 in §11.3) | L APIs | F time | spec §9.5, §11.3 | P2 |
 | Exploit Museum 16-card UI | 16 replayable incident cards with "Replay all" | Rep M · Test M | 5 h (J3) | Scripted agent | One UI person | P1 §5; J3 §2 | cut (10 exhibits; cards at P1 #7) |
 
 ### 4.8 Testing and evaluation

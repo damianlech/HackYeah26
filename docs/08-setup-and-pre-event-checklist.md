@@ -39,6 +39,7 @@ Decide before the event if you can (the spec allows until H1): which Mac is the 
 | 1.7 | HackTribe | All | before the event | Every member has a HackTribe account, the team exists with all six members, and the Goldman Sachs task is selected (verify how the platform does this). L reads the submission form: title, team, members, description, ≤ 10-slide PDF (`docs/00-task-analysis.md`), and whether edits after upload are allowed (Q2, confirmed again at H0). |
 | 1.8 | Docker Hub login | All | before the event | `docker login` with a free account on every laptop. Anonymous pulls are rate-limited **per IP**, and a hackathon puts hundreds of people behind one NAT address. The exact limits change; check docs.docker.com (verify). Pre-pull everything (§4.3) so it doesn't matter. |
 | 1.9 | Team chat channel `#setup-proof` + shared team drive | L | before the event | One place for proof posts and one copy of the offline kit (§4.7). |
+| 1.10 | Claude Design access + Claude Code on F's laptop | F | before the event | Open Claude Design, attach `mockups/dashboard.html`, paste the brief's §7.0 P0 prompt and generate one test screen. Done when the screenshot is in `#setup-proof`. Fallback: Claude Code + the brief §3 tokens directly. |
 
 ---
 
@@ -100,7 +101,7 @@ Requirements (spec §3.2 row 13, FACT-CHECK A1/A2/A6):
 - **Ollama ≥ 0.14** (for `/v1/messages`; `/v1/responses` arrived in 0.13.3). R4 saw v0.35.1 as the latest on 2026-09-29.
 - **Native on the Mac**, never in Docker: Docker on macOS has no Metal GPU.
 - Duration fields (`eval_duration` and friends, in nanoseconds) exist **only on the native `/api/chat` and `/api/generate`**, not on `/v1/*`. That is why compute-ms is wall clock at P0 (spec D21).
-- Ollama has **no authentication**. Bind it to `127.0.0.1`, never `0.0.0.0` on hackathon Wi-Fi (our own pitch hook is "175,000 Ollama servers on the internet without auth").
+- Ollama has **no authentication**. Bind it to `127.0.0.1`, never `0.0.0.0` on hackathon Wi-Fi (our own pitch hook is "~175,000 Ollama servers on the internet without auth"; the number is not yet verified, FACT-CHECK E1).
 
 ```bash
 ollama --version
@@ -149,7 +150,7 @@ curl -s http://127.0.0.1:11434/api/ps          # qwen3:8b listed = warm
 
 Claude Code clip (P1 rank 10, A): Ollama recommends a 64k+ context for Claude Code (FACT-CHECK A1), and Claude Code needs `CLAUDE_CODE_MAX_CONTEXT_TOKENS` for local models (`examples/agent-config/claude-code/README.md`). Record that clip in a separate session with its own agent-lane settings, never during the live demo.
 
-### 2.6 Hand-run doctor before the event, `make doctor` from H6 (All / C)
+### 2.6 Hand-run doctor before the event, `make doctor` from H6 (All / L)
 
 Before the event, every member pastes this output into `#setup-proof`:
 
@@ -165,7 +166,7 @@ gitleaks version; gh auth status 2>&1 | head -3
 df -h ~ | tail -1
 ```
 
-`make doctor` (C7, owned by C, due **H6**) automates this. Expected checks; each prints PASS, WARN or FAIL, and the target exits non-zero only on FAIL:
+`make doctor` (L8, owned by L since v1.1; C supplies the Ollama and ONNX checks; due **H6**) automates this. Expected checks; each prints PASS, WARN or FAIL, and the target exits non-zero only on FAIL:
 
 | Check | PASS when | Otherwise |
 |---|---|---|
@@ -649,7 +650,7 @@ models/minilm-l12-ml-int8: derived from sentence-transformers/paraphrase-multili
   converted to ONNX and INT8-quantized by <team>, <date>.
 ```
 
-**`make licenses`** (L, by H20; spec R19: it fails on GPL/AGPL/SSPL). A starting point: `uv run --with pip-licenses pip-licenses --format=markdown --with-urls` inside each service's environment, plus an npm licence report for `ui/` (verify the tool choice and its fail-on flags). The output becomes `docs/LICENSES.md`.
+**`make licenses`** (L, by H20; spec R19: it fails on GPL/AGPL/SSPL). A starting point: `uv run --with pip-licenses pip-licenses --format=markdown --with-urls` inside each service's environment, plus an npm licence report for `ui/` (verify the tool choice and its fail-on flags). The output becomes `docs/LICENSES.md` in the `aicl` build repo (spec §3.9), not in this brainstorm repo.
 
 ---
 

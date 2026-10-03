@@ -9,13 +9,15 @@
 >
 > **§11.6 overrides, in short:**
 > 1. The API is served by `control`, not "the gateway's control-plane FastAPI".
-> 2. Only the 4 pages above are P0. Full Spend page, Agents & MCP, Approvals, Policy diff, Audit query and Exploit Museum cards are P1. My AI, ECS/CEF/HEC previews, what-if and the weekly report are P2.
+> 2. Only the 4 pages above are P0. Full Spend page, Agents & MCP, Approvals and Exploit Museum cards are P1. Policy diff, Audit query, My AI, ECS/CEF/HEC previews, what-if and the weekly report are P2.
 > 3. Console toggles (`PATCH /api/controls`) are P1. At P0 the Controls page is read-only and judges edit `policy.yaml`.
 > 4. The Playground sends traffic through the data plane as `judge`, `alice` or `ola` only. There is no arbitrary impersonation.
-> 5. Placeholders as above. Pseudonymise-and-rehydrate (`<PL_PESEL_1>`) is P2; `route-local` / MNPI downgrade is P1 (`downgrade`).
+> 5. Placeholders as above. Pseudonymise-and-rehydrate (`<PL_PESEL_1>`) is P2; `route-local` / MNPI downgrade is P2 (it would reuse the P1 `downgrade` verdict).
 > 6. The header gains replicas `2/2`, the guard engine + DEGRADED state, self-test, posture delta and the "unsigned local change" chip.
-> 7. Role-based field stripping is P1. At P0, Management sees the same data, with a banner saying so.
+> 7. Role-based field stripping is P2. The role switch is UI-only at P0; Management sees the same data, with a banner saying so.
 > 8. Approvals are single-approver at P1; four-eyes is P2.
+> 9. Model IDs are `ollama/qwen3:8b`, `ollama/qwen3:4b`, `sim/gpt-4.1` (simulated commercial pricing) and `mock/scripted`; ignore `ext/*`, `llama3.2:3b` and `gpt-oss:20b` in the samples below. An ungranted model is **400** `model_not_allowed` (spec §5.7). Money is integer micro-USD; times are UTC.
+> 10. For Claude Design, paste the **P0 prompt in §7.0**, not the full-vision prompt in §7.1.
 
 > For the teammate building the real dashboard with Claude Design + Claude Code.
 > Visual reference: `mockups/dashboard.html` (one self-contained file; open it in a browser, every page is clickable and runs on sample data).
@@ -198,7 +200,7 @@ Every page needs four states: **loading** (skeleton rows and greyed charts, neve
 - **Diff**: from/to selectors, a summary line (sha a → b, result, author, posture a → b, newly uncovered ids) and a unified diff with 3 lines of context and ⋯ gaps. Feed: `GET /api/policy/diff?from=&to=`.
 - **Validation**: schema, RE2 compile, feed signature, canary self-test, propagation time, last rejected attempt. Feed: `GET /api/policy/validation`.
 - **Active policy.yaml**: syntax-coloured (keys accent, strings green, numbers orange, booleans indigo, comments grey italic). Feed: `GET /api/policy/versions/{v}` (text/yaml).
-- The demo button "Simulate catastrophic regex edit" is mockup-only. In the real product the judge edits the file and the gateway emits `policy_rejected`.
+- The demo button "Simulate non-RE2 regex edit" is mockup-only. In the real product the judge edits the file and the gateway emits `policy_rejected`.
 
 ### 4.6 Agents & MCP · `#agents` · security (edit), developer (read)
 - **Quarantine panel** (shown when any tool is quarantined):
@@ -424,7 +426,7 @@ GET /api/policy/validation
 ```
 ```json
 {"items": [{"version": 14, "ts": "2026-10-20T08:55:40Z", "author": "bob", "principal_type": "user", "result": "rejected",
-            "reason": "regex rejected: catastrophic backtracking in (a+)+$ (RE2 compile failed), kept v13", "sha256": "8a7eddc1…", "reload_ms": 140},
+            "reason": "regex rejected: lookahead (?=…) is not supported by RE2, kept v13", "sha256": "8a7eddc1…", "reload_ms": 140},
            {"version": 15, "ts": "2026-10-20T13:51:12Z", "author": "alice", "result": "applied", "posture_before": 90.6, "posture_after": 91.5,
             "summary": ["C27 enabled (monitor)", "C10 threshold 0.85 → 0.80"], "sha256": "b7f0c2a9…", "reload_ms": 820}]}
 {"from": 13, "to": 15, "from_sha": "c8e12d9…", "to_sha": "b7f0c2a…", "result": "applied", "newly_uncovered": [], "covered_again": ["LLM08:2026"],
@@ -579,7 +581,7 @@ event: policy_reloaded
 data: {"version":16,"sha256":"93ff8891…","previous":15,"author":"judge-2","principal_type":"judge","reload_ms":784,"diff_summary":["C07 enabled: true → false"],"posture_before":91.5,"posture_after":70.0,"critical_gate":["C07"],"newly_uncovered":["LLM02:2026","MCP10:2025","AML.T0057"],"covered_again":[]}
 
 event: policy_rejected
-data: {"attempted_version":19,"kept_version":18,"author":"judge-2","reason":"regex rejected: catastrophic backtracking in (a|aa)+$ (RE2 compile failed)","path":"signature_feed.local_rules[4]"}
+data: {"attempted_version":19,"kept_version":18,"author":"judge-2","reason":"regex rejected: backreference \\1 is not supported by RE2","path":"signature_feed.local_rules[4]"}
 
 event: selftest_progress
 data: {"run_id":"st_0c52","policy_version":16,"done":48,"total":152,"case":{"id":"C07-NEG-01","state":"gap","note":"C07 disabled by policy v16"}}
@@ -621,7 +623,7 @@ How the client handles each event:
 
 ## 6. Sample data for mocks from hour 1
 
-Put these files in `ui/mocks/` and serve them with the mock server in §10 (nested routes map to dashed names: `/api/spend/burndown` → `spend-burndown.json`). The **full** sample set (users, 32 controls, 152 self-test cases, framework mapping, scenarios, spend matrix, MCP inventory, approvals, efficacy, `/api/me`) is the `DATA` object at the top of the script in `mockups/dashboard.html`. Copy it out with `node -e` or by hand. Its shapes are close to the API above, but money there is in plain USD for readability.
+At P0 the mock server in §10 serves L's generated fixtures straight from `contracts/fixtures/` (spec §11.1, §11.5): `api/<path with / → ->.json` (`/api/spend/burndown` → `api/spend-burndown.json`), `events/<event_id>.json` and `stream.jsonl`. The files below show the shapes; if the fixtures are not committed by H1:45, save these into `ui/mocks/` with the same layout and run the server with `AICL_FIXTURES=ui/mocks` until they land. The **full** sample set (users, 32 controls, 152 self-test cases, framework mapping, scenarios, spend matrix, MCP inventory, approvals, efficacy, `/api/me`) is the `DATA` object at the top of the script in `mockups/dashboard.html`. Copy it out with `node -e` or by hand. Its shapes are close to the API above, but money there is in plain USD for readability.
 
 `mocks/header.json`
 ```json
@@ -670,6 +672,20 @@ Test values that pass their checksums (safe dummies):
 ---
 
 ## 7. Copy-paste prompt for Claude Design
+
+### 7.0 P0 prompt (use this one)
+
+> Design a desktop-first console "AICL Console" for a bank's AI control layer, using the **Visual direction** block of §7.1 unchanged. Shell: sticky header `● policy v18 · 3f2a9c1 · 2/2 replicas ✓ · applied 0.6 s ago` · `● feed #43 ✓ exp 6d` · `● audit ✓ seq 18,452` · `● guard pg2-86m ✓ 41 ms p95` · `● self-test 151/156 · 5 GAP` · `● posture 79.4 ▼11.6` · `LLM: mock` badge · `unsigned local change` chip, in 4 states (normal, amber, red with the YAML path, grey stale); a rail with only Overview, Threats, Controls & Self-test, Playground; a UI-only role switch; banners "single admin token (demo)" and "Management sees the same data".
+>
+> Screens:
+> 1. **Overview:** posture + 4 sub-scores + "capped at 70" banner; KPI band; coverage grid (LLM 2026 / ASI / MCP ×10 + ATLAS strip); spend panel (burn-down with 75/95/100% lines, local compute-s vs "simulated commercial pricing", RUNAWAY LOOP STOPPED (C05), race tile "200 fired · 50 admitted · 0% overshoot"); health; recent policy changes.
+> 2. **Threats:** live table + drawer tabs Trace, Run (ordered taint chain with where each destination came from), Evidence (post-redaction snippet, decoded hidden text, sent vs forwarded), Integrity; Export CSV, Verify chain.
+> 3. **Controls & Self-test:** read-only table C01-C36 with mode, fail mode and self-test state (PASS / GAP amber / FAIL red), Run self-test, "S4 EXPOSED since v19".
+> 4. **Playground:** principal judge / alice / ola; model `ollama/qwen3:8b`, `ollama/qwen3:4b`, `sim/gpt-4.1`, `mock/scripted`; prompt + example chips; verdict banner; stages T0/T1/T2/OUT with ms; sent vs model-saw with `[PL_PESEL]` `[IBAN]` `[SECRET:aws_access_key]`; Server-Timing.
+>
+> No toggles, sliders, what-if, ROUTE LOCAL or re-hydration. Light + dark; empty / loading / error / stale states for Threats.
+
+### 7.1 Full-vision prompt (P1/P2 reference; do not paste unedited)
 
 > Design a desktop-first web console called **AICL Console** ("AI Control Layer") for a global bank. AICL is a gateway that governs agent→LLM, agent→MCP-tool and agent→agent traffic with guardrails, budgets, a signed attack-signature feed, a hash-chained audit log and live policy hot reload. Users: security analysts, management, approvers and developers.
 >
@@ -744,19 +760,21 @@ Reuse one `<VerdictPill>`, `<Severity>`, `<FrameworkChip>`, `<KpiBand>`, `<Panel
 
 **Mock server (FastAPI, ~40 lines)**. The gateway team works in Python, so the same process can later proxy to the real control plane.
 ```python
-# ui/mock_server.py   ·   pip install fastapi uvicorn   ·   uvicorn mock_server:app --port 8000 --reload
-import asyncio, itertools, json, pathlib
+# ui/mock_server.py   ·   pip install fastapi uvicorn   ·   from the repo root: uvicorn ui.mock_server:app --port 8000 --reload
+# Serves contracts/fixtures/ directly (spec §11.1); fallback before H1:45: AICL_FIXTURES=ui/mocks uvicorn ui.mock_server:app --port 8000
+import asyncio, itertools, json, os, pathlib
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-M = pathlib.Path(__file__).parent / "mocks"
+FX = pathlib.Path(os.environ.get("AICL_FIXTURES", pathlib.Path(__file__).resolve().parents[1] / "contracts" / "fixtures"))
+M = FX / "api"                                   # /api/spend/burndown → api/spend-burndown.json
 app = FastAPI()
 QUEUE: asyncio.Queue = asyncio.Queue()          # messages injected by write endpoints
-load = lambda name: json.loads((M / name).read_text())
+load = lambda path: json.loads(path.read_text())
 
 @app.get("/api/stream")                          # declared before the catch-all on purpose
 async def stream(req: Request):
-    lines = [json.loads(l) for l in (M / "stream.jsonl").read_text().splitlines() if l.strip()]
+    lines = [json.loads(l) for l in (FX / "stream.jsonl").read_text().splitlines() if l.strip()]
     async def gen():
         seq = 18452
         for msg in itertools.cycle(lines):
@@ -771,8 +789,8 @@ async def stream(req: Request):
 
 @app.get("/api/events/{event_id}")
 async def event(event_id: str):
-    f = M / f"event-{event_id}.json"
-    return JSONResponse(load(f.name) if f.exists() else load("event-01J9ZK3Q8X7M4T2R6V5N0B1C2D.json"))
+    f = FX / "events" / f"{event_id}.json"
+    return JSONResponse(load(f) if f.exists() else load(sorted((FX / "events").glob("*.json"))[0]))
 
 @app.patch("/api/controls/{cid}")
 async def patch_control(cid: str, req: Request):
@@ -785,14 +803,14 @@ async def patch_control(cid: str, req: Request):
 
 @app.post("/api/playground/inspect")
 async def inspect(req: Request):
-    return JSONResponse(load("playground-inspect.json"))   # later: forward to the real gateway dry-run
+    return JSONResponse(load(M / "playground-inspect.json"))   # later: forward to control's /api/playground/inspect
 
-@app.get("/api/{path:path}")                     # catch-all: /api/spend/burndown → mocks/spend-burndown.json
+@app.get("/api/{path:path}")                     # catch-all: /api/spend/burndown → api/spend-burndown.json
 async def fixture(path: str):
     f = M / (path.replace("/", "-") + ".json")
-    return JSONResponse(load(f.name)) if f.exists() else JSONResponse({"error": {"type": "not_found", "message": f.name}}, 404)
+    return JSONResponse(load(f)) if f.exists() else JSONResponse({"error": {"type": "not_found", "message": f.name}}, 404)
 ```
-Vite proxy (`vite.config.ts`): `server: { proxy: { "/api": { target: "http://localhost:8000", changeOrigin: true } } }`. SSE works through the Vite proxy; if a corporate proxy buffers it, hit `:8000` directly. To switch to the real backend, point the proxy at the gateway's control plane. The routes are identical.
+Vite proxy (`vite.config.ts`): `server: { proxy: { "/api": { target: "http://localhost:8000", changeOrigin: true } } }`. SSE works through the Vite proxy; if a corporate proxy buffers it, hit `:8000` directly. To switch to the real backend, point the proxy at `control` (`http://127.0.0.1:3000`). The routes are identical.
 
 Alternative for pure-frontend work: MSW (Mock Service Worker) for REST plus a fake `EventSource` that replays `stream.jsonl`.
 
@@ -806,7 +824,7 @@ Alternative for pure-frontend work: MSW (Mock Service Worker) for REST plus a fa
   - The semantic classifier score is a deterministic keyword heuristic, and the guard-LLM verdict is a regex. Both are labelled "simulated" in the UI.
   - Hashes and shas are FNV-based fingerprints, not SHA-256.
   - Spend series, risk scores, efficacy numbers and the what-if distribution are synthetic.
-  - "Simulate tampering" and "Simulate catastrophic regex edit" are buttons, where the real demo edits files on disk.
+  - "Simulate tampering" and "Simulate non-RE2 regex edit" are buttons, where the real demo edits files on disk.
   - The upstream LLM is a canned mock that echoes placeholders.
   - Personal names are not detected: there is no NER, as Presidio NER is optional in R1 C07.
 - **Real in the mockup** (port the logic server-side, keep the tests):

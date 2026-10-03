@@ -14,7 +14,7 @@
 
 ### 1.1 In one paragraph
 
-Banks are wiring AI agents to models, tools and each other, and handing them credentials that open everything. In April 2026 the Fed, the OCC and the FDIC replaced SR 11-7 with SR 26-2, which says outright that generative and agentic AI are not within its scope. Meanwhile the software agents run on often ships with no authentication at all. Detection alone won't close that gap: the OWASP LLM Top 10 2026 cites adaptive attacks beating most published defences more than 90% of the time. So Mandate puts the guarantee somewhere a classifier can't be talked out of it. Every agent→LLM and agent→MCP call crosses one self-hosted gateway on the only network path agents have, and one hot-reloaded policy file decides what each call may see, spend and send. An agent may only send data to destinations that its user's task, the policy or a trusted tool vouched for. Switch off every AI detector and hijack the model with a poisoned ticket: the exfiltration is still denied. Every number we show comes from a test or report in the repo, and a judge can edit the policy and watch that evidence change within seconds. **Agents get mandates, not keys.**
+Banks are wiring AI agents to models, tools and each other, and handing them credentials that open everything. In April 2026 the Fed, the OCC and the FDIC replaced SR 11-7 with SR 26-2, which says outright that generative and agentic AI are not within its scope. Meanwhile the software agents run on often ships with no authentication at all. Detection alone won't close that gap: the OWASP LLM Top 10 2026 cites adaptive attacks beating most of 12 published defences more than 90% of the time (Nasr et al. 2025; **[verify]**, FACT-CHECK E2). So Mandate puts the guarantee somewhere a classifier can't be talked out of it. Every agent→LLM and agent→MCP call crosses one self-hosted gateway on the only network path agents have, and one hot-reloaded policy file decides what each call may see, spend and send. An agent may only send data to destinations that its user's task, the policy or a trusted tool vouched for. Switch off every AI detector and hijack the model with a poisoned ticket: the exfiltration is still denied. Every number we show comes from a test or report in the repo, and a judge can edit the policy and watch that evidence change within seconds. **Agents get mandates, not keys.**
 
 ### 1.2 Three messages every judge should remember
 
@@ -49,7 +49,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
 5. **IDs** use the 2026 form (`LLM01:2026`, `ASI01`, `MCP03:2025`, `AML.T0051.001`). Incidents are phrased exactly as in FACT-CHECK D7 (see §6).
 6. **Diagrams** are rendered from `diagrams/src/*.mmd` into `diagrams/png/`. Slide diagrams are simplified; the full ones stay in the README.
 
-### 2.2 Placeholder legend (fill at IC5 / PDF v1, H17:30-H18:45)
+### 2.2 Placeholder legend (fill at IC5 H17:30 and PDF v2 H20:30; plan (a): H12:30 / H14:15)
 
 | Placeholder | Meaning | Source file | Produced by | Used on |
 |---|---|---|---|---|
@@ -115,7 +115,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
   - **Test line:** `INVARIANT detectors-off: {inv_blocked}/{inv_total} agentic attacks still blocked` (`make test`, `policies/test-detectors-off.yaml`).
   - Diagram source: `diagrams/src/mcp-taint-provenance.mmd`.
 - **Earns:** Robustness & quality of guardrails (30%). Testing too: this is a hermetic test and was our H12 gate.
-- **Speaker notes (D runs it; L frames it):** OWASP's 2026 list cites adaptive attacks beating most defences over 90% of the time, so we don't bet the bank on a classifier. Detectors produce evidence: scores, redactions, taint. Authority produces the guarantee. A paraphrase like "audit at evil dot test" gains nothing because membership is a set lookup, and a look-alike bank domain is denied with a critical alert. The legitimate reply to the customer whose address came from the CRM goes through, with a flag.
+- **Speaker notes (D runs it; L frames it):** OWASP's 2026 list cites adaptive attacks beating most of 12 published defences over 90% of the time (FACT-CHECK E2, verify before PDF v1), so we don't bet the bank on a classifier. Detectors produce evidence: scores, redactions, taint. Authority produces the guarantee. A paraphrase like "audit at evil dot test" gains nothing because membership is a set lookup, and a look-alike bank domain is denied with a critical alert. The legitimate reply to the customer whose address came from the CRM goes through, with a flag.
 
 ---
 
@@ -129,7 +129,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
   - **Strictness strip** (spec §6.3): permissive / **balanced** / strict. Example rows: injection adherence 85% / 95% / 99% → `block_at`; PII mask / redact / block; unknown destination allow+flag / ask / deny. Caption: "adherence = target recall on a held-out calibration set". If `make eval` didn't ship, add "calibration provisional".
   - **Efficacy box (only if `make eval`, P1 #3, shipped):** self-graded vs held-out: TPR `{eval_tpr}` [`{ci}`], FPR `{eval_fpr}`, and the regex-baseline row. Otherwise the box reads "self-graded only; held-out numbers not measured".
 - **Earns:** Robustness (30%). Architecture & performance (20%).
-- **Speaker notes (B, then C):** The deterministic tier is checksum PII (PESEL, IBAN mod-97, Luhn, NIP), secrets, signed signatures and tool-argument validators, all on RE2, so a ReDoS pattern is rejected at load. The semantic tier is a local injection classifier over sliding windows, so padding can't hide a payload, plus multilingual similarity over English and Polish examples. When a semantic detector fails, the run is tainted; nothing fails open silently. In our own research run a regex baseline caught 0% of InjecAgent's indirect injections (R8), and that is why taint, not detection, carries that case.
+- **Speaker notes (B, then C):** The deterministic tier is checksum PII (PESEL, IBAN mod-97, Luhn, NIP), secrets, signed signatures and tool-argument validators, all on RE2, so ReDoS can't happen here: a pattern like `(a+)+$` is accepted and runs in linear time, and only syntax RE2 can't run in linear time (lookaround, backreferences) is rejected at load. The semantic tier is a local injection classifier over sliding windows, so padding can't hide a payload, plus multilingual similarity over English and Polish examples. When a semantic detector fails, the run is tainted; nothing fails open silently. In our own research run a regex baseline caught 0% of InjecAgent's indirect injections (R8), and that is why taint, not detection, carries that case.
 
 ---
 
@@ -208,7 +208,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
   - **Performance table** from `reports/perf.md`: overhead p50/p95 at c = 1/10/50 for the deterministic path (`{p95_overhead_det_ms}`) and with one classifier window (`{p95_overhead_t2_ms}`); holdback TTFT `{holdback_ttft_ms}`; policy edit → enforced on 2/2 `{reload_p95_s}`; feed publish → enforced `{feed_apply_s}`; machine `{bench_machine}`.
   - **Today → tomorrow strip:** compose today runs 2 stateless gateway replicas behind Caddy, with all shared state (budgets, runs, taint, pins, policy versions) in Valkey.
   - **K8s mapping** (spec §3.8, five rows): agents network → default-deny NetworkPolicy (+ Cilium `toFQDNs`) · gateways → Deployment + HPA + PDB · Valkey → managed or Sentinel · policy → ConfigMap *directory* mount (about 1 min to propagate; production uses signed bundles) · audit → per-pod chain → OTel → Kafka → SIEM, checkpoints to WORM storage. Add "kustomize + kubeconform in CI" only if P1 #16 shipped.
-  - **Licence line:** core is Apache-2.0 / MIT / BSD (Valkey BSD-3, not Redis 8); optional Llama-licensed guard models ship with a "Built with Llama" notice; full table in `docs/LICENSES.md`; `make licenses` fails on GPL/AGPL/SSPL.
+  - **Licence line:** core is Apache-2.0 / MIT / BSD (Valkey BSD-3, not Redis 8); optional Llama-licensed guard models ship with a "Built with Llama" notice; full table in `docs/LICENSES.md` (in the `aicl` build repo, spec §3.9, not this one); `make licenses` fails on GPL/AGPL/SSPL.
   - **"Your first idea survived" row:** directory groups → models and budgets (JWT `groups` claim) · forced chokepoint (network fence) · "my limits" (`GET /v1/me`).
 - **Earns:** Practical implementability & scalability (10-15%). Architecture & performance (20%).
 - **Speaker notes (A):** Nothing changes in the agent except a URL and a key. Groups come from the IdP's JWT claim, so Entra or AD groups map to models and budgets without code. The gateway is stateless and all shared state lives in Valkey, so scaling means adding replicas, and we prove two replicas share one budget exactly. Envoy or Apigee shops don't replace anything: they call the same brain through `/v1/decide` (P1). All of this runs on one laptop with Wi-Fi off.
@@ -219,7 +219,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
 
 - **Message:** these are our limits and the partial mitigation for each. A security team should trust a control layer that states them.
 - **On the slide:**
-  - **Six residual risks** (spec §14.2; full list in `docs/RESIDUAL-RISKS.md`):
+  - **Six residual risks** (spec §14.2; full list in `docs/RESIDUAL-RISKS.md` in the `aicl` build repo):
 
     | # | Not stopped | Partial mitigation |
     |---|---|---|
@@ -391,7 +391,7 @@ The name is confirmed or replaced at H11 (spec §15 Q1). If it changes, only UI,
 
 Note: in everyday Polish *mandat* also means a traffic fine, so "agenci dostają mandaty" reads as "agents get fined". In Polish texts we say **pełnomocnictwa** (the banking term for a mandate); the brand name stays **Mandate**.
 
-### 5.5 Claim check before pasting (at H20:30)
+### 5.5 Claim check before pasting (at H20:30; plan (a): H14:15)
 
 Each sentence below stays in the descriptions only if its test is green on `v1.0-submission`. If it's red, delete or soften the sentence; don't paste and hope.
 
@@ -406,23 +406,24 @@ Each sentence below stays in the descriptions only if its test is green on `v1.0
 | "multilingual similarity over English and Polish examples" | C10/C11 kNN with EN+PL exemplars shipped (cut line 7 removes it) |
 | "hash-chained audit log with signed checkpoints" | audit suite incl. recompute-after-edit |
 | "`make test` runs offline, with no model and no GPU" | IC5 clean-room run, Wi-Fi off (H17:30) |
+| agent→agent taint inheritance (slide 2, slide 10 T16, §6) | P1 #14 shipped and its case green; otherwise say "agent→agent is not built in this build; ASI07 open" |
 
 ### 5.6 Checklist and timing (spec §13.4)
 
-The clock time of each checkpoint is written in at H0, once the AM/PM wording of the deadline is confirmed (spec §15 Q2). **H21 = the deadline minus 3 hours**, regardless.
+H0 = build start (spec §13.4), about 18:00 on 3 October; L writes the clock time of each checkpoint in at H0. **Until Q2 is confirmed in writing, plan (a) runs** (deadline 11:00 Oct 4): P0 only, placeholder H8 (02:00), IC5 H12:30, video H13, PDF v1 H13:30, repo public H14, PDF v2 H14:15, **submit H15 (09:00)**, 2 h before the deadline. **Plan (b)** (23:00 confirmed): placeholder H11, freeze H18, and every checkpoint after IC4 moves 2 h later than the base plan (**submit H23**, 6 h before the deadline). Submitting at "the deadline minus 3 hours" is not the rule in either plan.
 
-| When | What | Owner | Done when |
-|---|---|---|---|
-| **H0** | Confirm deadline wording, which rubric weights apply, whether a submission can be edited after upload, and whether a video link is allowed. Create the HackTribe team, add all six members, fix `{team_name}`. | L | answers in the team chat |
-| **H11** | **Placeholder submission:** title (option 2 unless renamed), team name, member list, short + full description v1, PDF v0 (title, architecture, plan). If the platform doesn't allow edits, do a checklist dry run instead. | L | confirmation screenshot |
-| H16 | Feature freeze, tag `rc1`; screenshot list frozen. | L, F | tag exists |
-| H17:30 | IC5 clean room on the hot spare, Wi-Fi off: `make doctor && make test && make demo-offline && make demo`. Fill `{make_test_*}`, `{case_*}`, `{fence_*}`, `{inv_*}`, `{race_*}`. | L | storyline test 100% |
-| H18:00 | Video: 3-4 min of the full storyline + 20-40 s clips per beat. Upload unlisted, playable without login. | F, A | `{video_url}` works in a private window |
-| H18:45 | PDF v1 (screenshots from `rc1`, placeholders filled). | L | 10 pages or fewer |
-| H20:00 | Repo public: `gitleaks detect` clean on history; `make licenses`; NOTICE ("Built with Llama" if PG2/LG3 ship). | L | `{repo_url}` opens logged out |
-| H20:30 | PDF v2 (L + F); claim check §5.5; descriptions final. | L, F | `make submission-check` green |
-| **H21:00** | **Submit:** title, team, members, description, PDF, repo link, video link. A second person watches the screen. Save the confirmation screenshot to the team drive. Demo laptop on tag `v1.0-submission`. | L + one witness | confirmation screenshot saved |
-| H21-H24 | Pitch prep: three rehearsals; storyline test 10 min before stage; `main` locked. | all awake | — |
+| Base plan | Plan (a), default | Plan (b) | What | Owner | Done when |
+|---|---|---|---|---|---|
+| **H0** | H0 | H0 | Confirm deadline wording, which rubric weights apply, whether a submission can be edited after upload, and whether a video link is allowed. Create the HackTribe team, add all six members, fix `{team_name}`. | L | answers in the team chat |
+| **H11** | **H8** | H11 | **Placeholder submission:** title (option 2 unless renamed), team name, member list, short + full description v1, PDF v0 (title, architecture, plan). If the platform doesn't allow edits, do a checklist dry run instead. | L | confirmation screenshot |
+| H16 | H11 | H18 | Feature freeze, tag `rc1`; screenshot list frozen. | L, F | tag exists |
+| H17:00 | H13:30 | H19:00 | PDF v1 (L, before IC5 and L's nap): screenshots from `rc1`; placeholders filled where the number already exists. | L | 10 pages or fewer |
+| H17:30 | H12:30 | H19:30 | IC5 clean room on the hot spare, Wi-Fi off: `make doctor && make test && make demo-offline && make demo`. Fill `{make_test_*}`, `{case_*}`, `{fence_*}`, `{inv_*}`, `{race_*}`. | L | storyline test 100% |
+| H18:00 | H13 | H20 | Video: 3-4 min of the full storyline + 20-40 s clips per beat. Upload unlisted, playable without login. | F, A | `{video_url}` works in a private window |
+| H20:00 | H14 | H22 | Repo public: `gitleaks detect` clean on history; `make licenses`; NOTICE ("Built with Llama" if PG2/LG3 ship). | L | `{repo_url}` opens logged out |
+| H20:30 | H14:15 | H22:30 | PDF v2 (L + F): the IC5 measurements filled in; claim check §5.5; descriptions final. | L, F | `make submission-check` green |
+| **H21:00** | **H15** | **H23** | **Submit:** title, team, members, description, PDF, repo link, video link. A second person watches the screen. Save the confirmation screenshot to the team drive. Demo laptop on tag `v1.0-submission`. | L + one witness | confirmation screenshot saved |
+| H21-H24 | after submit | after submit | Pitch prep: three rehearsals; storyline test 10 min before stage; `main` locked. | all awake | — |
 
 **What to attach or link:**
 
@@ -444,15 +445,15 @@ The clock time of each checkpoint is written in at H0, once the AM/PM wording of
 | Regulation (EU) | "supports evidence for EU AI Act Art. 12/19 logging; Annex III high-risk obligations apply from 2 Dec 2027 and Annex I from 2 Aug 2028 (Reg. (EU) 2026/1744)"; also DORA, ISO/IEC 42001, NIST AI RMF | "compliant", "certified", "the AI Act requires this from August 2026" | FACT-CHECK C7; spec §2.5 |
 | Regulation (US) | "SR 26-2 (Fed, OCC Bulletin 2026-13, FDIC; 17 Apr 2026) explicitly excludes generative and agentic AI. We fill that gap." | "SR 26-2 compliant", "SR 11-7 compliance", "the Fed requires this", "Fed and OCC" without the FDIC | FACT-CHECK C5 |
 | Pricing | "simulated commercial pricing" for every `sim/*` model | "we saved X on OpenAI", any real vendor spend figure | No paid keys exist at the event (`docs/00` §2) |
-| agent→agent | "agent→agent is thin (P1): taint is inherited through the run token; ASI07 is partial" | "full A2A security", "ASI07 covered" | spec §3.6, §14.2 T16 |
+| agent→agent | "agent→agent is thin (P1): taint is inherited through the run token; ASI07 is partial" (only if P1 #14 shipped; otherwise "agent→agent is not built in this build; ASI07 open") | "full A2A security", "ASI07 covered" | spec §3.6, §14.2 T16 |
 | OCSF | "OCSF-shaped 1.9.0 export" (until the validator has passed) | "OCSF-compliant" | spec §2.5; FACT-CHECK C6 (`ai_operation` dates from 1.8.0, `record_integrity` is new in 1.9.0) |
 | Polish detection | "this Polish attack was blocked by [rule ID] after normalisation"; "Polish recall `{pl_slice_tpr}` [`{ci}`] on our 100-prompt slice" only with `make eval` numbers | "we detect Polish jailbreaks", "multilingual detection quality", "Prompt Guard 2 works on Polish" | PG2 86M was not evaluated on Polish (FACT-CHECK A4) |
 | Indirect injection | "taint and provenance carry the indirect-injection guarantee" | "our classifier catches indirect injection", "detects all jailbreaks" | protectai v2 is EN-only and doesn't detect jailbreaks (FACT-CHECK A5); R4 |
 | ShadowRay | "CVE-2023-48022, disputed by Anyscale as by design, still unpatched; run Ray only on isolated networks" | "the patched Ray bug" | FACT-CHECK D7 |
 | Amazon Q | "a wiper prompt was injected into Amazon Q's VS Code extension v1.84.0; AWS says it never executed (syntax error)" | "Amazon Q wiped machines" | FACT-CHECK D7 |
 | Nx s1ngularity | "security researchers (Wiz, JFrog, OX) report the malware drove Claude, Gemini and Amazon Q CLIs with permission-skipping flags" | "the Nx advisory says Claude was abused" | FACT-CHECK D7: the advisory quotes the prompt but doesn't name the CLIs |
-| Exposed Ollama | "~175,000 exposed Ollama hosts (SentinelLABS + Censys, Jan 2026)", source on the slide | "175,000 servers hacked"; the number without a source | R2 b4; not re-checked in FACT-CHECK, so verify before PDF v1 |
-| Adaptive attacks | "OWASP LLM01:2026 cites > 90% adaptive-attack success against most defences" | "classifiers are useless" | R1 §2 (Nasr et al., 2025); detectors are still our evidence |
+| Exposed Ollama | "~175,000 exposed Ollama hosts (SentinelLABS + Censys, Jan 2026)", source on the slide | "175,000 servers hacked"; the number without a source | R2 b4; not re-checked (FACT-CHECK E1), so verify before PDF v1 |
+| Adaptive attacks | "OWASP LLM01:2026 cites > 90% adaptive-attack success against most of 12 published defences (Nasr et al. 2025)" | "classifiers are useless"; "> 90% against most defences" (the study tested 12) | R1 §2 (Nasr et al., 2025); not re-checked (FACT-CHECK E2); detectors are still our evidence |
 | Performance | "p95 overhead `{p95_overhead_det_ms}` ms measured on `{bench_machine}` (`reports/perf.md`)" | R4/R7 sandbox numbers as our latency; "zero overhead"; "real-time" without a number | J1 must-fix 14; spec §5.1, §10.6 |
 | Budget race | "200 concurrent requests at a cap worth 50 → `{race_admitted}` admitted"; "naive check-then-charge overshot 400% *in our simulation*" | "0% overshoot" if the test isn't green on the tag; the 400% as a field measurement | spec §7.3; R8 |
 | Local compute | "local compute time, measured as wall clock from dispatch at P0" | "exact GPU-seconds from Ollama" (unless P1 #11 shipped) | Ollama durations only exist on the native API (FACT-CHECK A2); residual T15 |

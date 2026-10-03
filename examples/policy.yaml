@@ -33,10 +33,10 @@
 #  3. `controls.C07_pii.mode: block` → the PESEL prompt is now blocked, not redacted (one control overrides its knob).
 #  4. Typo a key, e.g. `enabeld: false` under any control → REJECTED (unknown key), LKG kept, red header with the
 #     YAML path. It never silently disables anything. A YAML bomb (anchors/aliases) is rejected the same way.
-#  5. Add a non-RE2 or ReDoS regex rule to policy/feeds/local.yaml (sample: examples/policy-local-feed.yaml), e.g. a
-#     lookahead `(?!x)` or a backreference `(a)\1` → REJECTED at compile, LKG kept. Python `re` is never used on
-#     editable patterns. (§6.6 also lists the classic ReDoS shape `(a+)+$`: RE2 itself accepts it and runs it in
-#     linear time, so rejecting it needs the compiler's nested-quantifier lint.)
+#  5. Add a non-RE2 regex rule to policy/feeds/local.yaml (sample: examples/policy-local-feed.yaml), e.g. a
+#     lookahead `(?!x)` or a backreference `(a)\1` → REJECTED at compile, LKG kept. A catastrophic-backtracking shape
+#     such as `(a+)+$` is ACCEPTED and harmless: RE2 matches in linear time, so ReDoS can't happen here (Python `re`
+#     is never used on editable patterns; spec §6.6). A nested-quantifier lint that only warns is optional P1 #13.
 #  6. Relax C24 (demo beat 6): `controls.C24_taint.untrusted_destination: monitor` → applied in < 2 s, but raises a
 #     critical `control_weakened` finding, caps posture at 70 and the self-test shows "S4 EXPOSED since v19".
 #     Revert → green again.
@@ -130,6 +130,11 @@ groups:                                     # names mirror LDAP CNs; effective r
 # Default deny: a model id not in this catalog, or not granted to the caller's groups, gets
 # 400 model_not_allowed with a hint naming the group that grants it. GET /v1/models is filtered per caller.
 # `kind`: local (chargeback per compute-second) | external_simulated (labelled SIMULATED commercial pricing) | test.
+# A REAL commercial provider would be one more upstream + model entry on the same ledger, with the key injected by the
+# gateway and never by agents. NOT in the aicl.policy/v1 schema yet (needs an RFC before H1), so it stays commented:
+#   upstreams:  openai: {base_url: "https://api.openai.com/v1", dialect: openai, api_key_env: OPENAI_API_KEY}
+#   models:     "openai/gpt-4.1-mini": {upstream: openai, kind: external, price: {usd_per_mtok_in: …, usd_per_mtok_out: …}}
+# The demo uses sim/* because no paid keys are provided at the event.
 upstreams:
   ollama_agent: {base_url: "http://host.docker.internal:11434/v1", dialect: openai, offline_fallback: mock}  # make demo-offline → mock-llm, header badge "LLM: mock"
   ollama_guard: {base_url: "http://host.docker.internal:11435"}            # P1: C11 guard-LLM lane (separate instance)

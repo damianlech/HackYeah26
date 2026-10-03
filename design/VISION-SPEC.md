@@ -18,6 +18,7 @@
 > - **Feed schema:** the match fields the examples use (`extract`, `host_not_in`, `json_field`, `not_regex`, `query_has`, `field`, `topics`, `exemplar_groups`, …) and `metadata.tier` are defined in §8.1/§8.4.
 > - **Case and audit schemas:** `expect.headers` is added and the field name `by_profile` is noted (§10.3). §9.1 now lists the per-control verdict `flag`, the budget scope prefixes and a top-level `synthetic`.
 > - **Gantt:** re-timed to match the tables, with `todayMarker off`.
+> - **Review fixes (2026-10-03, pre-H0, no contract change):** unverified pitch numbers marked (175k Ollama hosts, the >90% adaptive-attack figure scoped to "most of 12 published defences", Claude apps gateway enforcement timing; FACT-CHECK E1-E3); §10.2 budget suite gains a local compute-cap and a tool-units-cap case; §11.5/§9.5 endpoint times aligned with the §13.2 WPs (KPIs, integrity, export at H14); residuals T17 (untrusted text in `task`) and T18 (model files never sent to the scan API) added; Q16 now discloses the pre-event `poc/`; Appendix B marked done.
 
 ---
 
@@ -110,7 +111,7 @@
 
 | Pillar | What it means | How a judge sees it |
 |---|---|---|
-| **1. Authority beats detection** | Detectors produce evidence: scores, redactions, taint. Deterministic authority produces the guarantee: where data may go, which tools exist, how much may be spent. A detector saying "safe" never lifts a deterministic block. This is the OWASP LLM 2026 stance ("Stop trying to build a model that cannot be fooled. Build the system around it", `research/R1-threat-frameworks.md` §2) and the "deterministic first" ordering of the OWASP Agent Control Standard (FACT-CHECK B5) | A judge disables C09/C10/C11/C16 live. The model is hijacked by a poisoned ticket. The email to `audit@evil.test` is **still denied**, and the Threats drawer shows where that address came from |
+| **1. Authority beats detection** | Detectors produce evidence: scores, redactions, taint. Deterministic authority produces the guarantee: where data may go, which tools exist, how much may be spent. A detector saying "safe" never lifts a deterministic block. This is the OWASP LLM 2026 stance ("Stop trying to build a model that cannot be fooled. Build the system around it", `research/R1-threat-frameworks.md` §2; quote not yet re-verified, FACT-CHECK E2) and the "deterministic first" ordering of the OWASP Agent Control Standard (FACT-CHECK B5) | A judge disables C09/C10/C11/C16 live. The model is hijacked by a poisoned ticket. The email to `audit@evil.test` is **still denied**, and the Threats drawer shows where that address came from |
 | **2. Evidence is computed, not claimed** | Posture, coverage, test status and performance figures are all derived from three sources: the policy the replicas *actually loaded* (heartbeats), the latest live self-test and `reports/perf.md`. Self-graded numbers always appear next to held-out numbers (P1) | A judge edits `policy.yaml`. The header reads `v18 · 2/2 replicas · 0.6 s`, posture drops, LLM01 turns amber, the self-test marks GAP, and a broken regex is rejected with its YAML path while v17 stays active |
 | **3. It ships and survives poking** | P5's delivery chassis: hermetic `make test`, `make demo-offline` with no model at all, the storyline as a test, and a raw `docker compose` command for mentors on Windows | A phase-1 mentor runs `make test` on an x86 laptop with no Ollama and no HF token and gets a green control × case matrix in about 2 minutes |
 
@@ -118,7 +119,7 @@
 
 | Alternative | What it gets right | Why it loses on the rubric | What we take from it |
 |---|---|---|---|
-| **A smarter filter** (proxy + classifier cascade only) | Simple, fast to build | Probabilistic. A regex baseline catches **0%** of InjecAgent indirect injections (`research/R8-testing-evaluation.md`), and OWASP LLM01:2026 cites >90% adaptive-attack success against most defences. It fails the "spontaneous ad-hoc prompt" test on robustness (30%) | The whole detection cascade, demoted to *evidence* |
+| **A smarter filter** (proxy + classifier cascade only) | Simple, fast to build | Probabilistic. A regex baseline catches **0%** of InjecAgent indirect injections (`research/R8-testing-evaluation.md`), and adaptive attacks succeed > 90% of the time against most of 12 published defences (Nasr et al. 2025, cited by OWASP LLM01:2026 per R1; not yet re-verified, FACT-CHECK E2). It fails the "spontaneous ad-hoc prompt" test on robustness (30%) | The whole detection cascade, demoted to *evidence* |
 | **Fork Squid** (the team's original idea) | A forced chokepoint is the right instinct | It can't see prompts, tool calls or SSE without SslBump plus a CA on every client. Content logic ends up in ICAP anyway. No HTTP/2. GPLv2+ C++ (`docs/01-review-of-our-first-idea.md`, `research/R5-proxy-enforcement-identity.md`) | The chokepoint becomes a network property (§2.3) |
 | **Build on LiteLLM / Portkey / agentgateway** | Mature routing | The features we need are enterprise-gated (JWT/OIDC, guardrails). YAML edits need a restart. LiteLLM had a PyPI supply-chain compromise on 2026-03-24. Judges would score the vendor (`research/R3-oss-landscape.md`, FACT-CHECK D1/D2) | `/v1/decide` (P1), so those data planes can use our brain |
 | **Hooks only, inside agents** (Claude Code `PreToolUse`) | Sees local actions | Vendors say client config is not a security boundary (R5) | A hook script that calls `/v1/decide` (P1) |
@@ -150,7 +151,7 @@ The original plan: fork Squid to analyse requests and block sites and tools; a s
 |---|---|---|---|---|---|---|
 | Vendor-neutral incl. local Ollama | Claude only | yes | yes | yes | n/a (SDK/policy) | **yes, local-first, offline** |
 | Directory groups → model allowlist | OIDC only, no LDAP/SAML, no CI service tokens | JWT/OIDC and SSO > 5 users are Enterprise | often Enterprise; Kong ≥ 3.10 has no free mode | CEL RBAC | policy-based | **JWT `groups` claim + virtual keys; agents are principals with owner, cost centre and kill switch** |
-| Hard budgets under concurrency | metered after the fact; fails open by default | reserve + settle (prior art) | mostly post-hoc (Kong charges on the next request) | LLM budgets | — | **reserve/settle, 0% overshoot across replicas, local compute-ms** |
+| Hard budgets under concurrency | per-user/group/org spend caps with 429 `billing_error`; enforcement timing unverified (FACT-CHECK E3); fails open by default | reserve + settle (prior art) | mostly post-hoc (Kong charges on the next request) | LLM budgets | — | **reserve/settle, 0% overshoot across replicas, local compute-ms** |
 | Deterministic + semantic guardrails | — | partly Enterprise | plugins / SaaS guards | regex + SaaS webhooks | YAML/OPA/Cedar policy | **in-house cascade on local models, visible scores and thresholds** |
 | Exfiltration guarantee independent of detectors | — | — | — | — | partial | **run taint + positive-allowlist destinations (C24/C33)** |
 | MCP governance (pins, rug pull, argument policy) | — | basic | Bifrost per-key MCP allowlists | MCP authz | MCP gateway | **pins + scan + validators + sandboxed servers** |
@@ -530,7 +531,7 @@ aicl/                                  # hackathon repo (Apache-2.0)
   src/aicl/core/{policy,pipeline,identity,runs,taint,destinations}/  src/aicl/detectors/  src/aicl/proxy/
   src/aicl/mcp/  src/aicl/tools/  src/aicl/budget/  src/aicl/audit/  src/aicl/feed/  src/aicl/artifacts/  src/aicl/testkit/
   services/{gateway,control,guard,feed,mock_llm,mcp_demo,demo_agent}/
-  ui/                                  # Vite app; src/mocks/*.json copied from contracts/fixtures
+  ui/                                  # Vite app; ui/mock_server.py serves contracts/fixtures directly (brief §10)
   tests/{unit,cases,integration,invariants,fence,e2e}/  tests/e2e/test_walking_skeleton.py  tests/e2e/test_demo_storyline.py
   deploy/{compose.yaml,compose.test.yaml,compose.offline.yaml,caddy/Caddyfile,valkey/users.acl}  (P1: deploy/k8s/)
   feed/rules/*.yaml                    # source rules for the external feed service
@@ -1459,7 +1460,7 @@ It turns red or amber within 2 s of a bad edit, a tampered feed, a broken chain,
   - **H5 (IC1):** the Threats table goes live over SSE from L3's audit tailer.
   - **H8:** header, health and replicas.
   - **H8:30:** the DuckDB-backed `/api/threats` filters and `/api/events/{id}` drawer data (B7).
-  - **H10-H13:** the rest.
+  - **H10-H14:** the rest (§11.5).
 - `VITE_API=fixtures|live` switches between the two.
 - SSE falls back to 2 s polling.
 - Seeded history comes from `tools/seed.py` (C8): 7 days, ~20k events, `synthetic: true`, labelled in the UI, so charts are never empty.
@@ -1520,7 +1521,7 @@ Every export writes an `export` event (format, filter, row count, export sha256)
 | **Fence & admin isolation** | `fence-probe` from the agent container: valkey, control, guard, mcp-*, mock, host Ollama (`host.docker.internal:11434` **and the raw host IP**) and the internet are unreachable, plus `model-runner.docker.internal` if Docker Model Runner is enabled; `lb /admin/*` and `/api/*` return 404 | IC1 (probe), **H12 gate** (test) |
 | **Hot reload & tamper** | verdict flips in < 2 s on 2/2 replicas (propagation time recorded); typo key, YAML bomb, non-RE2 regex (lookaround / backreference) and failing rule vector are each rejected with LKG kept; a catastrophic-backtracking regex (`(a+)+$`) is **accepted** and scans a long `aaaa…!` prompt (under the 32k-char cap) in linear time; a relaxation emits `control_weakened`; deleting `models:` denies everything | IC2 |
 | **Feed** | publish applies in < 5 s; tampered bundle, rolled-back serial and **serial replay after a gateway restart** are each rejected; expired → stale; unknown rule type skipped and listed | IC4 |
-| **Budget** | pre-flight 429 with **zero upstream calls**; `max_tokens ≤ 0` → 400; `n=50` clamped; Ollama options stripped; warn thresholds; **cross-replica race 200 → exactly 50**; loop breaker on the 4th identical call; ledger down → external 503 / local capped | IC2; race at the **H12 gate** |
+| **Budget** | pre-flight 429 with **zero upstream calls**; `max_tokens ≤ 0` → 400; `n=50` clamped; Ollama options stripped; warn thresholds; **cross-replica race 200 → exactly 50**; loop breaker on the 4th identical call; ledger down → external 503 / local capped; **local compute cap**: `ollama/qwen3:4b` (mock via `offline_fallback`) with a `[[mock:latency=…]]` step exhausts the seat's `daily_compute_s` (`policies/test.yaml` sets a small cap) → 429 with `unit: compute_s`; **tool-units cap**: `support-bot.daily_tool_units` exhausted → MCP `isError` `budget_exceeded` | IC2; race at the **H12 gate** |
 | **Exploit Museum** | E1-E10 fixtures generated at session start (malicious and truncated pickles are scanned, never loaded) | IC4 |
 | **MCP S1-S8** | R6 §4.4 scenarios, each with its allowed twin, driven by raw JSON-RPC and the scripted agent | S4/S5 at the H12 gate; the rest IC4 |
 | **Audit** | completeness (one event per request); chain verifies; an edited line fails at the right `seq`; **recompute-after-edit is detected by checkpoints**; truncation detected; no raw PESEL/IBAN in any snippet | IC4 |
@@ -1802,8 +1803,8 @@ The rules from brief §5.12 apply:
 
 1. **H1:30:** L commits `contracts/fixtures/api/*.json` (generated from the example events) and `contracts/fixtures/stream.jsonl`. F runs `ui/mock_server.py` (brief §10) on port 8000.
 2. **H5 (IC1):** `control` serves `/api/stream` live from L3's audit tailer, so the Threats table is live over SSE. The DuckDB-backed filters and drawer data (`/api/threats`, `/api/events/{id}`) follow at H8:30 (B7). F flips `VITE_API=live` per page as endpoints land.
-3. **H8:** `/api/header`, `/api/replicas`, `/api/health` and `/api/playground/inspect` are live.
-4. **H12:** every P0 endpoint is live. A fixture-vs-live contract test (`tests/integration/test_api_contract.py`) validates live responses against the fixture JSON schemas.
+3. **H8:** `/api/header`, `/api/replicas`, `/api/health`. **H10:** `/api/playground/inspect` (L7).
+4. **H11:** `/api/selftest/*` (L5). **H13:** posture, coverage, controls, spend, policy history. **H14:** KPIs, integrity, export (B7, §13.2). The fixture-vs-live contract test (`tests/integration/test_api_contract.py`) validates live responses against the fixture JSON schemas from H14.
 
 ### 11.6 Where this spec overrides `docs/dashboard-design-brief.md`
 
@@ -1829,7 +1830,7 @@ The rules from brief §5.12 apply:
 
 | # | Time | Persona | Action | Expected visible result | Controls | Fallback |
 |---|---|---|---|---|---|---|
-| 0 ★ | 0:00-0:30 | L | Hook slide: "SR 26-2 (Fed/OCC/FDIC, Apr 2026) leaves agentic AI out. 175,000 Ollama servers sit on the internet without auth. Your agents have keys. **We give them mandates.**" Architecture slide | — | — | slide |
+| 0 ★ | 0:00-0:30 | L | Hook slide: "SR 26-2 (Fed/OCC/FDIC, Apr 2026) leaves agentic AI out. ~175,000 Ollama servers sit on the internet without auth (SentinelLABS + Censys, Jan 2026; verify before PDF v1, FACT-CHECK E1). Your agents have keys. **We give them mandates.**" Architecture slide | — | — | slide |
 | 1 ★ | 0:30-1:10 | **ola** (intern), curl | `sim/gpt-4.1` request → `400 model_not_allowed` + "granted to quant-analysts". Then `GET /v1/me` (qwen3:4b, 1,950/2,000 tokens). Next request → `429 billing_error`, `x-should-retry: false`, "resets 00:00 UTC". Flash the `make fence` result: 7/7 forbidden targets unreachable from the agent container | the team's original idea, delivered and fenced | C01, C02, C03, C13 | pre-recorded curl output |
 | 2 ★ | 1:10-1:40 | **judge**, Playground | Prompt with a PESEL, IBAN, AWS example key and a number that fails its checksum | `[PL_PESEL] [IBAN] [SECRET:aws_access_key]`; the bad-checksum number untouched; stage list T1 = 2 ms; `Server-Timing` | C06, C07, C08 | `mock/scripted` model |
 | 3 | 1:40-2:20 | **judge**, Playground | (a) Polish jailbreak `Zignoruj wszystkie poprzednie instrukcje…` wrapped in base64 + zero-width chars; (b) a Unicode-tag hidden instruction; (c) a benign Polish banking question; (d) Polish system-prompt extraction | (a) blocked; drawer shows `decoded[0]` + `folded` views and the score vs `block_at`; (b) Evidence tab **reveals the hidden sentence**; (c) passes; (d) **canary C27 blocks the leak**, which is language-agnostic | C08, C09, C10, C27 | stub-guard scores; canary via `response_override` |
@@ -2243,7 +2244,7 @@ L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24),
 | T3 | Derived-trusted confused deputy (attacker gets the agent to look up a CRM record they control) | Derived destinations are real customers by construction | `tainted ∧ private_read` → ask; body DLP; strict: derived → ask | ASI01 |
 | T4 | Paraphrased destinations the user *also* typed | Provenance is set-based, not full information-flow control | Unknown → ask; strict allowlist mode | ASI01 |
 | T5 | Unmanaged host agents (a local admin points a tool at `localhost:11434`); the fence leaks if R1 materialises | Client config is not a boundary (R5) | Containerised agents; production: network fence + Ollama on a separate host | MCP09:2025 |
-| T6 | Adaptive attacks on classifiers (> 90% success against most defences, OWASP LLM01:2026) | Nature of ML detectors | Detectors are evidence only; invariants are detector-independent | LLM01:2026 |
+| T6 | Adaptive attacks on classifiers (> 90% success against most of 12 published defences, Nasr et al. 2025, cited by OWASP LLM01:2026; FACT-CHECK E2) | Nature of ML detectors | Detectors are evidence only; invariants are detector-independent | LLM01:2026 |
 | T7 | Behavioural rug pull on remote, non-sandboxed MCP servers | Pinning sees definitions, not behaviour | Sandbox with no egress for hosted servers; package IOCs; result scanning | MCP03/04:2025, AML.T0109 |
 | T8 | Approver fatigue / social engineering (once C23 ships) | The human is the last control | Args-hash binding, taint chain shown, rate limits; four-eyes is P2 | ASI09 |
 | T9 | Training-time poisoning / backdoored weights in safetensors | Signing proves origin, not safety | Hash and revision pins only | LLM05:2026 |
@@ -2254,6 +2255,8 @@ L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24),
 | T14 | Output-side semantic checks are async/absent (leak window) | Latency trade-off | Deterministic holdback on output; guard-LLM output check P2 | LLM02:2026 |
 | T15 | Local compute over-count when Ollama queues (wall-clock at P0) | `/v1` path has no durations (FACT-CHECK A2) | `NUM_PARALLEL=1` on the agent lane; native durations at P1 | LLM06:2026 |
 | T16 | agent→agent only thin (P1), no signed A2A | Time | Run-token taint inheritance; ASI07 shown partial | ASI07 |
+| T17 | An app builds `task` from untrusted text (e.g. a customer email), so addresses in it are minted as trusted destinations | `/v1/runs` trusts the whole `task`; at P0 there is no separate untrusted `context` field and no per-agent invoker allowlist | Only user credentials can mint runs (C33); apps must pass user-authored text only. Proposed before H1 (RFC): an untrusted `context` field that taints the run and never mints destinations, C09 on `task`, and a per-agent invoker allowlist | ASI01, ASI03 |
+| T18 | Model files that never pass through `/v1/artifacts/scan` (no HF mirror at P0) | The gate only sees files explicitly sent to the scan API or `aicl scan` | Scan API + `pickle_globals`/`hash` rules; HF scanning mirror P2 | LLM04:2026, ASI04 |
 
 ---
 
@@ -2276,7 +2279,7 @@ L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24),
 | Q13 | Is a single shared admin token for the console acceptable at P0 (no per-user admin identity)? | yes, with the banner "single admin token (demo)" | H1 |
 | Q14 | Reset timezone: UTC (vendor convention) or Europe/Warsaw? | UTC | H1 |
 | Q15 | Has the OWASP MCP Top 10 October 2026 release renumbered anything? | keep 2025-edition IDs | H0 |
-| Q16 | Rule compliance (ask the organisers with Q2): is pre-event design allowed? We bring this spec, research notes and text/schema drafts of `contracts/`, but no product code; code starts at H0 | design docs are allowed; if not, L writes `contracts/` from scratch in H0-H1 and CF may slip to H1:30 | H0 |
+| Q16 | Rule compliance (ask the organisers with Q2): is pre-event work allowed? We bring this spec, research notes, text/schema drafts of `contracts/`, and a small throw-away proof of concept (`poc/`: one gateway, a keyword guard, a mock LLM). May we show it, may any of it be reused, or must all product code be written after the start? | design docs are allowed; the POC is reference-only and not copied into the product repo created at H0:30 unless the answer explicitly allows reuse; the README links it as pre-event work. If design is not allowed, L writes `contracts/` from scratch in H0-H1 and CF may slip to H1:30 | H0 |
 
 ---
 
@@ -2369,7 +2372,7 @@ L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24),
 | Hot reload hardened (J3-14) | §6.5, §6.6 | P0 |
 | Name/tagline/placeholder by H11; demo laptop on tags; pre-event checklist executed (J3-14/15) | §13.4, §13.8 | — |
 
-## Appendix B: Follow-ups to existing repo artefacts (done by L at H0-H1)
+## Appendix B: Follow-ups to existing repo artefacts (all done before H0, 2026-10-03)
 
 1. `examples/agent-config/python/clients.py`: replace `X-Ctl-Run-Id` / `X-Ctl-Agent-Id` with `POST /v1/runs` + `X-AICL-Run`, and use model IDs `ollama/qwen3:4b` / `sim/gpt-4.1`.
 2. `examples/tests/c07_pii.yaml`:

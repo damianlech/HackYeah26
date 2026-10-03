@@ -7,8 +7,8 @@
 
 - **What we chose.** Our own **protocol-aware Python L7 gateway** with an LLM edge and an MCP edge. Both edges share one policy brain (`aicl.core`). It runs behind **Docker trust-zone networks**, with **no Squid and no vendor gateway at the core**. The guarantee comes from **authority, not detection**: an agent may only send data to a destination that came from the user's authenticated task, the policy, or a `trusted_source` tool (C24 + C33). We build it on **P5's delivery chassis** (spec §0, D01, D02, D06).
 - **Reason 1: it is the only interception point that sees everything the rubric judges.** That means prompts, streamed output, and tool calls, including stdio MCP tools (seen via the model's `tool_calls`). It needs no TLS MITM. R5 §3.6 scores the gateway 5/4/5/5/4 on its own and **5 on every criterion** once a fence and network isolation are added (feasibility 4). A Squid fork scores **2 on every criterion** (feasibility 1).
-- **Reason 2: authority is the only framing that moves the 30% robustness criterion.** Detectors get bypassed. A regex baseline catches **0%** of InjecAgent indirect injections, and LLM01:2026 cites **>90%** adaptive-attack success against most defences. P4 scored capability mandates **9/10** on guardrails, and no other framing scored above 7. "Detectors off, model hijacked, exfiltration still denied" is our **H12 gate**.
-- **Reason 3: feasibility decided the ranking.** All three judges ranked the delivery plan (P5) **first** on weighted score (**50.1 / 56.4 / 47.5**), even though its design scored lowest. The best designs came last. So the spec is P5's machine with P2's locks, P4's definition of a trusted destination, P1's evidence loop and P3's fail-mode discipline. It is sized at **~82 person-hours, about 85% of capacity**.
+- **Reason 2: authority is the only framing that moves the 30% robustness criterion.** Detectors get bypassed. A regex baseline catches **0%** of InjecAgent indirect injections, and LLM01:2026 cites **>90%** adaptive-attack success against most of 12 published defences (Nasr et al. 2025; not yet re-verified, FACT-CHECK E2). P4 scored capability mandates **9/10** on guardrails, and no other framing scored above 7. "Detectors off, model hijacked, exfiltration still denied" is our **H12 gate**.
+- **Reason 3: feasibility decided the ranking.** All three judges ranked the delivery plan (P5) **first** on weighted score (**50.1 / 56.4 / 47.5**), even though its design scored lowest. The best designs came last. So the spec is P5's machine with P2's locks, P4's definition of a trusted destination, P1's evidence loop and P3's fail-mode discipline. It is sized at **~79.5 person-hours against 81 h (about 98%; no lane above 13.5 h)**, so realistically there is no P1 in the base plan, and the default plan (a) has only ~54 h (spec §13.2-13.4).
 - **What we rejected, and when we would revisit it.** The Squid fork is dropped completely. Squid itself becomes a P2 sensor. Vendor gateways become optional data planes that call our brain through `/v1/decide` (P1). Every risky choice has a fallback decided in advance, with a time and an owner (§6.2).
 
 ---
@@ -154,7 +154,7 @@ Costs are the spec's P0 work-package estimates (§13.2) unless marked otherwise.
 | Multi-view normaliser (C08) + an obfuscation subset in `make test` | **P2** | §5.3, cut line 5 | B4 2.5 h | The full 10-mutator matrix (trimmed first if we're behind) |
 | Strict schema; controls opt-out, permissions opt-in; hard floors in code; `control_weakened` | **P2** | §6.6, D15 | Inside A2 2.5 h | — (cheap) |
 | Separate `control` service + 2 stateless replicas + cross-replica race (200 → exactly 50) | **P1 / P3** (J2 must-fix 1, 3) | §3.1-3.2, D03, D12 | L3 2.0 h + A6 0.5 h + C6 1.5 h | P5 monolith; P1's second test harness (J3 est. 3 h) (D18) |
-| Live-edit evidence loop: global header, posture from what replicas *loaded*, auto self-test GAP vs FAIL, "S4 EXPOSED" | **P1** (+ P4 exposure line) | §9.3, §10.4, D13 | L5 2.0 h + L6 2.0 h | P4's sparring service (J3 est. 7 h); P1's console writes to the policy file (D14 single writer) |
+| Live-edit evidence loop: global header, posture from what replicas *loaded*, auto self-test GAP vs FAIL, "S4 EXPOSED" | **P1** (+ P4 exposure line) | §9.3, §10.4, D13 | L5 2.0 h + L6 1.5 h | P4's sparring service (J3 est. 7 h); P1's console writes to the policy file (D14 single writer) |
 | Exploit Museum: each exhibit = feed rule + test case | **P1** | §8.5, D34 | Inside B3/B5 + cases | 16 exhibits → 10; cards + replay move to P1 rank 7 |
 | Fail-mode table as a live health panel + one safe drill (stop `guard`) | **P3** | §5.4, D44 | `/api/health` + a panel | Live Valkey kill on stage → recorded clip |
 | Real JWT/JWKS path (static demo issuer, `groups` claim) + hashed virtual keys | **P3** (J2 must-fix 11) | C01, §6.2, D20 | Inside A3 | Keycloak + `aictl` + overlay lattice (J3 est. 7 + 5 h) |
@@ -165,13 +165,13 @@ Costs are the spec's P0 work-package estimates (§13.2) unless marked otherwise.
 | `/v1/decide` PDP API + `/v1/guard` + `PreToolUse` hook | **P4** (+ P1 `/v1/guard`) | §11.2, P1 rank 15 | 2.0 h (P1) | Compiler emitters to Squid, managed settings and k8s |
 | Canary token in system prompts (C27) at P0 | J1 must-fix 9 | C27 | A7 0.5 h | n-gram overlap → P1 |
 | Held-out efficacy with Wilson CIs next to every self-graded number | J1 must-fix 13 (P2's Polish slice) | §10.5, D41 | 2.0 h (P1 rank 3) | — |
-| Console scope: 4 P0 pages + header, spend as an Overview panel | J2, J3 must-fixes | §9.5, D19 | F lane 12.5 h | 9-11 pages (P2, P3; J3 est. +12 h for P2) |
+| Console scope: 4 P0 pages + header, spend as an Overview panel | J2, J3 must-fixes | §9.5, D19 | F lane 12.0 h | 9-11 pages (P2, P3; J3 est. +12 h for P2) |
 
 ---
 
 ## 5. Fate of the team's original idea
 
-Full reasoning: [`docs/01-review-of-our-first-idea.md`](01-review-of-our-first-idea.md) and spec §2.3. Where the two disagree, the spec wins. Note that `docs/01` still shows stock Squid as the P0 egress fence; spec D35 replaced it with Docker networks.
+Full reasoning: [`docs/01-review-of-our-first-idea.md`](01-review-of-our-first-idea.md) and spec §2.3. Where the two disagree, the spec wins. `docs/01` and the spec agree: the fence is the internal network, and stock Squid is an optional P2 sensor (D35).
 
 | Part of the plan | Verdict | Where it lives now |
 |---|---|---|
@@ -213,7 +213,7 @@ Full reasoning: [`docs/01-review-of-our-first-idea.md`](01-review-of-our-first-i
 |---|---|---|---|
 | **H0** | PG2 HF access missing on a demo laptop | Keep the baked protectai-v2 default + multilingual kNN; the header shows the engine honestly | C · Q4, R23 |
 | **H0** | OWASP MCP Top 10 (October 2026 release) renumbered anything | Update `frameworks.yaml` only; keep `MCPnn:2025` IDs until confirmed | L · Q15, R20 |
-| **H0** | Deadline wording or rubric weights (15/15 vs 20/10) clarified | No design change: submit at H21 regardless; tests stay first-class | L · Q2, R18 |
+| **H0** | Deadline wording or rubric weights (15/15 vs 20/10) clarified | Plan (a) (P0 only, freeze H11, submit H15) runs until the deadline is confirmed in writing; on confirmation of 23:00 switch to plan (b) (+2 h P1, freeze H18, submit H23). Tests stay first-class either way | L · Q2, R18 |
 | **CF H1** | **Fence probe leaks** (`host.docker.internal` reachable from `internal: true`) | Fallback ladder: (1) `extra_hosts` + `dns` → `0.0.0.0`, re-probe; (2) agent-lane Ollama on the hot-spare over a LAN cable; (3) **stop claiming the Ollama chokepoint**; residual T5 + probe output in the README | L · §3.4, R1 |
 | **H2** | **Default classifier > 150 ms p95 for one window** on the demo Mac | Switch demo laptops to PG2-86M (faster in our bench); if still slow, `cascade.t2.window_tokens: 256` | C · §5.1, R6 |
 | **H2** | Qwen3Guard-Gen-0.6B community GGUF spike fails | P1 guard lane uses `llama-guard3:1b` (official tag) | C · Q5 |
@@ -223,7 +223,7 @@ Full reasoning: [`docs/01-review-of-our-first-idea.md`](01-review-of-our-first-i
 | **IC2 H8** | Guard won't load / feed signing broken | Stub guard + "semantic tier degraded" shown honestly / sha-pinned unsigned bundle, said openly | C, B · §13.4 |
 | **H11:30 / IC3 H12** | **Detectors-off S4/S5 test**, fence, admin isolation or race red | **D + A + L swarm on C24; all P1 frozen**. C14 email allowlist is the deterministic backstop | D · §13.2, R3 |
 | **IC4 H15** | Any P0 control still red | Flag it off in the demo policy and drop it from slides | L · §13.4 |
-| **Any IC** | Behind schedule | Cut in the §13.6 order (P1 ranks 16 → 7 first). **Never cut** C13, C24, C33, C35, the detectors-off test, `make test`, offline mode, 2 replicas + race | L · §13.6, R2 |
+| **Any IC** | Behind schedule | Cut in the §13.6 order (P1 ranks 17 → 7 first). **Never cut** C13, C24, C33, C35, the detectors-off test, `make test`, offline mode, 2 replicas + race | L · §13.6, R2 |
 
 ### 6.3 Revisit triggers after the hackathon (team judgment)
 

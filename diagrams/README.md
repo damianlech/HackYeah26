@@ -26,7 +26,9 @@ These are the Mermaid sources and rendered images for the pitch deck, the README
 | `feed-update` | Sequence (d): a signed feed publish, the gateway poll and verification, anti-rollback serial, and the tampered/rolled-back/expired branch | §3.5 (d) | [src](src/feed-update.mmd) · [svg](svg/feed-update.svg) · [png](png/feed-update.png) |
 | `timeline-gantt` | The 24 h build plan by lane, with checkpoints CF, IC1-IC4, freeze, clean room and submit | §13.4 | [src](src/timeline-gantt.mmd) · [svg](svg/timeline-gantt.svg) · [png](png/timeline-gantt.png) |
 
-These copies match the spec word for word, with one exception: `timeline-gantt` adds `todayMarker off`. Without it, Mermaid draws a red "now" line at whatever time of day the diagram is rendered, because the chart uses `HH:mm` dates. When the spec changes, copy the block into `src/` again and re-render.
+These copies are meant to match the spec word for word. `timeline-gantt` needs `todayMarker off` (the spec block has it since v1.1); without it, Mermaid draws a red "now" line at whatever time of day the diagram is rendered, because the chart uses `HH:mm` dates. When the spec changes, copy the block into `src/` again and re-render.
+
+> **Stale since spec v1.1:** `timeline-gantt` still has the pre-v1.1 plan (title "H0 = official start", L's 21:30 sleep instead of the 18:00 nap, no B6 C07 slot, old B5/B7 timings), and `container-c4` lacks "(P1)" on the mock's Ollama-native endpoint. Until they are re-copied from spec §13.4 and §3.3 and re-rendered (`diagrams/render.sh timeline-gantt container-c4`), use the spec's blocks, not these files. The other four spec copies match.
 
 ## Re-render
 

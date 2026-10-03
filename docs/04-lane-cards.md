@@ -4,6 +4,8 @@
 > **Derived from:** spec §3.2, §3.9, §4, §5.7, §10, §11, §12, §13, §15; `research/FACT-CHECK.md`; `design/judging/J1-gs-appsec-lead.md` (red-team probes R1-R12), `J2` (X1-X14), `J3`; `docs/dashboard-design-brief.md`.
 > **Snapshot:** 2026-10-03, synced to spec **v1.1**. Times are hours after the **build start** (H0 = when the team starts building, after the kickoff). Spec §13.4 maps them to the real deadline, and plan (a) (11:00 Oct 4, compressed) runs until Q2 is confirmed. Control IDs are the spec's `C01`-`C36`.
 
+> **Legend.** Hn = hours after build start; H4.5 = H4:30. CF = contracts frozen (H1). IC1-IC5 = integration checkpoints (§10). WP = work package. POS/NEG = test case expected allowed / blocked-or-redacted. LKG = last-known-good policy. GAP = self-test state for a control a judge disabled (amber); FAIL = an enabled control regressed (red). Taint = the run has read untrusted content. S1-S8 = MCP attack scenarios (R6 §4.4); E1-E10 = Exploit Museum exhibits (spec §8.5); "beat n" / ★ = demo-script step / 3-min cut (spec §12). R1-R9 = research notes; "risk Rnn" = spec §14.1; "J1 Rn" / "J2 Xn" = judge-memo probes; Dnn = spec §16 decision; Tnn = residual threat (spec §14.2). PG2 = Llama Prompt Guard 2; TR39 = Unicode confusables skeleton; JCS = RFC 8785 canonical JSON.
+
 ---
 
 ## 0. How to use these cards
@@ -13,7 +15,7 @@
 3. The WP tables are copied from spec §13.2. The **checkpoint table (§10 here, spec §13.4) is binding**; the gantt in the spec is indicative.
 4. "Needs" and "Delivers" are promises between lanes. By **H1:30** every lane exposes a contract-shaped stub of its interface, so nobody waits on real code.
 5. If you will miss a "Delivers" time, tell L before the next checkpoint. L makes the call from the "If red" column (§10), with no debate.
-6. Point your AI assistant at `CLAUDE.md`, your card and the spec sections listed under "Read first" on your card.
+6. Point your AI assistant at `CLAUDE.md`, your card and the spec sections listed under "Read first" on your card. (L creates `CLAUDE.md` at H0:30 in the `aicl` repo; until then use §3.4 below.)
 7. Section 12 lists the spec issues that v1.1 did not resolve. L resolves them at kickoff, or they go to an RFC.
 
 ---
@@ -97,7 +99,7 @@ flowchart LR
 |---|---|---|---|
 | **H0:00-0:15** | **1. Read your card** (10 min, silent). Then answer the H0 questions: Q2 (deadline wording, weights, can the submission be edited; this picks plan (a) or (b) of spec §13.4, and plan (a) runs until it is confirmed), Q4 (PG2 access on every demo laptop), Q15 (OWASP MCP Top 10 renumbered in Oct 2026?), Q16 (is pre-event design allowed?) | all 6 | Q2/Q4/Q15/Q16 answered or defaults logged in team chat |
 | **H0:15-0:30** | **2. Open questions Q1-Q16** (§3.2): confirm each default, name who closes it. Close Q3, Q7, Q10, Q13 and Q14 now (due H1). L resolves the §12 spec issues or assigns them | all 6 | defaults logged; §12 issues decided |
-| **H0:30-0:45** | **3. Freeze contracts** (§3.3). L creates the repo layout (spec §3.9) and walks through each `contracts/` file; its producer and consumers sign off. A gap becomes a v1.1 RFC, not an edit. F stays for `openapi-control.yaml`, `sse-events.md` and fixtures, then starts F1 at about H0:40 | all; F leaves early | sign-off list in the contracts PR |
+| **H0:30-0:45** | **3. Freeze contracts** (§3.3). L creates the repo layout (spec §3.9) and walks through each `contracts/` file; its producer and consumers sign off. A gap becomes a v1.2 RFC, not an edit. F stays for `openapi-control.yaml`, `sse-events.md` and fixtures, then starts F1 at about H0:40 | all; F leaves early | sign-off list in the contracts PR |
 | **H0:45-1:00** | **4. Fence probe + working rules.** Run `fence-probe` on every demo Mac (primary + hot spare, Q3/Q10); L collects `reports/fence.json`. While it runs: CLAUDE.md rules (§3.4), branch/merge and checkpoint conventions (§3.5) | L, A, B, C, D | fence result logged; **CF declared at H1:00** |
 
 The probe tests every host target **by name and by raw host IP**, plus `model-runner.docker.internal` if Docker Model Runner is enabled (it should be off on demo Macs). Fence leak at H0:45? Apply the ladder from spec §3.4 in order: (1) `extra_hosts: ["host.docker.internal:0.0.0.0", "gateway.docker.internal:0.0.0.0"]` + `dns: [0.0.0.0]` on agent services, then re-probe by name and raw IP (the override only renames hosts); (2) agent-lane Ollama on the hot spare over a LAN cable; (3) do not claim the Ollama chokepoint, put the probe output in the README and record it as residual T5.
@@ -121,7 +123,7 @@ The probe tests every host target **by name and by raw host IP**, plus `model-ru
 | Q13 | Single shared admin token for the console at P0? | yes, with the banner "single admin token (demo)" | H1 | L |
 | Q14 | Budget reset timezone: UTC or Europe/Warsaw? | UTC | H1 | C |
 | Q15 | Has the OWASP MCP Top 10 October 2026 release renumbered anything? | keep 2025-edition IDs | **H0** | L |
-| Q16 | Rule compliance: is pre-event design allowed (this spec, research notes, text/schema drafts of `contracts/`; no code)? | design docs are allowed; if not, L writes `contracts/` in H0-H1 and CF may slip to H1:30 | **H0** | L |
+| Q16 | Rule compliance: is pre-event work allowed (this spec, research notes, text/schema drafts of `contracts/`, and a small throw-away POC in `poc/`: one gateway, a keyword guard, a mock LLM)? May we show it, may any of it be reused, or must all product code be written after the start? | design docs are allowed; the POC is reference-only and not copied into the `aicl` repo unless the answer explicitly allows reuse; if design is not allowed, L writes `contracts/` in H0-H1 and CF may slip to H1:30 | **H0** | L |
 
 ### 3.3 Contracts frozen at H1 (`contracts/`, CODEOWNERS: L)
 
@@ -173,7 +175,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 ## 4. Card L: lead / integrator
 
 **Mission.** Freeze the contracts, own the one test harness and the evidence (self-test, posture, coverage), call every checkpoint, and ship the submission.
-**Read first:** spec §3.4, §3.9, §9.3-9.4, §10, §11.3-11.5, §13, §15, Appendix B.
+**Read first:** spec §3.4, §3.9, §9.3-9.4, §10, §11.3-11.5, §13, §15.
 
 **You are done when (P0):**
 - **CF (H1):** `contracts/` committed, CI green on stubs, fence probe run and logged on every demo Mac; fixtures published at H1:30.
@@ -183,12 +185,12 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 - **Submit (H21):** IC5 clean room 100%, repo public with `gitleaks` clean, PDF ≤ 10 slides, tag `v1.0-submission`.
 
 **Owns.**
-- **Files:** `contracts/`, `CLAUDE.md`, `Makefile`, CI, `deploy/compose*.yaml` (6 networks: agents, edge, core, sandbox, admin, upstream), `src/aicl/testkit/` (case runner + `steps` executor; the mutators are P1 #8), `tests/{fence,invariants,e2e}/`, `policies/test.yaml`, `policies/test-detectors-off.yaml`, `tools/{fence_probe.sh,keys.py,make_fixtures.py,submission_check.py,doctor.sh}`, the `aicl-pybase` image, README, `docs/JUDGES.md`, PDF, submission.
+- **Files:** `contracts/`, `CLAUDE.md`, `Makefile`, CI, `deploy/compose*.yaml` (6 networks: agents, edge, core, sandbox, admin, upstream), `src/aicl/testkit/` (case runner + `steps` executor; the mutators are P1 #8), `tests/{fence,invariants,e2e}/`, `policies/test.yaml`, `policies/test-detectors-off.yaml`, `tools/{fence_probe.sh,keys.py,make_fixtures.py,submission_check.py,doctor.sh}`, the `aicl-pybase` image, README, `docs/JUDGES.md` (build-repo path, spec §3.9), PDF, submission.
 - **Components:** `fence-probe`, `tests`; `control` (skeleton, admin auth, SSE hub, self-test, posture/coverage, Playground endpoint).
 - **Controls:** C13, C35; the live self-test (§10.4), posture (§9.3) and coverage (§9.4).
 - **Endpoints:** `/api/header`, `/api/replicas`, `/api/health`, `/api/posture`, `/api/coverage`, `/api/controls`, `/api/selftest/*`, `/api/playground/inspect`, `/api/stream`. (`/api/policy/history` is B's since v1.1; you supply the derived diff and posture delta.)
 - **Make targets:** `make test`, `make test-live`, `make demo-offline`, `make reset-demo`, `make keys`, `make fence`, `make doctor`, `make warm` (both from C in v1.1), `make demo-check`, `make submission-check`, `make licenses`.
-- **Decisions:** every "if red" call (§10), the cut order (§11), Appendix B follow-ups at H0-H1.
+- **Decisions:** every "if red" call (§10), the cut order (§11). Do not copy `poc/` code into the `aicl` repo unless the A4/Q16 answer allows it.
 
 **P0 work packages (spec §13.2).**
 
@@ -203,7 +205,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 | L7 | `/api/playground/inspect` (calls through `lb` as a demo principal, composes stages from the audit event) | 1.0 | L3, A4 | F, H10 |
 | L8 | `test_walking_skeleton.py` (IC1), `test_demo_storyline.py` (IC4), `make demo-offline/reset-demo/keys`, `make doctor/warm` (v1.1: from C7; checks per `docs/08` §2.6; the scripted-agent CLI moved to D6) | 1.5 | all; C's Ollama/ONNX check list | H5 / H6 (doctor) / H14 |
 
-**P1 (spec §13.3), only after your lane is green at IC3/IC4, top-down:** #3 `make eval` + calibration + Polish slice + held-out numbers on Self-test (C + L, 2.0) · #6 full Spend page + Agents & MCP page + `PATCH` toggles via the single-writer path (F + L, 3.5) · #7 Exploit Museum cards + scenario replay through the data plane (L + F, 1.5) · #8 mutation kill rate + entitlement-matrix tests + the obfuscation mutators (from L2) (L, 2.0) · #12 live `qwen3:8b` agent + promote-to-test-case (D + L, 1.5) · #16 kustomize + kubeconform in CI (L, 1.0). Your lane is 13.5 h of P0, so P1 only starts if you finish early. Plan (b) adds 2 h, and plan (a) builds no P1.
+**P1 (spec §13.3), only after your lane is green at IC3/IC4, top-down:** #3 `make eval` + calibration + Polish slice + held-out numbers on Self-test (C + L, 2.0) · #6 full Spend page + Agents & MCP page + `PATCH` toggles via the single-writer path (F + L + B, 4.0) · #7 Exploit Museum cards + scenario replay through the data plane (L + F, 1.5) · #8 mutation kill rate + entitlement-matrix tests + the obfuscation mutators (from L2) (L, 2.0) · #12 live `qwen3:8b` agent + promote-to-test-case (D + L, 1.5) · #16 kustomize + kubeconform in CI (L, 1.0). Your lane is 13.5 h of P0, so P1 only starts if you finish early. Plan (b) adds 2 h, and plan (a) builds no P1.
 
 **Libraries and licences that matter here.**
 - pytest (+ xdist; policy-mutating tests in one serial group), `rich`, Faker; FastAPI 0.142 for `control`; Docker compose `internal: true` networks.
@@ -235,7 +237,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 - [ ] H0:30 create the repo per spec §3.9: `CLAUDE.md` (the 10 rules), CODEOWNERS (`contracts/` → L), CI (unit + schema checks on fixtures, events and policies, < 3 min).
 - [ ] Commit `contracts/` after sign-off. Compose with the 6 networks and `fence-probe` on `agents`.
 - [ ] H0:45 fence probe on every demo Mac → `reports/fence.json`; on a leak, apply the ladder.
-- [ ] H1:00 declare CF. Next: build `aicl-pybase` from the real `uv.lock` and `docker save` it to both USB sticks; `tools/make_fixtures.py` → `contracts/fixtures/api/*.json` + `stream.jsonl` for F by H1:30; Appendix B follow-ups; start L2 against `case.schema.json`.
+- [ ] H1:00 declare CF. Next: build `aicl-pybase` from the real `uv.lock` and `docker save` it to both USB sticks; `tools/make_fixtures.py` → `contracts/fixtures/api/*.json` + `events/*.json` + `stream.jsonl` for F by H1:30; start L2 against `case.schema.json`.
 
 **Sleep:** a 90-min nap H18:00-H19:30, after PDF v1 (H17:00) and the IC5 clean room, plus an optional 30-min nap before IC3 if the gate is green early. You are awake at every checkpoint from CF to Submit and at every rehearsal (H21-H24). Plan (a): a 60-min nap H15:30-H16:30, after submitting.
 
@@ -333,7 +335,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 | B1 | audit event builder, per-replica chain writer (bounded queue, batched fsync), `canonical.py`, `aicl audit verify` | 2.5 | contracts | skeleton **H3.5** |
 | B2 | C06 secrets (~30 patterns + entropy) | 1.0 | A2 compile hook | skeleton H4.5 |
 | B3 | signature engine: regex / keyword / http_request / url_ioc / hash / pickle_globals (v1.1: `package_ioc` moved to P1 #17 and is skipped and listed until then); `applies_to` mapping; unknown types skipped; **C20 rules** (`http_request` packs compiled into hard exclusions + the Ollama-admin-API floor) | 1.5 | frozen `contracts/detector.py` | rule-engine stub + static dev feed bundle file (unsigned, sha-pinned) **H4.5** (D3a, IC1); engine to D3, C5, H7 |
-| B4 | C08 multi-view normaliser + `destinations.py` (extract, canonicalise, TR39 skeleton) | 2.5 | — | extractor to D by **H7**; views H8:30 |
+| B4 | C08 multi-view normaliser + `destinations.py` (extract, canonicalise, TR39 skeleton). Order inside B4: the `stripped`, `tag_decoded`, `nfkc` and `skeleton` views first (≈ 45 min, so S4's `audit@evil.test` is extracted from `tag_decoded` and L4's homoglyph case has `skeleton`), then `destinations.py` (to D by H7), then `decoded[]` and `folded` (H8:30) | 2.5 | — | extractor to D by **H7**; views H8:30 |
 | B6 | C07 checksum PII + PL false-positive guards (v1.1: before B5) | 1.0 | B4 | **H9:30** (IC3 beats 2 and 4) |
 | B5 | feed service (`feedctl publish`: validate, vectors, serial, sign; `GET /bundle`) + gateway client (verify, **persisted serial**, expiry/stale, vectors, swap, `feed_update`, local override tighten-only) | 2.5 | B3, B6 | **H12:30** (v1.1: IC3 runs on the dev bundle; the signed feed is first needed at IC4, for beat 8 and the feed suite) |
 | B7 | in `control`: `/api/threats`, `/api/events/*`, `/api/kpis` (DuckDB, threats by H8:30); `/api/policy/history` (v1.1, from L6); checkpoint signer + witness; `/api/integrity` + verify; `/api/export` (JSONL/CSV) (v1.1: `/api/feed` moved to P1 #6) | 2.5 | L3; L's derived policy diff | threats H8:30; policy history H13; rest H14 |
@@ -524,7 +526,7 @@ Load 13.5 h (v1.1: + D6 0.5 h, + the C20 hook 0.5 h in D3b). The separate 1 h of
 ## 9. Card F: console (UI only)
 
 **Mission.** Build the header and 4 P0 pages (Overview with the spend panel, Threats + drawer, Controls & Self-test, Playground), designed with Claude Design and built with Claude Code, on fixtures from H1:30 and on live data as endpoints land.
-**Read first:** spec §9.5, §11 (esp. §11.3 shapes, §11.4 SSE, §11.5, §11.6), §12; brief §2-3 (shell, visual language), §9-10 (a11y, perf, mock server).
+**Read first:** spec §9.5, §11 (esp. §11.3 shapes, §11.4 SSE, §11.5, §11.6), §12; brief banner, §2-3 (shell, visual language), §7.0 (P0 Claude Design prompt), §9-10 (a11y, perf, mock server); docs/08 §1.10, §2.4, §4.2 (do these before H0).
 
 **You are done when (P0):**
 - **H2:** Claude Design visual system + 4 page mocks (F1).
@@ -534,7 +536,7 @@ Load 13.5 h (v1.1: + D6 0.5 h, + the C20 hook 0.5 h in D3b). The separate 1 h of
 - **After freeze:** screenshots for the PDF (v2 at H20:30, with L), video (H18:00, with A), slide visuals.
 
 **Owns.**
-- **Files:** `ui/` (Vite app; `ui/src/mocks/` copied from `contracts/fixtures`; `ui/mock_server.py` from brief §10).
+- **Files:** `ui/` (Vite app; `ui/mock_server.py` from brief §10, serving `contracts/fixtures/` directly).
 - **Work products:** the Claude Design brief + visual system, seeded-history rendering, slide visuals, screenshots.
 - **Pages:** global header, Overview (with spend panel), Threats + decision drawer, Controls & Self-test, Playground.
 - **You do not own any endpoint.** Chase these people:
@@ -544,7 +546,7 @@ Load 13.5 h (v1.1: + D6 0.5 h, + the C20 hook 0.5 h in D3b). The separate 1 h of
 | Header | `/api/header`, `/api/replicas`, `/api/stream` | L: stream H5 (Threats rows live over SSE at IC1), header H8 |
 | Threats + drawer | `/api/threats`, `/api/events/{id}`, `/api/events/{id}/related`, `/api/runs/{run_id}`, `/api/mcp/tools/{name}`, `/api/export`, `/api/integrity/verify` | B: DuckDB-backed filters and drawer data H8:30, rest H14; D: runs and MCP data, MCP by H15 |
 | Playground | `/api/playground/inspect` | L, H10 |
-| Overview | `/api/posture`, `/api/coverage`, `/api/kpis`, `/api/spend/summary`, `/api/spend/burndown`, `/api/health`, `/api/policy/history?limit=5` | L: posture/coverage H13, health H8; B: KPIs, policy history H13; C: spend + seeded history H13 |
+| Overview | `/api/posture`, `/api/coverage`, `/api/kpis`, `/api/spend/summary`, `/api/spend/burndown`, `/api/health`, `/api/policy/history?limit=5` | L: posture/coverage H13, health H8; B: policy history H13, KPIs H14; C: spend + seeded history H13 |
 | Controls & Self-test | `/api/controls`, `/api/selftest/runs`, `/api/selftest/matrix`, `/api/policy/history` | L: self-test H11, controls H13; B: policy history H13 |
 
 **P0 work packages (spec §13.2).**
@@ -585,9 +587,9 @@ If you are late, the Overview coverage grid drops to a list. Apply the §11 cons
 **Demo and Q&A.** You drive the console in every beat and play the **CISO in beat 10 ★** (Threats → Export CSV; Verify names the `seq`; header DEGRADED; Run self-test → GAP vs FAIL; perf strip). The results must read at a glance in beats 2-3 (Playground stage list, sent vs forwarded, Evidence reveal), 4 (drawer Run tab: where `audit@evil.test` came from), 5 (header `v18 · 2/2 replicas · applied 0.6 s`, posture ▼, LLM01/ASI01 amber, GAP), 6 ("S4 EXPOSED since v19"; red header with the YAML path), 7 (MCP tab diff), 8 (feed cell `#43 ✓`, then red) and 9 (spend panel: "RUNAWAY LOOP STOPPED", race tile). Q&A: console and reporting questions.
 
 **First 60 minutes (H0:40-H1:40, after kickoff blocks 1-3).**
-- [ ] Copy the brief's §7 Claude Design prompt and cut it to spec scope (4 pages + header + spend panel; `[PL_PESEL]`; `sim/*` IDs; no toggles, what-if or ROUTE LOCAL). Attach `mockups/dashboard.html`.
+- [ ] Paste the brief's §7.0 P0 Claude Design prompt (already cut to spec scope: 4 pages + header + spend panel; `[PL_PESEL]`; `sim/*` IDs; no toggles, what-if or ROUTE LOCAL). Attach `mockups/dashboard.html` for visual tone only.
 - [ ] Generate the visual system (tokens from brief §3.2, light + dark), the 4 page mocks and the header states (normal, transitional, bad, stale).
-- [ ] H1:30: pull `contracts/fixtures/api/*.json` + `stream.jsonl`, copy them to `ui/src/mocks/`, and run `ui/mock_server.py` on :8000.
+- [ ] H1:30: run `uvicorn ui.mock_server:app --port 8000` from the repo root, straight against `contracts/fixtures/` (no copy). `tools/make_fixtures.py` names files by path with `/` → `-` (`/api/spend/burndown` → `api/spend-burndown.json`) and events as `events/<event_id>.json`. If the fixtures are not committed by H1:45, save the brief §6 samples into `ui/mocks/` with the same layout, run with `AICL_FIXTURES=ui/mocks`, and switch back at H2:30.
 - [ ] Note every gap between the fixtures and the design; send them to L as RFCs (contracts are frozen).
 - [ ] H2:00: scaffold the Vite app (F2).
 
@@ -667,8 +669,8 @@ Issue 1 (capacity) is fixed in the per-lane loads. What remains:
 
 **Timing:**
 1. **Zero slack.** P0 is 79.5 h against 81 h. L, A, B, C and D are each at 13.5 h, which fills H1-H16, so their last P0 hour lands between IC4 (H15) and freeze (H16), and D has lost its separate gate hour. The tightest lane is still A: A5 (4.0 h), A7 and the rest of A4 all fall between H8 and H12. The IC4 flag-off rule, not slack, absorbs the overrun. There is realistically no P1 in the base plan; plan (b)'s extra 2 h buys about 12 h (ranks 1-5).
-2. **L before H5.** L1 (2.0 h) is due at H1 while L chairs the kickoff and owes the Appendix B follow-ups "at H0-H1". IC1 at H5 needs L3's SSE stream, and the gantt now starts L3 at H4:30, still tight. Suggestion: hand Appendix B items 2-3 (`examples/tests/c07_pii.yaml`, `examples/feed/signatures.yaml`) to B, and build L3's tailer → SSE slice before L2's polish.
+2. **L before H5.** L1 (2.0 h) is due at H1 while L chairs the kickoff. IC1 at H5 needs L3's SSE stream, and the gantt now starts L3 at H4:30, still tight. Suggestion: build L3's tailer → SSE slice before L2's polish. (The spec's Appendix B follow-ups were all done before H0.)
 3. **Plan (a) capacity.** With a deadline of 11:00 Oct 4 there are about 9 h per person before freeze (≈ 54 h) for 79.5 h of P0. D's gate chain alone is about 9 h, so the gate merges with IC4 at H10:30. Expect most P0 outside the never-cut list to be flagged off; the storyline is the ★ beats.
 
 **Other:**
-4. **Examples vs spec tiers.** `examples/feed/signatures.yaml` marks SIG-0008 (GGUF template) and SIG-0011 (`tool_sequence`) as `metadata.tier: P1`, but v1.1 declares both P2. SIG-0013 has no tier, although `package_ioc` is now P1 #17. All three are skipped and listed either way, but the example tiers should be updated.
+4. **Examples vs spec tiers:** resolved. `examples/feed/signatures.yaml` now carries the v1.1 tiers (SIG-0008 and SIG-0011 `tier: P2`, SIG-0013 `tier: P1`).

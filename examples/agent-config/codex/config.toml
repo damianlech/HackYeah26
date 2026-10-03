@@ -1,11 +1,12 @@
-# /etc/codex/config.toml — OpenAI Codex CLI governed by the control layer (stretch goal)
-# Codex only speaks the OpenAI *Responses* wire API, so the gateway must expose /v1/responses (stateless).
+# /etc/codex/config.toml — OpenAI Codex CLI governed by the control layer (roadmap example)
+# Codex only speaks the OpenAI *Responses* wire API, which is NOT in the spec's data-plane contract at any tier
+# (spec §11.2; roadmap only, docs/07). Example kept for the future.
 # Pair with /etc/codex/requirements.toml to pin model_provider so users cannot switch it.
 model_provider = "controllayer"
-model = "qwen3:8b"
+model = "ollama/qwen3:8b"
 
 [model_providers.controllayer]
 name = "AI Control Layer"
-base_url = "http://gateway.core:8080/v1"
+base_url = "http://lb:8080/v1"          # from the host: http://127.0.0.1:8080/v1
 env_key = "CONTROL_LAYER_KEY"
 wire_api = "responses"

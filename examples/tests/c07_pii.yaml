@@ -1,5 +1,5 @@
 # examples/tests/c07_pii.yaml: sample data-driven test cases for the PII control (C07), plus one format sample each
-# for C09 (Unicode-tag smuggling) and C03 (budget).
+# for C09 (Unicode-tag smuggling) and C03 (token and local-compute budgets).
 # Format: design/VISION-SPEC.md §10.3 (FROZEN AT H1; contracts/case.schema.json is generated from it).
 # Values in {{ }} are generated at runtime (Faker pl_PL, tag encoder), so no realistic PII or secret is ever committed.
 # Redaction placeholders follow spec §11.6: [PL_PESEL], [IBAN], [PAN], [EMAIL], [SECRET:<kind>].
@@ -7,6 +7,8 @@
 # (false-positive guards). Every NEG case carries `mutate: true`, so the obfuscation matrix (§10.2) re-runs it as
 # base64, zero-width split, Unicode tags, homoglyph, leetspeak, letter spacing, pre-translated Polish and (output
 # cases) split across stream chunks. Deterministic controls must be 100% invariant under every mutator.
+# `mutate: true` is executed from P1 #8; at P0 the obfuscation suite is the hand-written NEG cases for base64,
+# zero-width, Unicode tags and pre-translated Polish (spec §10.2, cut 5).
 # `make test` runs these against the frozen policies/test.yaml (where `mock/*` is granted); the live self-test sends
 # the `canary: true` subset through `lb` as svc-selftest and resolves expectations against the loaded policy (§10.4).
 suite: C07 PII detection & redaction
@@ -125,6 +127,25 @@ cases:
       verdict: block
       http_status: 429                      # billing_error + x-should-retry: false + retry-after (wire contract §5.7)
       upstream_called: false
+      audit: {primary_control: C03, reason_code: budget_exceeded}
+    mutate: true                            # content obfuscation must never change a budget verdict
+    tags: {owasp_llm: ["LLM06:2026"], owasp_asi: [ASI08], atlas: [AML.T0034], lang: en}
+
+  - id: C03-COMPUTE-NEG-001
+    title: A local model's compute-seconds cap is enforced like a money cap (wall clock at P0, spec §7.1)
+    control: C03
+    surface: llm.request
+    polarity: negative
+    principal: ola                          # interns: daily_compute_s (policies/test.yaml sets a small cap, e.g. 2 s)
+    model: "ollama/qwen3:4b"                # kind: local → charged in compute_s; mock-llm via offline_fallback in make test
+    steps:                                  # step 1 holds the upstream for 2.5 s of wall clock; the expect applies to the last step
+      - {llm: {input: "Warm-up question", max_tokens: 64, mock: "[[mock:latency=2500]]"}}
+      - {llm: {input: "Summarise the meeting notes", max_tokens: 64}}
+    expect:
+      verdict: block
+      http_status: 429                      # billing_error, code budget_exceeded, unit compute_s (spec §7.6)
+      upstream_called: false
+      headers: {x-should-retry: "false"}
       audit: {primary_control: C03, reason_code: budget_exceeded}
     mutate: true                            # content obfuscation must never change a budget verdict
     tags: {owasp_llm: ["LLM06:2026"], owasp_asi: [ASI08], atlas: [AML.T0034], lang: en}

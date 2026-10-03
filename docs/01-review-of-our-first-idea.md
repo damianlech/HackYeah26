@@ -20,11 +20,11 @@ flowchart LR
 | Element | Why it is good | Where it lives in the new design |
 |---|---|---|
 | **Single chokepoint** that agents are forced through | Without it nothing else is enforceable | Gateway is the only route to models. Agents run on an `internal` Docker network (K8s: NetworkPolicy), proven by a fence probe. Stock Squid for non-LLM egress is an optional P2 sensor. |
-| **SSO + LDAP groups → allowed models & budgets** | That's how a bank will actually run it, and it scores on *practical implementability* | `identities.groups` in `policy.yaml`. MVP uses virtual keys with group metadata. Stretch: Keycloak OIDC with a `groups` claim (LDAP federation). |
-| **User sees their limit and allowed models** | Fewer surprised developers, fewer tickets | "My AI" page in the console + `GET /v1/models` filtered per user, so Claude Code's model picker shows only allowed models. |
+| **SSO + LDAP groups → allowed models & budgets** | That's how a bank will actually run it, and it scores on *practical implementability* | `identities.groups` in `policy.yaml`. P0: hashed virtual keys + JWT/JWKS validation (static demo issuer, `groups` claim → policy groups). P2: Keycloak/LDAP compose profile (spec D20). |
+| **User sees their limit and allowed models** | Fewer surprised developers, fewer tickets | `GET /v1/me` + a per-caller filtered `GET /v1/models` (P0), so Claude Code's model picker shows only allowed models; the console "My AI" page is P2. |
 | **Managed agent settings enforce the proxy** | Zero-code integration for developers | Config bundle: Claude Code `managed-settings.json` (`ANTHROPIC_BASE_URL`, `apiKeyHelper`), managed MCP config, Codex `config.toml`, Open WebUI env, Python `base_url`. |
 | **Block non-allowed models and over-budget use** | Core requirement R1/R3 | Model allowlist control + hierarchical budget ledger (tokens, money, GPU-seconds), 429 with a readable reason. |
-| **Docker now, Kubernetes later** | Credible scaling story | Stateless gateway pods + Valkey ledger + ConfigMap policy + HPA (kustomize manifests in the repo). |
+| **Docker now, Kubernetes later** | Credible scaling story | Stateless gateway pods + Valkey ledger + ConfigMap policy + HPA (kustomize manifests are P1 #16). |
 
 ## 3. What breaks with a forked Squid
 
@@ -46,6 +46,8 @@ flowchart LR
 
 *(Adapted from `research/R5-proxy-enforcement-identity.md` §3.6. Full option analysis: [`docs/03-options-and-decision-record.md`](03-options-and-decision-record.md).)*
 
+*These are team judgments, not measurements, and the 5s are scored for containerised agents. Laptop and host agents are residual T5 for our design; see §7 for where the original idea scores higher.*
+
 ## 5. The upgraded idea
 
 > The canonical version of this picture is in `design/VISION-SPEC.md` §3.3. Squid is **not** in the P0 runtime; the fence is the `internal: true` agents network.
@@ -53,12 +55,12 @@ flowchart LR
 ```mermaid
 flowchart LR
   subgraph AG["agents network (internal: no route out)"]
-    CC["Claude Code<br/>managed-settings.json"]
+    CC["Claude Code (P1)<br/>managed-settings.json"]
     OW["Open WebUI / Playground"]
     PA["Python demo agent"]
   end
   subgraph CORE["core network"]
-    GW["AI Control Layer gateway<br/>/v1/chat/completions · /v1/messages<br/>/v1/models (per user) · /mcp/{server}"]
+    GW["AI Control Layer gateway<br/>/v1/chat/completions · /v1/models (per user)<br/>/v1/me · /v1/runs · /mcp/{server}<br/>(/v1/messages P1)"]
     POL[("policy.yaml<br/>hot reload")]
     FEED["Signature feed service<br/>(external, signed)"]
     LED[("Budget ledger<br/>Valkey")]
@@ -67,7 +69,7 @@ flowchart LR
     MCP["MCP servers"]
   end
   SQ["Stock Squid (optional, P2)<br/>shadow-AI sensor for pip/git/web<br/>external_acl → policy"]
-  IDP["SSO / OIDC<br/>(Keycloak, groups)"]
+  IDP["SSO / OIDC IdP<br/>(JWT groups claim;<br/>Keycloak/LDAP P2)"]
   CC & OW & PA -- "base_url + token" --> GW
   CC -- "pip / git / web via HTTPS_PROXY" --> SQ
   SQ -. "may user U reach host H?" .-> GW
@@ -85,10 +87,20 @@ Anthropic ships the **Claude apps gateway** (<https://code.claude.com/docs/en/cl
 
 That **validates** the original idea: identity + model allowlists + spend caps is what a vendor builds first, and we should **copy its error contract** (400 for an ungranted model, 429 `billing_error` for budgets). It also means our pitch can't stop there. Lead with what such a vendor gateway does not do:
 
-- **vendor-neutral**: Anthropic + OpenAI dialects + local Ollama + MCP + (A2A),
+- **vendor-neutral**: OpenAI dialect (Anthropic P1) + local Ollama + MCP + (A2A, P2),
 - **hybrid guardrails** with visible decision traces,
 - **historical-exploit signatures** from an external signed feed,
 - **local-compute budgets** (GPU-seconds), not only dollars,
-- **evidence-grade reporting** (hash-chained audit, OCSF export, posture score),
+- **evidence-grade reporting** (hash-chained audit, posture score, OCSF-shaped export at P1),
 - a **self-testing** control layer that re-tests itself on every policy change,
-- **LDAP groups and non-human principals** (agents/CI with their own identity and budgets), **fail-closed** option per control, and a K8s story.
+- **directory groups** via the JWT `groups` claim (LDAP federation P2) and **non-human principals** (agents/CI with their own identity and budgets), **fail-closed** option per control, and a K8s story.
+
+## 7. Where the original idea is still the better answer
+
+The critique above is about where *inspection* happens. On three points the original plan is stronger than our P0, and we should say so:
+
+1. **Laptop and host agents.** Our fence is a Docker network, so it covers containerised agents only. A developer's Claude Code or IDE agent on a laptop is residual T5 (spec §14.2), and managed settings are config, not a boundary. In production the fence for laptops is a stock egress proxy or firewall whose CONNECT allowlist reaches only the gateway, with no SslBump: the original proxy, minus the inspection.
+2. **Claude Code itself.** It speaks the Anthropic `/v1/messages` dialect, which is P1 #10 and frozen under plan (a). In a P0 build the original idea's main agent cannot go through our gateway at all; it is a recorded clip at best.
+3. **Shadow AI and non-LLM egress.** A proxy sees every host an agent or developer reaches (pip, git, unsanctioned AI SaaS). Our gateway sees only the traffic sent to it. That visibility is the stock Squid sensor, which is P2.
+
+So the honest pitch is "gateway for inspection, network or proxy for the fence", and for laptops the fence is the original idea.

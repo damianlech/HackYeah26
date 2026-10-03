@@ -94,6 +94,7 @@ pre.mermaid{margin:0;background:transparent;font-size:13px}
 .lane p{font-size:13.5px;margin:6px 0 0}
 .lane .gate{font-size:12.5px;color:var(--seal);margin-top:6px}
 ol.q{margin:0;padding-left:20px;display:grid;gap:6px}
+ul.lim{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px}
 .note{font-size:13px;color:var(--muted);border-left:3px solid var(--warn);padding:6px 10px;background:var(--surface);margin-top:12px}
 a{color:var(--accent)}
 a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -112,6 +113,7 @@ html{scroll-behavior:smooth}
     <a href="#guarantee">The guarantee</a>
     <a href="#first-idea">Our first idea</a>
     <a href="#demo">Demo storyline</a>
+    <a href="#limits">Limits</a>
     <a href="#team">Team &amp; timeline</a>
     <a href="#questions">Open questions</a>
   </nav>
@@ -126,7 +128,7 @@ html{scroll-behavior:smooth}
         <span class="chip">canonical spec <strong>design/VISION-SPEC.md</strong></span>
         <span class="chip">code namespace <strong>aicl</strong></span>
         <span class="chip">6 Python devs · ~24 h</span>
-        <span class="chip">P0 ≈ <strong>82</strong> person-hours</span>
+        <span class="chip">P0 ≈ <strong>79.5</strong> of 81 person-hours · plan (a) ~54 h</span>
         <span class="chip">runs offline on Apple Silicon</span>
       </div>
     </header>
@@ -161,7 +163,7 @@ html{scroll-behavior:smooth}
 <pre class="mermaid">
 flowchart LR
   subgraph AGN["agents network, internal"]
-    AG["Agents: demo bot, Claude Code, SDK apps"]
+    AG["Agents: demo bot, SDK apps, Claude Code (P1)"]
   end
   subgraph DP["data plane"]
     LB["lb, Caddy"]
@@ -263,6 +265,34 @@ flowchart LR
       </ol>
     </section>
 
+    <section id="limits">
+      <h2>Limits: what Mandate will not do</h2>
+      <p class="sub">The residual threat register (spec §14.2, T1-T18) is the closing slide. A security team should trust a control layer that states its limits.</p>
+      <div class="grid2">
+        <div class="panel">
+          <h3>Residual threats</h3>
+          <ul class="lim">
+            <li><b>T1</b> Harmful-but-allowed actions: we govern actions, not truthfulness.</li>
+            <li><b>T2</b> Low-bandwidth exfiltration inside an allowed channel.</li>
+            <li><b>T3</b> Confused deputy through a CRM record the attacker controls.</li>
+            <li><b>T5</b> Unmanaged host agents: the fence covers containerised agents only.</li>
+            <li><b>T6</b> Adaptive attacks on classifiers: detectors are evidence only.</li>
+            <li><b>T13</b> Chat-only jailbreak while the guard is down (balanced profile).</li>
+            <li><b>T16</b> agent→agent is thin (P1); ASI07 partial.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Not built, simulated or unmeasured</h3>
+          <ul class="lim">
+            <li>Not built at P0: Squid, live Keycloak/LDAP, the A2A proxy, the Anthropic dialect (so Claude Code is not governed live), approvals, OCSF export, the HF scanning mirror.</li>
+            <li>Paid APIs are simulated (<code>sim/*</code>, labelled "simulated commercial pricing").</li>
+            <li>Local compute is wall clock at P0 (T15); native Ollama durations are P1.</li>
+            <li>Polish detection quality is unmeasured until <code>make eval</code> (P1).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <section id="team">
       <h2>Team lanes and checkpoints</h2>
       <p class="sub">One lane per person, one owner per file. Contracts freeze at H1. Checkpoints are binding; if one is red, the lead's pre-decided fallback applies.</p>
@@ -289,6 +319,7 @@ flowchart LR
             <div><span class="h">H17:30</span>clean-room offline run on the hot spare</div>
             <div class="gate"><span class="h">H21:00</span>final submission</div>
           </div>
+          <p class="note">Base plan shown. Until the deadline is confirmed in writing, <b>plan (a)</b> runs: IC2 H7, placeholder H8, IC3 + IC4 H10:30, freeze H11, clean room H12:30, submit H15 (09:00). Plan (b) (23:00 confirmed): freeze H18, submit H23.</p>
         </div>
         <div class="panel">
           <h3>Never cut</h3>
@@ -303,7 +334,7 @@ flowchart LR
       <h2>Open questions for the team</h2>
       <p class="sub">Defaults apply if nobody answers by the time shown. Full list in <code>docs/06-open-questions.md</code>.</p>
       <ol class="q">
-        <li><b>Deadline wording.</b> RULES PDF says 11:00 PM Oct 3 → 11:00 PM Oct 4. AM or PM? Which weights apply? Can a submission be edited? Ask at H0.</li>
+        <li><b>Deadline wording.</b> RULES PDF says 11:00 PM Oct 3 → 11:00 PM Oct 4. AM or PM? Which weights apply? Can a submission be edited? Ask at H0. Plan (a) (submit H15) runs until it is confirmed in writing.</li>
         <li><b>Name.</b> Keep Mandate or choose another candidate (Remit, Writ, Countersign, Tollgate). Decide by H11.</li>
         <li><b>Lanes.</b> Who takes L, A, B, C, D and F?</li>
         <li><b>Demo hardware.</b> Primary Mac, hot spare, LAN cable, fence-probe result on both.</li>

@@ -20,8 +20,8 @@
 #   applies_to  prompt | response | tool_output | tool_description | tool_args | http_request | artifact | package
 #               (+ `run` for tool_sequence rules, §8.4). R2's egress_http/ingress_http → http_request,
 #               agent_tools → run; process_args / filesystem_event have no gateway surface and were dropped.
-#   type        P0: regex · keyword · semantic · url_ioc · http_request · package_ioc · hash · pickle_globals
-#               P1: tool_sequence · P2: yara (YARA-X)
+#   type        P0: regex · keyword · semantic · url_ioc · http_request · hash · pickle_globals
+#               P1: package_ioc (#17) · P2: tool_sequence · yara (YARA-X)
 #   action      flag | redact | block | quarantine      severity  info | low | medium | high | critical
 #   status      draft | testing | stable | deprecated
 # Framework tags: OWASP LLM 2026 ids with the edition suffix (2025 id in the comment where it differs), OWASP Agentic

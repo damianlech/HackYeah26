@@ -24,6 +24,17 @@
 | D6 | picklescan has a long, ongoing bypass record (3× CVSS 9.3 in Sep 2025 and more since). | **Allowlist + safetensors-only by default + fail-closed.** Scanners are just one layer. |
 | D7 | ShadowRay CVE-2023-48022 is **disputed / unpatched by design**. The Amazon Q payload **never executed** (syntax error). The AI-CLI abuse in Nx is from vendor research, not the Nx advisory. | Phrase incidents precisely in slides. |
 
+## Open items added after the fact-check (2026-10-03 review; not yet verified)
+
+These claims are used in the pitch or the docs but were **not** among the 26 checks below. Until someone verifies them against the primary source, they carry a `[verify]` marker wherever they appear, and they leave the slides if they can't be confirmed before PDF v1.
+
+| # | Claim or erratum | Where it is used | Status / what to do |
+|---|---|---|---|
+| E1 | ~175,000 Ollama hosts exposed on the internet without auth, in 130 countries (SentinelLABS + Censys, Jan 2026) | spec §12 beat 0; `docs/05` slide 1, §6; `docs/08` | **Unverified.** Source chain is R2 row b4 (The Hacker News, SecurityWeek). Open the SentinelLABS report once; if it can't be confirmed, say "exposed AI infrastructure" without a number. |
+| E2 | OWASP LLM01:2026 cites adaptive attacks succeeding > 90% of the time against most of 12 published defences (Nasr et al., 2025), and the OWASP 2026 line "Stop trying to build a model that cannot be fooled. Build the system around it" | spec §2.1, §2.2, §14.2 T6; `docs/03` TL;DR; `docs/05` §1.1, slide 3, §6 | **Unverified.** R1 §2 gives "> 90% adaptive for most of 12 defenses (Nasr et al., 2025)". Say "most of 12 published defences", never "most defences" or "all classifiers". Check the LLM01:2026 text and the quote verbatim. |
+| E3 | When the Claude apps gateway enforces spend caps (before the request or after the fact) | spec §2.4 vendor table | **Unverified.** B4 confirms only the caps and the 429 `billing_error` on a breach. The table now says "enforcement timing unverified"; don't claim "metered after the fact" on stage. |
+| E4 | **Erratum for R9:** R9's control numbers predate the canonical catalog. In R9 (the §2.4 example event, the posture worked example, the console sketches) C09 = PI classifier, C10 = signature feed, C20 = budgets, C03 = model allowlist. Canonical (spec §4): C09 = signatures, C10 = semantic, C19 = feed, C03 = budgets, C02 = model allowlist | B (audit, `primary_control`), F (console) | Use `examples/audit/event-example.json` as the reference event, never R9's. R9's Merkle/C2SP checkpoints, ECS/CEF/HEC exports and the weekly report are P2 (spec §9.2, §9.6). |
+
 ## All checks
 
 ### Ollama, local models, licenses
