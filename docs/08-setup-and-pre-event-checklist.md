@@ -543,9 +543,9 @@ mkdir -p ~/aicl-kit/fence && cat > ~/aicl-kit/fence/probe.py <<'EOF'
 import sys, urllib.request, urllib.error
 for url in sys.argv[1:]:
     try:
-        urllib.request.urlopen(url, timeout=3); print("LEAK    ", url)
+        urllib.request.urlopen(url, timeout=3); print("REACHABLE", url)
     except urllib.error.HTTPError as e:
-        print("LEAK    ", url, f"(HTTP {e.code}, but reachable)")
+        print("REACHABLE", url, f"(HTTP {e.code})")
     except Exception as e:
         print("blocked ", url, type(e).__name__)
 EOF
@@ -567,7 +567,7 @@ docker run --rm --network fence-try \
 docker network rm fence-try
 ```
 
-Step 0 must print `LEAK` (that is the gateway reaching Ollama, which we want). Also confirm in step 0 that Docker Desktop reaches an Ollama bound to `127.0.0.1` (verify; FACT-CHECK A6 notes that Colima/OrbStack may need a different bind). Steps 2 and 3 must print `blocked` for everything. Note that blanking the **names** (step 3) does nothing against the **raw IP**. If the IP still leaks, ladder step 1 does not hold.
+Step 0 must print `REACHABLE` (that is the gateway's path to Ollama, which we want). Also confirm in step 0 that Docker Desktop reaches an Ollama bound to `127.0.0.1` (verify; FACT-CHECK A6 notes that Colima/OrbStack may need a different bind). Steps 2 and 3 must print `blocked` for everything; any `REACHABLE` there is a leak. Note that blanking the **names** (step 3) does nothing against the **raw IP**. If the IP still leaks, ladder step 1 does not hold.
 
 **Fallback ladder** (spec §3.4), decided by L at the CF checkpoint (H1) from the real `fence-probe` output:
 1. Agent services get `extra_hosts: ["host.docker.internal:0.0.0.0", "gateway.docker.internal:0.0.0.0"]` and `dns: [0.0.0.0]`. Re-probe, by IP as well.

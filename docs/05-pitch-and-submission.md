@@ -86,7 +86,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
   - **Number card:** "~175,000 Ollama hosts reachable from the internet with no auth, in 130 countries" (SentinelLABS + Censys, Jan 2026; `research/R2-historical-attacks.md` row b4, links in R2 §sources). **[verify]** FACT-CHECK did not re-check this figure. Open the source once before PDF v1; if it can't be confirmed, drop the card and say "exposed AI infrastructure" without a number.
   - **Bottom strip:** the six root causes from `docs/02` §2 as six icons: executable model files · unauthenticated AI admin APIs · the lethal trifecta · leaky output channels · poisoned supply chain · denial of wallet and jailbreaks.
 - **Earns:** no criterion directly. It frames Robustness (30%) and tells a phase-1 mentor in ten seconds what we built.
-- **Speaker notes (L):** In April the Fed, OCC and FDIC replaced SR 11-7, and the new guidance says in plain words that generative and agentic AI are out of scope. Meanwhile the infrastructure agents run on ships without authentication; Censys counted about 175,000 exposed Ollama hosts. Banks are giving their agents keys. We give them mandates.
+- **Speaker notes (L):** In April the Fed, OCC and FDIC replaced SR 11-7, and the new guidance says in plain words that generative and agentic AI are out of scope. Meanwhile the infrastructure agents run on ships without authentication; SentinelLABS and Censys counted about 175,000 exposed Ollama hosts. Banks are giving their agents keys. We give them mandates.
 
 ---
 
@@ -139,7 +139,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
 - **On the slide:**
   - **Scope ribbon:** org (monthly) → pool = directory group → seat (user) → agent → run. Caption: "admitted only if every scope has room".
   - **Three units:** tokens · integer micro-USD (`sim/*` models: *simulated commercial pricing*) · local compute-ms (wall clock at P0).
-  - **Race tile screenshot:** `200 fired · {race_admitted} admitted · {race_overshoot_pct}% overshoot · 2 replicas` (cap worth 50). Comparison line: "a naive check-then-charge design overshot by 400% in our simulation (R8)".
+  - **Race tile screenshot:** `200 fired · {race_admitted} admitted · {race_overshoot_pct}% overshoot · 2 replicas` (cap worth 50; the test asserts exactly 50 admitted, i.e. 0% overshoot, and fails otherwise, so the tile goes on the slide only if the test is green on the tag). Comparison line: "a naive check-then-charge design overshot by 400% in our simulation (R8)".
   - **Overview spend panel:** burn-down with 75/95/100% lines; local compute-s vs simulated external µUSD; the "RUNAWAY LOOP STOPPED (C05)" row.
   - **The 429 the agent gets** (spec §7.6): `billing_error · budget_exceeded · scope seat:ola · resets 00:00 UTC` with `x-should-retry: false`.
 - **Earns:** Robustness (30%: LLM06:2026 Unbounded Consumption, AML.T0034 Cost Harvesting). Architecture & performance (20%). Practicality (the team's "directory groups → budgets" idea).
@@ -206,6 +206,7 @@ Phase-1 mentors read the PDF cold, so we keep new vocabulary to a minimum (J3).
 - **On the slide:**
   - **Code card:** `OpenAI(base_url="http://<gateway>/v1", api_key="vk_…")` and the MCP URL `http://<gateway>/mcp/{server}`. Next to it, an excerpt of `examples/agent-config/claude-code/managed-settings.json` (`ANTHROPIC_BASE_URL`, `apiKeyHelper`, `allowedProviders: ["customEndpoint"]`, which needs Claude Code ≥ 2.1.285 per FACT-CHECK B3), labelled "recorded clip" and shown only if P1 #10 (Anthropic dialect) shipped.
   - **Performance table** from `reports/perf.md`: overhead p50/p95 at c = 1/10/50 for the deterministic path (`{p95_overhead_det_ms}`) and with one classifier window (`{p95_overhead_t2_ms}`); holdback TTFT `{holdback_ttft_ms}`; policy edit → enforced on 2/2 `{reload_p95_s}`; feed publish → enforced `{feed_apply_s}`; machine `{bench_machine}`.
+  - **Today → tomorrow strip:** compose today runs 2 stateless gateway replicas behind Caddy, with all shared state (budgets, runs, taint, pins, policy versions) in Valkey.
   - **K8s mapping** (spec §3.8, five rows): agents network → default-deny NetworkPolicy (+ Cilium `toFQDNs`) · gateways → Deployment + HPA + PDB · Valkey → managed or Sentinel · policy → ConfigMap *directory* mount (about 1 min to propagate; production uses signed bundles) · audit → per-pod chain → OTel → Kafka → SIEM, checkpoints to WORM storage. Add "kustomize + kubeconform in CI" only if P1 #16 shipped.
   - **Licence line:** core is Apache-2.0 / MIT / BSD (Valkey BSD-3, not Redis 8); optional Llama-licensed guard models ship with a "Built with Llama" notice; full table in `docs/LICENSES.md`; `make licenses` fails on GPL/AGPL/SSPL.
   - **"Your first idea survived" row:** directory groups → models and budgets (JWT `groups` claim) · forced chokepoint (network fence) · "my limits" (`GET /v1/me`).
@@ -384,9 +385,9 @@ The name is confirmed or replaced at H11 (spec §15 Q1). If it changes, only UI,
 >
 > Every decision lands in a hash-chained audit log with signed checkpoints, tagged with OWASP 2026 and MITRE ATLAS IDs. The console shows posture, coverage, spend and threats, and a built-in self-test re-runs after every policy change. `make test` runs offline, with no model and no GPU.
 
-### 5.4 Short description (PL)
+### 5.4 Short description (PL, 60 words)
 
-> Agenci dostają pełnomocnictwa, a nie klucze. Mandate to warstwa kontroli AI uruchamiana we własnej infrastrukturze: każde wywołanie agent→LLM i agent→MCP przechodzi przez jedną politykę, zmienianą na żywo, która maskuje dane wrażliwe, blokuje ataki, pilnuje budżetów i zapisuje ślad audytowy. Ochrona przed wyciekiem opiera się na uprawnieniach, a nie na detekcji: przejęty agent wyśle dane wyłącznie do odbiorców dopuszczonych przez użytkownika, politykę lub zaufane narzędzie, nawet gdy wszystkie detektory AI są wyłączone.
+> Agenci dostają pełnomocnictwa, nie klucze. Mandate to warstwa kontroli AI we własnej infrastrukturze: każde wywołanie agent→LLM i agent→MCP przechodzi przez jedną politykę zmienianą na żywo, która maskuje dane wrażliwe, blokuje ataki, pilnuje budżetów i audytuje. Ochronę przed wyciekiem dają uprawnienia, nie detekcja: przejęty agent wyśle dane tylko do odbiorców dopuszczonych przez użytkownika, politykę lub zaufane narzędzie, nawet bez detektorów AI.
 
 Note: in everyday Polish *mandat* also means a traffic fine, so "agenci dostają mandaty" reads as "agents get fined". In Polish texts we say **pełnomocnictwa** (the banking term for a mandate); the brand name stays **Mandate**.
 
