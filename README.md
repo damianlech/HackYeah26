@@ -1,7 +1,7 @@
 # Mandate: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
 
 > **Agents get mandates, not keys.**
-> This is a **brainstorm and vision repo**. It contains research, design, mockups, examples and a build plan, and **no product code yet**.
+> This is a **brainstorm and vision repo**: research, design, mockups, examples and a build plan. The only runnable code is **[`poc/`](poc/)**, a minimal slice: one gateway, guard service and mock LLM, hot-reloaded policy, the shared signature feed and a 9-scenario demo. The real build follows the spec.
 > The canonical build contract is **[`design/VISION-SPEC.md`](design/VISION-SPEC.md)**. If anything here disagrees with it, the spec wins.
 > **Mandate** is a working name. The code namespace is `aicl`, so a rename is a string replace in docs and UI.
 > Visual briefing: https://claude.ai/artifact/NG9SugZGzpss3vUFUXCpAQ · Console mockup: https://claude.ai/artifact/UaYuSmfY1PiRhrtHtshxod (private; share them from the page's Share menu)
@@ -120,6 +120,7 @@ examples/
   tests/c07_pii.yaml              data-driven test cases (positive = allowed, negative = blocked/redacted)
   audit/                          aicl.audit/v1 JSON Schema + example event (validates)
   agent-config/                   Claude Code managed settings + MCP, Codex, Python SDK, Open WebUI, Squid fence
+poc/                              runnable minimal slice (gateway + guard-svc + mock LLM, ./poc/run.sh + ./poc/demo.sh); no streaming, in-memory budgets
 mockups/dashboard.html            clickable 12-page console mockup (real client-side detectors in the Playground)
 mockups/vision.html               one-page team briefing (published as an artifact)
 diagrams/                         slide-ready diagrams (Mermaid sources + PNG/SVG)
