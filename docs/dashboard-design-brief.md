@@ -1,5 +1,22 @@
 # AICL Console: design brief and data contracts
 
+> [!IMPORTANT]
+> **Canonical scope and API: `design/VISION-SPEC.md` §9.5 (dashboard IA) and §11 (control-plane API, FROZEN AT H1), including the §11.6 overrides of this brief.** Where this brief disagrees, the spec wins. The visual language (tokens, pills, severity shapes, states, §3 here) still applies.
+> - **P0 is 4 pages + the global header:** Overview (with the spend panel), Threats + decision drawer, Controls & Self-test, Playground. The mockup's other pages (`mockups/dashboard.html`) are the P1/P2 vision.
+> - **The API lives on the separate `control` service** at `http://127.0.0.1:3000/api`, with `Authorization: Bearer <AICL_ADMIN_TOKEN>` on every route. It is not on the gateway; the data plane (`lb`, 127.0.0.1:8080) has no `/api` or `/admin` routes.
+> - **The Playground goes through the data plane as a real demo principal** (`POST /api/playground/inspect` → `lb`), never through a bypass.
+> - **Redaction placeholders** are `[PL_PESEL]`, `[IBAN]`, `[PAN]`, `[EMAIL]`, `[SECRET:<kind>]`.
+>
+> **§11.6 overrides, in short:**
+> 1. The API is served by `control`, not "the gateway's control-plane FastAPI".
+> 2. Only the 4 pages above are P0. Full Spend page, Agents & MCP, Approvals, Policy diff, Audit query and Exploit Museum cards are P1. My AI, ECS/CEF/HEC previews, what-if and the weekly report are P2.
+> 3. Console toggles (`PATCH /api/controls`) are P1. At P0 the Controls page is read-only and judges edit `policy.yaml`.
+> 4. The Playground sends traffic through the data plane as `judge`, `alice` or `ola` only. There is no arbitrary impersonation.
+> 5. Placeholders as above. Pseudonymise-and-rehydrate (`<PL_PESEL_1>`) is P2; `route-local` / MNPI downgrade is P1 (`downgrade`).
+> 6. The header gains replicas `2/2`, the guard engine + DEGRADED state, self-test, posture delta and the "unsigned local change" chip.
+> 7. Role-based field stripping is P1. At P0, Management sees the same data, with a banner saying so.
+> 8. Approvals are single-approver at P1; four-eyes is P2.
+
 > For the teammate building the real dashboard with Claude Design + Claude Code.
 > Visual reference: `mockups/dashboard.html` (one self-contained file; open it in a browser, every page is clickable and runs on sample data).
 > Sources: R9 (IA, KPIs, posture, audit schema, API), R1 (control catalog C01-C32, coverage grid), R8 (policy-aware self-test states), R6 (MCP pinning, rug pull, taint, approvals), R7 (budgets, 429s, Server-Timing).

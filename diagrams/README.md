@@ -55,10 +55,16 @@ What the script runs for each diagram:
 
 ```bash
 # SVG: native SVG text labels (no <foreignObject>), so slide tools render the text
-mmdc -t neutral -b white -c svg-config.json -i src/X.mmd -o svg/X.svg      # svg-config.json: {"htmlLabels": false, "flowchart": {"htmlLabels": false}}
-# PNG: 1600 px wide; fill.css stops narrow diagrams at 1600 px instead of their natural width
-mmdc -t neutral -b white -w 1616 -C fill.css -i src/X.mmd -o png/X.png     # fill.css: #my-svg { max-width: none !important; }
+#   svg-config.json: {"handDrawnSeed": 1, "htmlLabels": false, "flowchart": {"htmlLabels": false}}
+mmdc -t neutral -b white -c svg-config.json -i src/X.mmd -o svg/X.svg
+# PNG: 1600 px wide; fill.css scales narrow diagrams up to 1600 px as vectors instead of
+# leaving them at their natural width
+#   png-config.json: {"handDrawnSeed": 1}
+#   fill.css:        #my-svg { max-width: none !important; }
+mmdc -t neutral -b white -c png-config.json -w 1616 -C fill.css -i src/X.mmd -o png/X.png
 ```
+
+`handDrawnSeed: 1` pins the random jitter Mermaid applies to some shapes, such as the rounded `request`/`response` nodes. Without it, every render of an unchanged source produces a different file and a noisy git diff.
 
 **Why mermaid-cli 11 (Mermaid 11.17) rather than 12.** Every source here also parses in Mermaid 12.1, but 12 lays out flowcharts very differently, and the container diagram and the slides come out much harder to read.
 

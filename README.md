@@ -143,8 +143,12 @@ research/
 
 Full list with defaults in [`docs/06-open-questions.md`](docs/06-open-questions.md). The ones that change the plan:
 
-1. **Deadline wording:** the RULES PDF says *start ≥ 11:00 PM Oct 3, submit ≤ 11:00 PM Oct 4*. Is that right, or AM? Also, which weights apply (CRITERIA 15/15 vs RULES 20/10)? Can a submission be edited after upload? → ask organizers at H0.
-2. **Name:** keep **Mandate** or pick another (shortlist in spec §1.1)? Decide by H11.
+1. **⏰ Deadline, and re-baselining the plan.** The RULES PDF says *start ≥ 11:00 PM Oct 3, submit ≤ 11:00 PM Oct 4*. The task pack was downloaded at ~12:12 CEST on Oct 3, which suggests the event started in the morning and "PM" may be a typo. In the spec, **H0 means "the moment we start building"**, not the official start.
+   - **If the deadline is 11:00 AM Oct 4:** only ~17 h remain from an evening start. Use the **compressed plan** in spec §13.4: P0 only, P1 frozen, earlier freeze and submit.
+   - **If it's 11:00 PM:** the 24 h plan fits with buffer.
+
+   Also ask the organizers which weights apply (CRITERIA 15/15 vs RULES 20/10), whether a submission can be edited after upload, and whether design work done before the official start is fine. The rules say "started solving no earlier than…".
+2. **Name:** keep **Mandate** or pick another (shortlist in spec §1.1)? Decide by H11. ⚠️ In everyday Polish **"mandat" also means a traffic fine**, so Polish judges may hear "agents get fined". That could be a fun pun or a distraction; choose deliberately. Polish texts use "pełnomocnictwa".
 3. **Who takes which lane** (L, A, B, C, D, F)? F = the Claude Design person.
 4. **Demo hardware:** which Mac is primary, which is the hot spare? Is there a LAN cable? Has each Mac run the fence probe?
 5. **Hugging Face access:** request gated Llama Prompt Guard 2 access **now** (approval isn't instant). Without it we ship the ungated protectai model, which is English-only.

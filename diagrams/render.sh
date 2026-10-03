@@ -22,8 +22,11 @@ MMDC="${MMDC:-npx -y -p @mermaid-js/mermaid-cli@11 mmdc}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
+# handDrawnSeed pins the random jitter Mermaid uses for some shapes (e.g. stadium nodes),
+# so re-rendering an unchanged source gives byte-identical files and clean git diffs.
+printf '{"handDrawnSeed": 1}\n' > "$tmp/png-config.json"
 # SVG: plain SVG text labels for portability into slide tools.
-printf '{"htmlLabels": false, "flowchart": {"htmlLabels": false}}\n' > "$tmp/svg-config.json"
+printf '{"handDrawnSeed": 1, "htmlLabels": false, "flowchart": {"htmlLabels": false}}\n' > "$tmp/svg-config.json"
 # PNG: let the diagram fill the 1600 px page instead of stopping at its natural width.
 printf '#my-svg { max-width: none !important; }\n' > "$tmp/fill.css"
 
@@ -45,7 +48,7 @@ for n in $names; do
   src="$here/src/$n.mmd"
   # shellcheck disable=SC2086  # $MMDC and $pp are intentionally word-split
   if $MMDC $pp -q -t neutral -b white -c "$tmp/svg-config.json" -i "$src" -o "$here/svg/$n.svg" &&
-     $MMDC $pp -q -t neutral -b white -w 1616 -C "$tmp/fill.css" -i "$src" -o "$here/png/$n.png"; then
+     $MMDC $pp -q -t neutral -b white -c "$tmp/png-config.json" -w 1616 -C "$tmp/fill.css" -i "$src" -o "$here/png/$n.png"; then
     echo "ok    $n"
   else
     echo "FAIL  $n" >&2
