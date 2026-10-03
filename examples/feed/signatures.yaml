@@ -413,6 +413,24 @@ feed:
         positive: ["POST /models?url=http://198.51.100.7/ctrl_test.mar"]
         negative: ["GET /models", "POST /predictions/resnet18 {\"data\":\"CTRL_TEST\"}"]
 
+    # ---------------------------------------------------------------- E1: known-malicious model file (sha256 IOC)
+    - id: SIG-0021
+      name: Known-malicious model file (sha256 IOC)
+      version: 1
+      status: stable
+      severity: critical
+      type: hash
+      applies_to: [artifact]
+      action: block
+      # IOC twin of SIG-0004: an exact sha256 match blocks a known-bad file even before the opcode walk. The demo IOC
+      # is the hash of the generated tests/fixtures/evil.pt (scanned, never loaded), written in at publish time.
+      match:
+        sha256: ["<filled by `make feed-publish` from the generated tests/fixtures/evil.pt>"]
+      metadata: {tier: P0, control: C18, owasp: ["LLM04:2026", "ASI04"], atlas: ["AML.T0010.003", "AML.T0011.000"], references: ["https://jfrog.com/blog/data-scientists-targeted-by-malicious-hugging-face-ml-models/"]}   # LLM04:2026 = LLM03:2025
+      tests:                                # vectors are file fixtures generated at runtime (session start); scanned, never loaded
+        positive: ["<tests/fixtures/evil.pt, the generated pickle whose sha256 is in match.sha256>"]
+        negative: ["<the safetensors twin of evil.pt, or any file whose sha256 is not in match.sha256>"]
+
 signature:
   alg: ed25519
   key_id: aicl-feed-2026                    # must be pinned in policy.feed.public_keys

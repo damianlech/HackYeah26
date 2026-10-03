@@ -4,6 +4,7 @@
 > **Canonical scope and API: `design/VISION-SPEC.md` §9.5 (dashboard IA) and §11 (control-plane API, FROZEN AT H1), including the §11.6 overrides of this brief.** Where this brief disagrees, the spec wins. The visual language (tokens, pills, severity shapes, states, §3 here) still applies.
 > - **P0 is 4 pages + the global header:** Overview (with the spend panel), Threats + decision drawer, Controls & Self-test, Playground. The mockup's other pages (`mockups/dashboard.html`) are the P1/P2 vision.
 > - **The API lives on the separate `control` service** at `http://127.0.0.1:3000/api`, with `Authorization: Bearer <AICL_ADMIN_TOKEN>` on every route. It is not on the gateway; the data plane (`lb`, 127.0.0.1:8080) has no `/api` or `/admin` routes.
+> - **SSE auth:** a browser `EventSource` cannot send headers, so the console opens `GET /api/stream` with `@microsoft/fetch-event-source` (MIT) and sends the same `Authorization: Bearer <admin token>`; tokens never go in URLs (spec §11.4). Read every `EventSource` below (§5.12, §9, §10) as that client.
 > - **The Playground goes through the data plane as a real demo principal** (`POST /api/playground/inspect` → `lb`), never through a bypass.
 > - **Redaction placeholders** are `[PL_PESEL]`, `[IBAN]`, `[PAN]`, `[EMAIL]`, `[SECRET:<kind>]`.
 >

@@ -19,6 +19,7 @@
 > - **Case and audit schemas:** `expect.headers` is added and the field name `by_profile` is noted (§10.3). §9.1 now lists the per-control verdict `flag`, the budget scope prefixes and a top-level `synthetic`.
 > - **Gantt:** re-timed to match the tables, with `todayMarker off`.
 > - **Review fixes (2026-10-03, pre-H0, no contract change):** unverified pitch numbers marked (175k Ollama hosts, the >90% adaptive-attack figure scoped to "most of 12 published defences", Claude apps gateway enforcement timing; FACT-CHECK E1-E3); §10.2 budget suite gains a local compute-cap and a tool-units-cap case; §11.5/§9.5 endpoint times aligned with the §13.2 WPs (KPIs, integrity, export at H14); residuals T17 (untrusted text in `task`) and T18 (model files never sent to the scan API) added; Q16 now discloses the pre-event `poc/`; Appendix B marked done.
+> - **Lead decisions after final review:** never-cut list widened (C11 floor, C18 lite, KPI tiles, Controls+self-test, export+Verify); ★ beat 8-lite; SSE via fetch-event-source; SIG-0021 hash IOC; hot spare = C; deck order lives in docs/05; pre-CF RFCs listed in docs/06.
 
 ---
 
@@ -1285,7 +1286,7 @@ signature: {alg: ed25519, key_id: aicl-feed-2026, sig: "<base64>"}
 | `url_ioc` | structural URL extraction + host/CIDR/suffix | response, tool_output, tool_args | **P0** | SIG-0002 EchoLeak/CamoLeak class (rewritten from R2's lookahead regex, which RE2 rejects), SIG-0015 mcp-remote OAuth endpoint injection (CVE-2025-6514) |
 | `http_request` | method + path + body predicates on parsed http-tool args | http_request | **P0** | SIG-0005 Ray Jobs (CVE-2023-48022, disputed), SIG-0006 Langflow (CVE-2025-3248), SIG-0007 Ollama `/api/pull` traversal (CVE-2024-37032), SIG-0020 TorchServe ShellTorch (CVE-2023-43654) |
 | `package_ioc` | name + semver | package (MCP launch specs, `pip`/`npx` in tool args) | P1 #17 (v1.1; skipped and listed until then) | SIG-0013 `postmark-mcp@>=1.0.16`, the 8 bad `nx` versions |
-| `hash` | sha256 set | artifact | **P0** | known-bad model files |
+| `hash` | sha256 set | artifact | **P0** | SIG-0021 known-malicious model file (sha256 IOC; the demo hash is the generated `evil.pt`, filled in by `make feed-publish`) |
 | `pickle_globals` | opcode walk allowlist (C18) | artifact | **P0** | SIG-0004 dangerous GLOBALs, `on_parse_error: block` |
 | `tool_sequence` | run state machine | run | P2 | SIG-0011 toxic flow (C24 already enforces the guarantee; this adds a named detection) |
 | `yara` | YARA-X (BSD-3) | artifact | P2 | SIG-0008 GGUF Jinja SSTI (shipped as a `regex` rule with `match.field` over the extracted chat template, tier P2) |
@@ -1299,15 +1300,15 @@ signature: {alg: ed25519, key_id: aicl-feed-2026, sig: "<base64>"}
 | `semantic` | `model`, `exemplars` **or** `exemplar_groups: {<C11 topic>: [exemplars]}`, `threshold` |
 | `url_ioc` | `extract` (`markdown_image`, `markdown_link`, `html_img`, `html_a`, `autolink`), `host_not_in` (a list or a policy reference such as `policy.output.url_allowlist`), `query_entropy_max_bits`; for URLs in structured fields `url_field`, `deny_scheme_not_in`, `deny_regex` |
 | `http_request` | `method`, `path_regex`, `body_contains`, `body_regex`, `query_has: [param]`, `json_field` + `not_regex` (the field is present and does not match), `any: [predicate, …]` (any one of these matches; all top-level predicates must hold) |
-| `package_ioc`, `hash`, `pickle_globals`, `tool_sequence` | as in `examples/feed/signatures.yaml` (`packages`; sha256 set; `deny_modules`/`safe_globals`/`allow_only`/`on_parse_error`; `sequence` + `window`) |
+| `package_ioc`, `hash`, `pickle_globals`, `tool_sequence` | as in `examples/feed/signatures.yaml` (`packages`; `sha256: [<hex>, …]`; `deny_modules`/`safe_globals`/`allow_only`/`on_parse_error`; `sequence` + `window`) |
 
-The seed feed is about 20 rules (SIG-0001..0020), all historical, with **benign test markers only** (e.g. `touch /tmp/CTRL_TEST`); detectors fire on structure. They yield about 40 generated test cases (two vectors per rule).
+The seed feed is 21 rules (SIG-0001..0021), all historical, with **benign test markers only** (e.g. `touch /tmp/CTRL_TEST`); detectors fire on structure. They yield about 40 generated test cases (two vectors per rule).
 
 ### 8.5 Exploit Museum (10 exhibits: each is a feed rule + a test case + a card)
 
 | # | Exhibit (real incident) | Benign replay | Expected | Controls | Rule |
 |---|---|---|---|---|---|
-| E1 | Malicious pickle on Hugging Face + **nullifAI** broken pickle | `.pt` whose `__reduce__` references `posix.system` (scanned, never loaded); a truncated twin | block; fail-closed on the truncated one | C18, C19 | SIG-0004 |
+| E1 | Malicious pickle on Hugging Face + **nullifAI** broken pickle | `.pt` whose `__reduce__` references `posix.system` (scanned, never loaded); a truncated twin | block; fail-closed on the truncated one | C18, C19 | SIG-0004 (+ SIG-0021 hash IOC) |
 | E2 | Exposed AI-infra admin APIs: ShadowRay, Langflow, Probllama | `web_fetch` POST `ray:8265/api/jobs/`, `/api/v1/validate/code` with `exec(`, `/api/pull` with `../` | deny | C20, C14 (SSRF) | SIG-0005/6/7 |
 | E3 | MCP tool poisoning (Invariant Labs, 2025-04) | `facts` v2 description with `<IMPORTANT>… ~/.ssh/id_rsa` | quarantine at `tools/list` | C15, C08 | SIG-0003 |
 | E4 | postmark-mcp rug pull (silent BCC) | `make demo-rugpull` changes the definition after pinning | quarantine + diff | C15, C19 | SIG-0013 |
@@ -1451,7 +1452,7 @@ It turns red or amber within 2 s of a bad edit, a tampered feed, a broken chain,
 3. Overview drops the measured column.
 4. The drawer's MCP tab merges into Evidence.
 
-**Never cut:** header, Threats + drawer (Trace + Run tabs), Playground.
+**Never cut:** header, Threats + drawer (Trace + Run tabs), Playground; and (§13.6, lead decision) the Overview KPI tiles incl. spend MTD and local compute-s, the Controls table + Run self-test, and Export JSONL/CSV + Verify chain.
 
 **Making one UI person productive:**
 - F owns UI only. The read-side endpoints are split across L (SSE, header, Playground), B (threats, events, KPIs, policy history, exports) and C (spend), so F never waits on a field.
@@ -1783,6 +1784,8 @@ The rules from brief §5.12 apply:
 - one stream per tab;
 - `decision` payloads are **projections**; the drawer fetches the full event.
 
+**Auth on the stream (lead decision; no API contract change):** a browser `EventSource` cannot send headers, so the console opens `GET /api/stream` with `@microsoft/fetch-event-source` (MIT) and sends the same `Authorization: Bearer <AICL_ADMIN_TOKEN>` as every other route (§11.1). Tokens are never put in URLs (no `?token=`).
+
 | Event | Tier | Payload (key fields) |
 |---|---|---|
 | `decision` | P0 | brief §5.12 + `replica`, `run_id`, `degraded` |
@@ -1820,7 +1823,7 @@ The rules from brief §5.12 apply:
 ---
 ## 12. Demo script
 
-**Format.** 7 minutes live, plus Q&A. A ★ marks the 3-minute cut.
+**Format.** 7 minutes live, plus Q&A. A ★ marks the 3-minute cut: beats 0, 1, 2, 4, 5, 8-lite, 10 and 11, 3:00 in total, timed per beat in `docs/05-pitch-and-submission.md` §3.3. Beat 8-lite exists only in the 3-minute cut (in the 7-minute run its two steps are part of beat 8); 10 s of its 30 s come from beat 10 (narration shortened to one line) and 5 s each from beats 0, 1, 2 and 4.
 
 **Stage layout.** Split screen: terminal on the left (D runs `demo-agent` and curl), console on the right (F drives). L narrates. A takes architecture and performance questions, B guardrails and feed, C budgets and models.
 
@@ -1839,8 +1842,9 @@ The rules from brief §5.12 apply:
 | 6 | 3:50-4:20 | **judge** | Set `C24_taint.untrusted_destination: monitor`. Then revert. Then add a typo key `enabeld:` and a lookahead regex `(?=…)`. Then add `(a+)+$` and send a long `aaaa…!` prompt | `control_weakened` (critical); posture capped at 70; self-test **"S4 EXPOSED since v19"**; revert → green. Typo and lookahead → **rejected, LKG kept**, red header with the YAML path. `(a+)+$` → **accepted** and harmless: the request returns in milliseconds. **"ReDoS can't happen here"** (RE2 is linear-time) | C30, C32, C24 | edits are integration tests |
 | 7 | 4:20-4:50 | **support-bot** | `tools/list` (poisoned `facts`) → `make demo-rugpull` → agent calls `vault_admin_get_credentials` | `facts_get_fact` quarantined (E001 instruction block + cross-server reference to `mail_send_email`); after the rug pull a **diff** in the drawer MCP tab; honeypot → **run killed, agent quarantined**, 403 on every edge | C15, C31, C26 | scripted agent |
 | 8 | 4:50-5:30 | **security analyst** (B) | `aicl scan evil.pt`, then a truncated pickle, then its safetensors twin; `web_fetch` to `ray:8265/api/jobs/`; add SIG-9001 to `feed/rules/90-judge.yaml` + `make feed-publish`; then hand-edit a byte of the bundle | pickle **blocked** (posix.system GLOBAL), truncated **fail-closed**, safetensors allowed; Ray call denied (C20); header `feed #43 ✓` in < 5 s and the new IOC blocks the next request; tampered bundle **rejected**, red feed cell | C18, C19, C20 | pre-generated fixtures |
+| 8-lite ★ | 3-min cut only (30 s) | **security analyst** (B) | `aicl scan evil.pt`; then add SIG-9001 to `feed/rules/90-judge.yaml` + `make feed-publish` and resend the matching request | pickle **blocked** (posix.system GLOBAL); the header feed serial bumps (`feed #43 ✓`) and the next matching request is **blocked** | C18, C19 | pre-generated fixtures; recorded clip |
 | 9 | 5:30-6:00 | **support-bot** + Overview spend panel | flaky-tool loop (`facts_flaky`, S8); a request with `n=50` / `max_tokens: -1` | 4th identical call → **circuit open** (C05); "RUNAWAY LOOP STOPPED" row; burn-down; race tile **"200 fired, 50 admitted, 0% overshoot, 2 replicas"**; `400 invalid_max_tokens` | C03, C04, C05 | screenshot of race-test output |
-| 10 ★ | 6:00-6:40 | **CISO** view (F) | Threats → Export CSV; edit one line of `audit/gw-1-*.jsonl` → **Verify**; `docker compose stop guard` → re-run S4; **Run self-test** | Verify names the exact `seq`; header **DEGRADED**, fail-to-taint counter, **S4 still denied**; 156 cases, GAP vs FAIL; perf strip shows p95 overhead from `reports/perf.md` | C25, C32, self-test | `make test` terminal recording |
+| 10 ★ | 6:00-6:40 | **CISO** view (F) | Threats → Export CSV; edit one line of `audit/gw-1-*.jsonl` → **Verify**; `docker compose stop guard` → re-run S4; **Run self-test** | Verify names the exact `seq`; header **DEGRADED**, fail-to-taint counter, **S4 still denied**; 156 cases, GAP vs FAIL; perf strip shows p95 overhead from `reports/perf.md`. 3-min cut: 10 s, Verify + the self-test counts only, one line of narration | C25, C32, self-test | `make test` terminal recording |
 | 11 ★ | 6:40-7:00 | L | Adoption + scale slide: one `base_url`, one MCP URL, managed-settings clip (P1), 2 stateless replicas + Valkey, K8s mapping, all permissive licences, runs offline. **Residual-risk slide** (§14.2) | — | — | slide |
 
 **Q&A crib** (J2 §7 and J3 §8 questions; every answer comes from a rehearsed artefact):
@@ -2028,7 +2032,7 @@ Clock times below assume H0 ≈ 18:00 CEST on 3 October.
 **Plan (a), pre-agreed:**
 - **Cuts.** §13.6 cuts 1-5 apply at H0. Cuts 1, 3 and 4 are P1 and frozen anyway, cut 2 is the console cuts, and cut 5 is already in force because the mutators are P1. Cuts 6-7 apply at IC2 if any lane is red. The never-cut list is unchanged.
 - **Capacity.** There are about 9 h per person before freeze (≈ 54 h) against 79.5 h of P0. Expect the IC4 flag-off rule to remove most of what is outside the never-cut list.
-- **Storyline.** The storyline is the ★ beats (0, 1, 2, 4, 5, 10, 11).
+- **Storyline.** The storyline is the ★ beats (0, 1, 2, 4, 5, 8-lite, 10, 11).
 - **Fallbacks.** IC2's red-path fallbacks (`stream_mode: buffer`, stub guard, sha-pinned dev feed) are taken at IC2 with no retry window.
 
 **Plan (b).** The base plan runs as written up to IC4. The ~5 h of buffer then buys +2 h of P1 (freeze H18), with every later checkpoint 2 h later, 3 h of sleep for everyone (L takes a 90-min nap), and a 6 h margin before the deadline.
@@ -2151,7 +2155,10 @@ The gantt is indicative. The **checkpoint table below is binding**.
 **Never cut:**
 - the guarantees: C13, C24, C33, C35 and the detectors-off test;
 - C01-C10, C12, C14-C17, C19, C20, C25, C26, C30, C32;
-- the hermetic `make test`, the live self-test, the header + Threats + Playground, the storyline test, offline mode, the two replicas and the race test.
+- the hermetic `make test`, the live self-test, the header + Threats + Playground, the storyline test, offline mode, the two replicas and the race test;
+- C11 topic-pack floor (EN+PL deterministic); C18 lite (pickle GLOBAL allowlist walk + fail-closed on parse error); Overview KPI tiles incl. spend MTD and local compute-seconds; Controls table + Run self-test; JSONL/CSV export + Verify.
+
+Why (lead decision, v1.1 final review): every formal requirement R1-R6 (incl. unsafe deserialization / model supply chain) must remain demonstrable under plan (a).
 
 ### 13.7 Sleep plan (v1.1: F 3 h; A, B, C, D 2.5 h; L a 90-min nap; never more than two asleep; never an owner asleep at their own gate)
 
@@ -2189,17 +2196,7 @@ L is awake at every checkpoint (CF → Submit) and at every rehearsal (H21-H24),
 
 - **Title:** "Mandate: agents get mandates, not keys (AI Control Layer)". Name and description go in at H11 and are final at H21 (plan (a): H8 and H15, §13.4).
 - **Description:** three lengths: a one-liner (§1.2), 100 words, 300 words.
-- **10-slide PDF:**
-  1. title + one-liner + team;
-  2. why now (SR 26-2, six incident root causes);
-  3. architecture (§3.3) + trust zones;
-  4. one policy file, profiles, adherence, < 2 s reload on 2/2;
-  5. guardrails: deterministic first, semantic second, plus the coverage grid;
-  6. **the guarantee**: detectors off, still denied (Run tab screenshot);
-  7. historical attacks + the signed external feed (museum);
-  8. budgets: 3 units, reserve/settle, 0% overshoot across replicas;
-  9. evidence: audit chain + checkpoints, self-test GAP vs FAIL, perf table, held-out numbers;
-  10. adoption and scale (base_url, MCP URL, K8s mapping, licences) + residual risks.
+- **10-slide PDF:** see `docs/05-pitch-and-submission.md` §2 (canonical deck order). In one line: mandates not keys → one policy brain on the only path → authority beats detection → deterministic first, semantic second → hard budgets → Attack Museum + signed feed → evidence for the CISO and CFO → it tests itself → adopt and scale → what it does not stop + team.
 - **README first screen:** see §10.7.
 - **`make submission-check`:** PDF ≤ 10 pages and < 20 MB; links resolve; the tag exists; `make test` is green on the tag.
 

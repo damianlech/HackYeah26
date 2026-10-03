@@ -102,6 +102,8 @@ flowchart LR
 | **H0:30-0:45** | **3. Freeze contracts** (§3.3). L creates the repo layout (spec §3.9) and walks through each `contracts/` file; its producer and consumers sign off. A gap becomes a v1.2 RFC, not an edit. F stays for `openapi-control.yaml`, `sse-events.md` and fixtures, then starts F1 at about H0:40 | all; F leaves early | sign-off list in the contracts PR |
 | **H0:45-1:00** | **4. Fence probe + working rules.** Run `fence-probe` on every demo Mac (primary + hot spare, Q3/Q10); L collects `reports/fence.json`. While it runs: CLAUDE.md rules (§3.4), branch/merge and checkpoint conventions (§3.5) | L, A, B, C, D | fence result logged; **CF declared at H1:00** |
 
+**H0:30 contracts review includes the pre-CF RFCs in `docs/06-open-questions.md` §6** (lead recommends accept; each verdict goes in the contracts PR).
+
 The probe tests every host target **by name and by raw host IP**, plus `model-runner.docker.internal` if Docker Model Runner is enabled (it should be off on demo Macs). Fence leak at H0:45? Apply the ladder from spec §3.4 in order: (1) `extra_hosts: ["host.docker.internal:0.0.0.0", "gateway.docker.internal:0.0.0.0"]` + `dns: [0.0.0.0]` on agent services, then re-probe by name and raw IP (the override only renames hosts); (2) agent-lane Ollama on the hot spare over a LAN cable; (3) do not claim the Ollama chokepoint, put the probe output in the README and record it as residual T5.
 
 ### 3.2 Open questions Q1-Q16 (spec §15): defaults to confirm
@@ -178,6 +180,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 **Read first:** spec §3.4, §3.9, §9.3-9.4, §10, §11.3-11.5, §13, §15.
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **CF (H1):** `contracts/` committed, CI green on stubs, fence probe run and logged on every demo Mac; fixtures published at H1:30.
 - **IC1 (H5):** `tests/e2e/test_walking_skeleton.py` green (all 9 steps of §13.5), tag `ic1`.
 - **H12 gate:** detectors-off S4/S5, fence + admin isolation (`tests/fence/test_bypass.py`) and run-token-escape cases green; `make test` ≤ 2 min warm with all five meta-tests enforced; tag `ic3`.
@@ -249,6 +252,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 **Read first:** spec §3.5(a)(c), §5.1-5.2, §5.5, §5.7, §6 (all), §7.3 step 1, §11.2.
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **IC1 (H5), walking-skeleton steps 2, 3 and 7:** the AWS-key request returns `x-aicl-decision: redact`, an event ID and `Server-Timing`; `vk_ola` + `sim/gpt-4.1` → 400 `model_not_allowed`; an unknown key → 401; a `tools/mint_jwt.py` JWT for alice is accepted; `C06_secrets.mode: block` flips the verdict within 2 s with `x-aicl-policy` bumped.
 - **IC2 (H8):** streaming through the gateway against the mock; `gw-2` behind `lb` with both shas in `/api/replicas`; `/v1/runs` mints tokens and the fallback run works; reload verdict flip < 2 s on 2/2.
 - **H12:** forged, absent or rotated run tokens land in the tainted fallback run; the LLM-edge C14/C24 hook is live with D (A5 full, H11); C27 canary in (A7).
@@ -315,6 +319,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 **Read first:** spec §5.3, §5.6 (destinations), §8, §9.1-9.2, §9.6, §11.3 (B rows), §6.6.
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **IC1 (H5):** the alice event validates against `contracts/audit-event.schema.json` and `aicl audit verify` passes; C06 turns `AKIAIOSFODNN7EXAMPLE` into `[SECRET:aws_access_key]`.
 - **H4.5:** rule-engine stub (frozen `contracts/detector.py` interface) and a static dev feed bundle file (unsigned, sha-pinned) up, for D3a and IC1.
 - **H7:** `destinations.py` (extract, canonicalise, TR39 skeleton) handed to D. **IC2 (H8):** signature engine with ≥ 5 rules. **H8:30:** `/api/threats` and `/api/events/*` live for F. **H9:30:** C07 (B6) live, **before** the feed service, for IC3 beats 2 and 4.
@@ -322,7 +327,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 - **IC4 (H15):** feed suite and audit suite green; C06, C07, C08, C09, C19, C20 and C25 each have ≥ 1 POS + ≥ 2 NEG; the ~40 feed vectors pass; integrity, export (JSONL/CSV) and policy-history endpoints live (H13-H14).
 
 **Owns.**
-- **Files:** `src/aicl/audit/`, `src/aicl/detectors/` (C06, C07, C08 views, signature engine), `src/aicl/core/destinations/`, `src/aicl/feed/` (gateway client), `services/feed/` (+ `feedctl`), `feed/rules/*.yaml` (seed SIG-0001..0020), the implementation behind `contracts/canonical.py`, the checkpoint signer and DuckDB queries inside `services/control/`.
+- **Files:** `src/aicl/audit/`, `src/aicl/detectors/` (C06, C07, C08 views, signature engine), `src/aicl/core/destinations/`, `src/aicl/feed/` (gateway client), `services/feed/` (+ `feedctl`), `feed/rules/*.yaml` (seed SIG-0001..0021), the implementation behind `contracts/canonical.py`, the checkpoint signer and DuckDB queries inside `services/control/`.
 - **Components:** `feed`; the per-replica audit writer in the gateway; the `witness` volume (written by `control`).
 - **Controls:** C06, C07, C08, C09, C19, C25, and **C20 (v1.1): the `http_request` packs and the Ollama-admin-API floor**, while D wires the call-site hook. You also own the rule engines that other controls use: `url_ioc` and the allowlist semantics (C12; A owns the holdback mechanics and URL extraction), the SIG-0017 regex pack (C17), `pickle_globals`/`hash` (C18). `package_ioc` is P1 #17 and is skipped and listed until then.
 - **Endpoints:** `/api/threats`, `/api/events/{id}`, `/api/events/{id}/related`, `/api/kpis`, `/api/policy/history` (v1.1, from L), `/api/integrity` + `POST /api/integrity/verify`, `/api/export` (JSONL/CSV), the `/api/runs/{run_id}` route (D supplies the data). `/api/feed` moved to P1 #6.
@@ -360,7 +365,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 | Family | Target |
 |---|---|
 | C06, C07, C08, C09, C19, C20, C25 (≥ 1 POS + ≥ 2 NEG each; FP guards: security-education prompts, Polish diacritics, failing checksum; C20 cases with D) | ≥ 21 |
-| Feed rule vectors (two per rule, SIG-0001..0020) | ~40 |
+| Feed rule vectors (two per rule, SIG-0001..0021) | ~40 |
 | Feed suite: publish applies < 5 s; tampered bundle, rolled-back serial and serial replay after a gateway restart rejected; expired → stale; unknown rule type skipped and listed | 6 |
 | Audit suite (`test_audit_completeness.py` + verify): one event per request; chain verifies; an edited line fails at the right `seq`; recompute-after-edit caught by checkpoints; truncation caught; no raw PESEL/IBAN in snippets | 6 |
 | Obfuscated NEG cases, hand-written at P0 (base64, zero-width, Unicode tags, pre-translated Polish; the full mutator matrix incl. homoglyph, leetspeak and letter spacing is P1 #8); deterministic controls must be **100% invariant** | per NEG |
@@ -385,6 +390,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 **Read first:** spec §5.1-5.4, §7 (all), §8.4 (`semantic`), C18 row in §4, §11.3 spend shapes, FACT-CHECK A2-A6, D4, D6.
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **Latency (H2):** `reports/perf-h2.md` holds classifier and kNN p95 per window count, measured on the demo Mac, and the H2 rule has been applied.
 - **IC1/IC2:** real Lua ledger by H5 (alice's settled spend visible in Valkey and `/v1/me`); by H8, real reserve/settle including a 429 `billing_error` with **zero upstream calls**.
 - **H12 gate:** `tests/integration/test_budget_race.py`: 200 concurrent requests across both replicas at a cap worth 50 → **exactly 50 admitted, 0% overshoot**.
@@ -459,6 +465,7 @@ Start each assistant session with: "Read `CLAUDE.md`, my card in `docs/04-lane-c
 **Read first:** spec §3.5(b), §5.6 (all), §6.2 `tools:` / `mcp:` / `destinations:`, §10.3, R6 §4.4 (S1-S8), FACT-CHECK B1-B2.
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **D1 (H2.5):** go/no-go decided; the MCP edge forwards `tools/call` to a sandbox HTTP server through our middleware.
 - **IC2 (H8):** one MCP `tools/call` blocked by a validator, with an audit event.
 - **H11 → H12 gate:** under `policies/test-detectors-off.yaml`, **S4 and S5 exfiltration still denied** by C24/C33 (+ C14 email). S4-POS (the reply to the CRM-derived customer) is allowed with a flag. A paraphrased destination is never trusted; a homoglyph destination → deny + critical.
@@ -529,6 +536,7 @@ Load 13.5 h (v1.1: + D6 0.5 h, + the C20 hook 0.5 h in D3b). The separate 1 h of
 **Read first:** spec §9.5, §11 (esp. §11.3 shapes, §11.4 SSE, §11.5, §11.6), §12; brief banner, §2-3 (shell, visual language), §7.0 (P0 Claude Design prompt), §9-10 (a11y, perf, mock server); docs/08 §1.10, §2.4, §4.2 (do these before H0).
 
 **You are done when (P0):**
+- **Plan (a)** (deadline 11:00 Oct 4, the default until confirmed): follow `docs/09-plan-a-p0-lite.md` §3.3 lane tables instead of the WP times below.
 - **H2:** Claude Design visual system + 4 page mocks (F1).
 - **IC1 (H5):** SPA scaffold, header, SSE hook + polling fallback, fixtures mode, token login; a live Threats row appears via SSE within 1 s (walking-skeleton step 6), wired **before you sleep at H5:30**.
 - **IC3 (H12):** Threats + drawer (Trace, Run, Evidence) on live data; the Playground on fixtures + one live call (fully live by IC4).
@@ -578,7 +586,7 @@ If you are late, the Overview coverage grid drops to a list. Apply the §11 cons
 **Top 5 gotchas.**
 1. **The spec overrides the brief's scope (§11.6).** Don't paste the brief's §7 Claude Design prompt unedited: it asks for 10 screens, `<PL_PESEL_1>` re-hydration, ROUTE LOCAL, threshold sliders and what-if lines. P0 is 4 pages + header. The Controls page is read-only (toggles are P1). Placeholders are `[PL_PESEL]`, `[IBAN]`, `[PAN]`, `[EMAIL]`, `[SECRET:<kind>]`. Model IDs are `sim/gpt-4.1`, `ollama/qwen3:8b`, `ollama/qwen3:4b`, `mock/scripted` (not `ext/gpt-4o`).
 2. **Money is integer micro-USD and times are UTC.** The mockup's `DATA` uses plain USD. `/api/header` has the spec's shape (§11.3: replicas, guard, selftest, posture, `llm_mode`), not brief §6's `header.json`. Fixtures come from `contracts/fixtures/api/`, not hand-written `ui/mocks/`.
-3. **SSE.** One `EventSource` per tab. `decision` payloads are projections, so the drawer fetches `/api/events/{id}`. Prepend rows and cap them at 200; never refetch the list. Fall back to 2 s polling; grey "stale" after 15 s of silence. Charts read `metrics_tick` or REST, never raw events, with Recharts animations off.
+3. **SSE.** One stream per tab, opened with `@microsoft/fetch-event-source` (MIT), not the native `EventSource`: `EventSource` cannot send headers, and `/api/stream` needs `Authorization: Bearer <admin token>` like every route. Never put the token in the URL (spec §11.4). `decision` payloads are projections, so the drawer fetches `/api/events/{id}`. Prepend rows and cap them at 200; never refetch the list. Fall back to 2 s polling; grey "stale" after 15 s of silence. Charts read `metrics_tick` or REST, never raw events, with Recharts animations off.
 4. **GAP is amber, never red, and state is never colour-only.** Pills carry words, severity carries a shape, coverage cells carry IDs + `aria-label`. Required labels: "synthetic" on seeded history, "simulated commercial pricing" on `sim/*`, the `LLM: mock` badge, the "unsigned local change" chip, the "single admin token (demo)" banner (Q13), and a banner saying management sees the same data (server-side role stripping is P2).
 5. **Auth and routing.** The base URL is `http://127.0.0.1:3000/api`, served by `control`, not the gateway. The admin bearer token goes on every route; ask for it once and keep it in `sessionStorage`. The Playground posts to `/api/playground/inspect`, which goes through the data plane as `judge`, `alice` or `ola`; there is no arbitrary-principal picker.
 
@@ -648,12 +656,15 @@ Sleep plan (spec §13.7, v1.1): F H5:30-H8:30 · B, D H15:30-H18:00 · L nap H18
 3. Overview drops the measured column.
 4. The drawer MCP tab merges into Evidence.
 
-**Plan (a)** applies cuts 1-5 at H0 and cuts 6-7 at IC2 if a lane is red. The storyline shrinks to the ★ beats 0, 1, 2, 4, 5, 10, 11.
+**Plan (a)** applies cuts 1-5 at H0 and cuts 6-7 at IC2 if a lane is red. The storyline shrinks to the ★ beats 0, 1, 2, 4, 5, 8-lite, 10, 11.
 
 **Never cut:**
 - the guarantees: C13, C24, C33, C35 and the detectors-off test;
 - C01-C10, C12, C14-C17, C19, C20, C25, C26, C30, C32;
-- the hermetic `make test`, the live self-test, the header + Threats (drawer Trace + Run tabs) + Playground, the storyline test, offline mode, the two replicas and the race test.
+- the hermetic `make test`, the live self-test, the header + Threats (drawer Trace + Run tabs) + Playground, the storyline test, offline mode, the two replicas and the race test;
+- C11 topic-pack floor (EN+PL deterministic); C18 lite (pickle GLOBAL allowlist walk + fail-closed on parse error); Overview KPI tiles incl. spend MTD and local compute-seconds; Controls table + Run self-test; JSONL/CSV export + Verify.
+
+Why (lead decision): every formal requirement R1-R6 (incl. unsafe deserialization / model supply chain) must remain demonstrable under plan (a).
 
 ---
 

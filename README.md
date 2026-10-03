@@ -131,7 +131,7 @@ docs/
 examples/
   policy.yaml                     documented sample policy: profiles permissive/balanced/strict, budgets, tools, destinations
   policy-local-feed.yaml          judge-editable, tighten-only local signature override
-  feed/signatures.yaml            signed-feed format with 20 historical-attack rules, each with its own tests
+  feed/signatures.yaml            signed-feed format with 21 historical-attack rules (incl. a model-hash IOC), each with its own tests
   tests/c07_pii.yaml              data-driven test cases (positive = allowed, negative = blocked/redacted)
   audit/                          aicl.audit/v1 JSON Schema + example event (validates)
   agent-config/                   Claude Code managed settings + MCP, Codex, Python SDK, Open WebUI, Squid shadow-AI sensor (P2)

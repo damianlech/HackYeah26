@@ -60,7 +60,7 @@ Each P0 exhibit is a **test case** in the suite, a **feed rule** and a **slide-w
 
 | # | Spec exhibit / tier | Exhibit (real incident) | When / ID | Benign replay | Expected verdict | Controls (R1 ids) | Feed rule |
 |---|---|---|---|---|---|---|---|
-| 1 | E1 | **Malicious pickle model on Hugging Face** (JFrog found ~100) | 2024 | `.pt` whose `__reduce__` calls `os.system("touch /tmp/CTRL_TEST")`, never loaded, only scanned | BLOCK (artifact gate, unsafe GLOBAL) | C18, C19 | SIG-0004 |
+| 1 | E1 | **Malicious pickle model on Hugging Face** (JFrog found ~100) | 2024 | `.pt` whose `__reduce__` calls `os.system("touch /tmp/CTRL_TEST")`, never loaded, only scanned | BLOCK (artifact gate, unsafe GLOBAL) | C18, C19 | SIG-0004 (+ SIG-0021 hash IOC) |
 | 2 | E1 (folded in) | **nullifAI**: "broken" 7z pickles evade HF scanning | 2025-02 | truncated / oddly compressed pickle | BLOCK (fail-closed: unparseable ⇒ deny) | C18 | — |
 | 3 | extra · P2 | **GGUF chat-template SSTI** | CVE-2024-34359 | GGUF metadata with a Jinja `__class__.__mro__` template | BLOCK (artifact scan) | C18 | SIG-0008 (P2) |
 | 4 | E2 | **ShadowRay**: Ray Jobs API RCE | CVE-2023-48022 (disputed, unpatched by design) | agent tool tries `POST http://ray:8265/api/jobs/` | BLOCK (AI-infra endpoint guard) | C20 | SIG-0005 |

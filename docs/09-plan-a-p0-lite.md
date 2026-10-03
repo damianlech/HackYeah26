@@ -15,7 +15,7 @@
 4. **The POC's gaps against the contracts are known, bounded and fixed first** (§1.2). They are: 403 instead of `content_filter`, `X-Mandate-*` headers, control names outside the spec, Python `re`, no strict schema, `/control/*` on the data port, no hash chain and a check-then-charge budget. The fixes are tasks A0 (H1:45), B1 and C1 (H2:30), A2 (H4:00) and B4 (H6:30). A0 lands before anyone else edits gateway code.
 5. **Recommendation:** P0-lite on the POC uses the 54 h like this: **45.25 h of build, 1.75 h of stretch, 5.0 h of tests/demo/submission and 2.0 h of reserve.** The **guarantee gate is at H9 (03:00)**, 1.5 h before the spec's merged IC3/IC4 at H10:30. Freeze is at H11 and submission at H15. If the deadline turns out to be 23:00, we grow the same code additively (§5).
 
-<sub>Footnote: the never-cut list (§13.6) priced with §13.2 WPs: L 12.0 (all but L6) · A 13.0 (all but A7) · B 13.0 (all; B7 without policy history) · C 9.0 (C1, C2, C3, the C10 half of C4, the race half of C6) · D 12.25 (all but vault, filesystem, path/amount validators and C31) · F 9.0 (F1, F2, F3, F5) = **68.25 h**.</sub>
+<sub>Footnote: the never-cut list (§13.6) priced with §13.2 WPs: L 12.0 (all but L6) · A 13.0 (all but A7) · B 13.0 (all; B7 without policy history) · C 9.0 (C1, C2, C3, the C10 half of C4, the race half of C6) · D 12.25 (all but vault, filesystem, path/amount validators and C31) · F 9.0 (F1, F2, F3, F5) = **68.25 h**. Update after the never-cut list was widened (lead decision, 2026-10-03): add the C4 topic-pack half (~1.25 h), C5 at cut-line-6 level (~1.5 h), the F6 KPI tiles (~1.0 h) and F7 (1.0 h). Export + Verify were already inside B7. New total **≈ 73 h (estimate)**, still about 135% of the ~54 h available, which is why §2 builds on `poc/`.</sub>
 
 ### 1.1 Strangler on the POC vs spec architecture from scratch
 
@@ -145,7 +145,7 @@ Shipped: 29 of the spec's 30 P0 controls (C01-C20, C24-C26, C30-C33, C35, C36); 
 | R2a deterministic | C01, C02, C06, C07, C08, C09, C12, C14, C17, C20 with rule IDs in the trace | 1, 2 | `tests/cases/c0[1-9]_*.yaml`, `c1[247]_*.yaml`, `c20_*.yaml` |
 | R2b semantic | C10 classifier score vs threshold in the Playground | **2 + insert 2b** | `tests/cases/c10_injection.yaml` (stub engine) + one ONNX smoke test |
 | R3 budgets | C03 in tokens / µUSD / compute-ms, C04, C05; 429 with zero upstream calls; race across 2 replicas | 1 | `tests/integration/test_budget_race.py`, `c03_budget.yaml` |
-| R4 historical attacks | signed feed from a separate process (C19), C09/C17/C20 rules, C18 pickle gate, C15 rug pull | **insert 8-lite**, 4 | `tests/integration/test_feed.py`, `tests/cases/museum_e*.yaml` |
+| R4 historical attacks | signed feed from a separate process (C19), C09/C17/C20 rules, C18 pickle gate, C15 rug pull | **8-lite ★**, 4 | `tests/integration/test_feed.py`, `tests/cases/museum_e*.yaml` |
 | R5 reporting | hash-chained audit + verify; JSONL/CSV export; Threats with decision trace (security); Overview-lite KPIs, spend and posture (management) | 4, 10 | `tests/integration/test_audit_chain.py`, `test_export.py` |
 | R6 self-testing | hermetic `make test` (compose, stub guard, mock LLM), POS+NEG for every shipped control incl. budgets and exploits; live self-test with GAP vs FAIL | 10 | the suite + `tests/test_meta.py` |
 | D1 diagram | P0-lite architecture diagram (README + slide 3) | 0 | — |
@@ -155,7 +155,7 @@ Shipped: 29 of the spec's 30 P0 controls (C01-C20, C24-C26, C30-C33, C35, C36); 
 
 ### 2.5 Storyline for plan (a)
 
-This is the spec's ★ beats (§12) plus two short inserts, so that R2b and R4 are visible on stage. The storyline test asserts all of them.
+This is the spec's ★ beats (§12; 8-lite became a ★ beat in the lead's final review) plus the short insert 2b, so that R2b and R4 are visible on stage. The storyline test asserts all of them.
 
 | Beat | What changes vs §12 |
 |---|---|
@@ -164,7 +164,7 @@ This is the spec's ★ beats (§12) plus two short inserts, so that R2b and R4 a
 | 2 ★ + **2b** (15 s) | as in the spec, plus one Playground chip with a paraphrased injection: `C10 pi-classifier 0.9x ≥ 0.80` blocked |
 | 4 ★ | as in the spec, driven by `tools/demo_agent.py` on the host terminal |
 | 5 ★ | as in the spec; the header shows `v{n} · 2/2 replicas · applied 0.x s`, posture ▼ and self-test GAP. There is no coverage-cell colour |
-| **8-lite** (30 s) | `make feed-publish` adds SIG-9001: header `feed #N ✓`, the next request is blocked; `aicl scan evil.pt` → blocked |
+| **8-lite** ★ (30 s) | `make feed-publish` adds SIG-9001: header `feed #N ✓`, the next request is blocked; `aicl scan evil.pt` → blocked |
 | 10 ★ | as in the spec. The perf strip appears only if the bench stretch shipped |
 | 11 ★ | adoption slide + residual risks + one line: "everything shown is in `make test`; anything marked 'designed' is not shipped" |
 
@@ -224,7 +224,7 @@ Task IDs below belong to plan (a). The spec WP each one replaces is in brackets.
 | L5 | Live self-test (`canary: true` cases through gw-1 as `svc-selftest`; PASS/GAP/FAIL/ERROR/EXPOSED; auto-run on `policy_reloaded`, debounced 1 s) + posture lite; `POST /api/selftest/runs`, `GET /api/selftest/runs/latest` [L5, L6 lite] | `src/aicl/control/{selftest,posture}.py` | 1.25 | H6:45 | needs L3, A2 · ⇒ F5 |
 | L6 | `POST /api/playground/inspect`: sends through gw-1 as `judge`/`alice`/`ola` (no bypass); `response_override` → `[[mock:reply:…]]`; stages from the event's `controls[].tier`; sent vs forwarded (`evidence.forwarded`, capture L2 for judges) [L7] | `services/control/playground.py` | 0.75 | H7:30 | needs A1, B1 · ⇒ F4 |
 | L8 | **T** Invariants: the detectors-off overlay (C09, C10, C11, C16 off) with S4 (`untrusted`) and S5 (`trifecta`) still denied; forged/absent/rotated run token → fallback with taint kept; paraphrased destination never trusted; homoglyph → spoof deny; fence test; C35 404s [L4] | `policies/test-detectors-off.yaml`, `tests/invariants/*`, `tests/fence/test_fence.py` | 0.75 | H8:15 | needs D4 · ⇒ **H9 gate** |
-| L9 | **T** Storyline test (★ beats 1, 2, 4, 5, 10 + inserts 2b and 8-lite), `make demo-check`; chair the H10:15 dry run [L8] | `tests/e2e/test_demo_storyline.py` | 0.75 | H9:00 | ⇒ dry run |
+| L9 | **T** Storyline test (★ beats 1, 2, 4, 5, 8-lite, 10 + insert 2b), `make demo-check`; chair the H10:15 dry run [L8] | `tests/e2e/test_demo_storyline.py` | 0.75 | H9:00 | ⇒ dry run |
 | L7 | **T** README first screen (what it is, diagram, `make test`, the raw compose command, `make demo-offline`, the "designed vs shipped" box) + `docs/JUDGES.md` (keys, URLs, the §10.8 pokes P0-lite supports) + the 100-word description for the placeholder | `README.md`, `docs/JUDGES.md` | 0.75 | H10:00 | ⇒ F6, submission |
 
 #### Lane A: gateway core (8.25 h build; stretch 0.5; reserve 0.25)
@@ -249,7 +249,7 @@ Task IDs below belong to plan (a). The spec WP each one replaces is in brackets.
 | B2 | C08 views (extends POC `fold()`): stripped, tag_decoded (hidden text recorded for the Evidence tab), nfkc, folded, decoded; `destinations.py`: extract and canonicalise email, URL host, IBAN and phone from every view, plus `skeleton()` [B4] | `src/aicl/controls/c08_normalize.py`, `src/aicl/core/destinations.py` | 2.0 | **H4:30** | ⇒ D4, A4 |
 | B3 | C06 secrets: ~10 RE2 patterns + entropy gate; fixtures generated at runtime [B2] | `src/aicl/controls/c06_secrets.py` | 0.75 | H5:15 | ⇒ beat 2 |
 | B4 | Rule engine (from POC `compile_rule`): `google-re2` everywhere (drop the `\x{…}` hack), keyword over every view, url_ioc (POC), **`http_request`** compiled into hard exclusions + the Ollama-admin floor (C20), `hash` and `pickle_globals` handed to C6, unknown types skipped and listed [B3] | `src/aicl/feed/engine.py` | 1.25 | H6:30 | ⇒ D3 (C17/C20 hooks), C6 |
-| B5 | Feed (C19): the `feed` service holds the only Ed25519 private key; `feedctl publish` (validate, compile, run vectors, bump the serial, sign JCS); `GET /bundle` + ETag; gateway client (3 s poll, pinned key, `serial > last_serial` persisted in Valkey, expiry → stale, vectors, atomic swap, `feed_update`/reject events) [B5] | `services/feed/app.py`, `tools/feedctl.py`, `src/aicl/feed/client.py`, `feed/rules/00-seed.yaml` (replaces `poc/gateway.py:122`) | 2.0 | H8:30 | ⇒ L4 header, insert 8-lite |
+| B5 | Feed (C19): the `feed` service holds the only Ed25519 private key; `feedctl publish` (validate, compile, run vectors, bump the serial, sign JCS); `GET /bundle` + ETag; gateway client (3 s poll, pinned key, `serial > last_serial` persisted in Valkey, expiry → stale, vectors, atomic swap, `feed_update`/reject events) [B5] | `services/feed/app.py`, `tools/feedctl.py`, `src/aicl/feed/client.py`, `feed/rules/00-seed.yaml` (replaces `poc/gateway.py:122`) | 2.0 | H8:30 | ⇒ L4 header, beat 8-lite |
 | B6 | C07 (from POC `step_pii`): IBAN mod-97, NIP, PL phone, `[CARD]` → `[PAN]`, per-entity actions, tool args [B6] | `src/aicl/controls/c07_pii.py` | 0.5 | H9:00 | ⇒ beat 2 |
 | B7 | STRETCH: signed checkpoints by `control` (Ed25519 key only there; `witness/checkpoints.jsonl` every 60 s); verify also detects a recompute and truncation [B7 part] | `services/control/checkpoints.py` | 0.75 | H10:00 | only if green at H6 |
 
@@ -262,7 +262,7 @@ Task IDs below belong to plan (a). The spec WP each one replaces is in brackets.
 | C3 | C04 hygiene (from POC `step_clamp_max_tokens`) + fixed-window rpm + `/v1/me` payload [C2] | `src/aicl/controls/c04_limits.py` | 0.75 | H5:15 | ⇒ beat 1 |
 | C4 | C05 breakers: max tool calls, identical-call hash ≥ 3 → `run_circuit_open` [D3b part] | `src/aicl/budget/breakers.py` | 0.5 | H5:45 | ⇒ D (MCP path) |
 | C5 | Control read API (no DuckDB): `/api/threats` (filters + cursor over the tail index), `/api/events/{id}`, `/api/runs/{run_id}` (D's `describe`), `/api/export?format=jsonl\|csv` + an `export` event [B7 part] | `services/control/reports.py` | 1.25 | H7:00 | needs L4, B1 · ⇒ F3 |
-| C6 | C18 lite: `pickletools.genops` walk with the SIG-0004 allowlist; parse error → block; torch-zip `data.pkl`; safetensors header; sha256 rules; `/v1/artifacts/scan` + `aicl scan`; artifact fixtures generated, never loaded [C5] | `src/aicl/artifacts/scan.py`, `tools/{aicl_scan,make_artifacts}.py` | 1.0 | H8:00 | needs B4 · ⇒ insert 8-lite |
+| C6 | C18 lite: `pickletools.genops` walk with the SIG-0004 allowlist; parse error → block; torch-zip `data.pkl`; safetensors header; sha256 rules; `/v1/artifacts/scan` + `aicl scan`; artifact fixtures generated, never loaded [C5] | `src/aicl/artifacts/scan.py`, `tools/{aicl_scan,make_artifacts}.py` | 1.0 | H8:00 | needs B4 · ⇒ beat 8-lite |
 | C7 | **T** Race test (200 across gw-1/gw-2 → exactly 50) + budget/limits/breaker cases (429 with `upstream_called: false`) [C6 part] | `tests/integration/test_budget_race.py`, `tests/cases/c0[345]_*.yaml` | 0.75 | H8:45 | ⇒ **H9 gate** |
 | C8 | STRETCH `make bench`: c = 1/10 via gw-1 vs direct to the mock, overhead p50/p95 → `reports/perf.md` [P1 #1 lite] | `tools/bench.py` | 0.5 | H9:30 | only if green at H6 |
 
