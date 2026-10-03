@@ -1,5 +1,9 @@
 # Clearance: pitch kit (one page)
 
+**Live mockup:** https://claude.ai/artifact/LFZfw2beasERryqkeCcoyE (private until you share it from the page's Share menu). It has clickable pins on every important module and a 60-second guided tour.
+
+![Clearance overview](mockups/overview.png)
+
 ## The one-liner
 
 > ### No AI request leaves the firm without clearance.
@@ -60,6 +64,10 @@ The model's answer goes back through gates too.
 6. **Audit:** open the record and click **Verify**: the chain is intact. *(15 s)*
 
 Or press **Take the 60-second tour**, which walks the same path with explanations.
+
+| Pipeline: one gate, three jobs | Simulate: masked before it left the firm |
+|---|---|
+| ![pipeline](mockups/pipeline-builder.png) | ![simulate](mockups/pipeline-trace.png) |
 
 ## Short answers to the questions judges will ask
 

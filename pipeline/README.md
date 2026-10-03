@@ -192,6 +192,6 @@ Re-run [`bench/`](bench/RESULTS.md) on the demo Mac before quoting these numbers
 5. Response gates in the demo? **Recommended: yes**, mask + budget_settle, with streaming buffered.
 6. Remote gates only, or in-process too? **Recommended:** one contract, remote by default; cheap gates in-process if time allows.
 
-The mockup shows most of this working on fake data: a builder with validation warnings, YAML out, and a request simulator with per-gate traces.
+The mockup shows most of this working on fake data: an Overview with clickable explainer pins and a guided tour, a builder with a health check and YAML out, a request simulator with per-gate traces, and an audit trail. Its tests are in `mockups/tests/`.
 ![pipeline builder](mockups/pipeline-builder.png)
 ![request trace](mockups/pipeline-trace.png)
