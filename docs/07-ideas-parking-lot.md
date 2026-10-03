@@ -78,7 +78,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | My AI self-service page | Groups, allowed models, budgets and reset times, recent blocks with plain reasons | Prac M · Rep L | ~2 h est. on top of `/v1/me`; ≤ 7 h with the Access pages (J3) | `GET /api/me` (P2 endpoint); F time | F bottleneck | spec §2.3; brief §4.11; P3 §4.2 | P2 |
 | Access matrix + explain-access | Group × model/tool matrix, "explain access for user X", unused entitlements, recertification CSV | Prac M · Rep M | part of 7 h (J3) | Entitlement generator (P1 #8) | F time | P3 §9.2 | cut |
 | Request access + personal keys | Request-access button routed to the group owner; mint an 8 h personal key | Prac M | n/a | My AI page, C23 | Low | P3 §4.2 | cut |
-| Downstream `act` tokens | Gateway as a mini-STS: per-call tokens for MCP upstreams carrying who acts for whom | Rob L · Prac M | 1-2 h (R5) | Per-backend credential injection (P0) | Low | R5 §6.5; P3 §4.1 | future |
+| Downstream `act` tokens | Gateway as a mini-STS: per-call tokens for MCP upstreams carrying who acts for whom | Rob L · Prac M | 1-2 h (R5) | Per-backend credential injection (P0) | Low | R5 §6.4; P3 §4.1 | future |
 | Server-side role field stripping | `control` strips fields per role (Security, Management, Developer) instead of the UI-only switch | Rep L · Prac M | n/a | Per-user admin identity (`docs/06` B6) | Low | spec §11.1, §11.6 | P1 (no rank) |
 | Claude Code `statusLine` + model discovery | `aictl status --short` shows "budget 41% · 3 models"; gateway model discovery fills the `/model` picker | Prac M (the team's "user sees their limit") | 1 h (R5) | P1 #10 | `availableModels` with non-Claude IDs unverified (R5 §10) | R5 §5; P3 §4.2 | future |
 | SPIFFE IDs, Keycloak agent delegation, MCP ID-JAG | Workload identity for agents; `may_act`/`act` delegation; standards-track SSO for MCP access | Prac M (pitch) | n/a | A real IdP | Keycloak delegation is a preview feature | R5 §6.6; R6 §6 | future |
@@ -128,7 +128,7 @@ These are spec §13.3 ranks 1-5. Each starts only when its owner's lane is green
 | Biscuit tokens | Offline-attenuable tokens for cross-organisation A2A | Prac L | n/a | — | Datalog learning curve | P4 §12 | future |
 | `tool_sequence` rule (SIG-0011) | A named toxic-flow detection on run state (C24 already enforces the guarantee) | Rob L | n/a ("fiddly", R2) | Run state | Low | spec §8.4; R2 §2.7 | P1 (no rank) |
 | MRTR/elicitation approvals | Approval asked in the agent's own terminal via MCP elicitation | Prac M | n/a | P1 #5; 2026-07-28 clients | Asks the same user, so it is not four-eyes | R6 §2.8 | future |
-| Docker MCP Gateway sandbox | Run third-party stdio servers in locked-down containers (`--block-network`, `--block-secrets`) | Rob M | n/a | Docker Desktop or CE | A second policy store | R6 §1.7; R3 §3 | future |
+| Docker MCP Gateway sandbox | Run third-party stdio servers in locked-down containers (`--block-network`, `--block-secrets`) | Rob M | n/a | Docker Desktop or CE | A second policy store | R6 §1.7; R3 §4 | future |
 | Unmodified OSS agent (goose) | An off-the-shelf agent governed by config only, as a video | Prac M | ~2 min video (R6) | P1 #10-style config | Slow local models | R6 §6 | future |
 
 ### 4.5 Supply chain and model artifacts
@@ -202,7 +202,7 @@ The demo is one laptop. A bank needs the same brain with real identity, change c
 | **Identity** | SSO live: OIDC to the bank IdP (Entra ID, ADFS or Keycloak) through a JWKS URL; AD/LDAP groups arrive as the `groups` claim and map through `group_map` with no code change | Entitlements come from the directory, not from a YAML file | spec §2.3, §12 Q&A, D20; R5 §6 |
 | | Directory sync or SCIM, so leavers lose access before their token expires; least privilege when the sync is stale | Leaver revocation is an audit finding if it waits for a token TTL | P3 §4.1, §11.1 |
 | | Per-person admin identity and RBAC on `control`; server-side field stripping; a `security_investigator` role to resolve pseudonyms, with `content_access` events | Replaces the single demo admin token; "who looked at whom" | spec §11.1; R9 §1.7 |
-| | Workload identity for agents (SPIFFE), token exchange with `act` for MCP upstreams, MCP ID-JAG | Agents become accountable principals across services | R5 §6.5-6.6; R6 §6 |
+| | Workload identity for agents (SPIFFE), token exchange with `act` for MCP upstreams, MCP ID-JAG | Agents become accountable principals across services | R5 §6.4, §6.6; R6 §6 |
 | **Policy change** | Git-based policy repo: CODEOWNERS, CI `policy check` with the same validator, access diff and verdict replay on every PR, four-eyes merge | Change management that model-risk and audit teams already understand | P3 §11.4 |
 | | Signed policy bundles (Ed25519 or OCI); `deployment: prod` refuses unsigned edits; git-sync or a ConfigMap directory mount on K8s (about 1 min to propagate) | Write access to a file must not equal authority to change policy | spec §6.5 #12, §3.8; R7 §4.6 |
 | | Shadow-before-enforce promotion per control; break-glass with two approvers that expires after 4 h; tighten-only overlays per business unit; schema N-1 converters | Safe rollout and multi-team ownership | P3 §11.2-11.4 |
