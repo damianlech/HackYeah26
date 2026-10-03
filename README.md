@@ -1,5 +1,9 @@
 # Mandate: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
 
+> **Current direction (after talking to the judges):** the 3-layer proxy, with L2 as an admin-built **pipeline of gates** (allow / deny / modify).
+> Start with **[`pipeline/README.md`](pipeline/README.md)**: a one-sitting review with holes, fixes, the gate list, diagrams, the latency benchmark and a builder mockup.
+> Everything below is the earlier brainstorm. Use it as reference.
+
 > **Agents get mandates, not keys.**
 > This is a **brainstorm and vision repo**: research, design, mockups, examples and a build plan. Runnable prototypes: **[`poc/`](poc/)** (gateway + guard + mock LLM, hot-reloaded policy, the shared feed, a 9-scenario demo) and **[`claude-proxy/`](claude-proxy/)** (3-layer proxy for Claude traffic). The real build follows the spec.
 > The canonical build contract is **[`design/VISION-SPEC.md`](design/VISION-SPEC.md)**. If anything here disagrees with it, the spec wins.

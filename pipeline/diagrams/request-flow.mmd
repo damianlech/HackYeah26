@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  participant A as Agent (alice)
+  participant P as Pipeline (L2)
+  participant G as Gates
+  participant U as L3 → Anthropic
+  A->>P: "Summarise Goldman Sachs Q3 results"
+  P->>G: auth (key sk-proxy-alice)
+  G-->>P: ALLOW + context.identity = alice
+  P->>G: is_model_allowed (claude-sonnet-5-5)
+  G-->>P: ALLOW
+  P->>G: budget_check (worst case $0.0051)
+  G-->>P: ALLOW, reserved $0.0051
+  P->>G: word_filter (1 of 3): "SLUR" → deny
+  G-->>P: ALLOW
+  P->>G: word_filter (2 of 3): "kill" → deny, whole word
+  G-->>P: ALLOW
+  P->>G: word_filter (3 of 3): "Goldman Sachs" → mask as "Firm"
+  G-->>P: MODIFY: "Summarise Firm Q3 results"
+  Note over P,G: masked text = new input for the next gates
+  P->>G: jev_eval (masked text)
+  G-->>P: ALLOW, score 3%
+  P->>U: forward the MODIFIED request
+  U-->>P: answer: "Goldman Sachs reported..."
+  P->>G: response: word_filter "Goldman Sachs" mask
+  G-->>P: MODIFY: "Firm reported..."
+  P->>G: response: budget_settle (real usage)
+  G-->>P: ALLOW, charged $0.0012, released the rest
+  P-->>A: answer + audit record (9 gate decisions, v12)
+  Note over A,G: if any gate says DENY: stop there, return an error the SDK understands, write the audit record

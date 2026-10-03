@@ -1,0 +1,75 @@
+# pipeline.yaml — what the admin's Pipeline Builder generates. ONE file = the whole L2 audit layer.
+# The pipeline service watches this file: save it and the next request uses the new version
+# (a broken file is rejected and the last good version keeps running).
+#
+# Your design, unchanged:  a list of gates, run top to bottom; each gate answers allow | deny | modify;
+#                          modify replaces the input for the next gates; the same gate type can appear
+#                          many times with different config (word_filter x3 below).
+# Added (cheap fixes, see pipeline/README.md):  an `id` per gate instance, per-gate `on_error` + `timeout_ms`,
+#                          a `mode` for safe roll-out, a restart loop guard, a `response:` list,
+#                          and `tests` that run when the admin presses Save.
+
+pipeline: default
+version: 12                    # bumped by the builder on every save; written into every audit record
+
+on_modify: continue            # continue = the next gate gets the modified input
+                               # restart  = after a modify, run the CONTENT gates again from the top
+max_restarts: 2                # loop guard for on_modify: restart (a non-idempotent modify can loop forever)
+
+defaults:
+  timeout_ms: 300              # a gate slower than this counts as an error
+  on_error: deny               # gate down / timeout / bad answer: deny (fail closed) | allow (fail open) | skip
+  mode: enforce                # enforce = act on the decision | monitor = log "would have denied", let it through
+
+registry:                      # gate TYPE -> its endpoint (each type is a small FastAPI service)
+  auth:             http://127.0.0.1:8701/evaluate
+  is_model_allowed: http://127.0.0.1:8702/evaluate
+  budget_check:     http://127.0.0.1:8703/check       # one budget service, two gate types
+  budget_settle:    http://127.0.0.1:8703/settle
+  word_filter:      http://127.0.0.1:8704/evaluate
+  jev_eval:         http://127.0.0.1:8705/evaluate    # wraps the existing JEV (claude-proxy/jev_sim.py, :8602)
+
+request:                       # runs on the agent's request, top to bottom
+  - id: auth                   # unique instance id: audit log, metrics and errors are per instance
+    gate: auth
+    pinned: true               # the builder can't remove or move it (without it everything downstream is anonymous)
+
+  - id: model_allowed
+    gate: is_model_allowed
+    config:
+      allowed: [claude-sonnet-5-5, claude-haiku-4-5]
+
+  - id: budget
+    gate: budget_check         # RESERVES the worst-case cost (in Valkey/Redis), budget_settle fixes it after the answer
+    config:
+      estimate: worst_case     # input estimate + full max_tokens
+
+  - id: filter_slur            # your example, instance 1
+    gate: word_filter
+    config: {pattern: "SLUR", decision: deny, ignore_case: true}
+
+  - id: filter_kill            # your example, instance 2
+    gate: word_filter
+    config: {pattern: "kill", decision: deny, ignore_case: true, whole_word: true}   # whole_word: "skill" passes
+    tests:                     # run by the builder on Save; a failing test blocks the save
+      deny:  ["how do I kill the guard"]
+      allow: ["help me improve my skills"]
+
+  - id: mask_firm              # your example, instance 3
+    gate: word_filter
+    config: {pattern: "Goldman Sachs", decision: mask, replacement: "Firm", ignore_case: true}
+
+  - id: jev
+    gate: jev_eval             # slow + costly: keep it AFTER the cheap gates, so regex denials never reach it
+    config: {block_at: 70, flag_at: 40}
+    timeout_ms: 2000
+    on_error: deny             # JEV down = fail closed (judges will ask)
+
+response:                      # runs on the model's answer before it goes back to the agent
+  - id: mask_firm_out          # the model can say "Goldman Sachs" on its own; mask the answer too
+    gate: word_filter
+    config: {pattern: "Goldman Sachs", decision: mask, replacement: "Firm", ignore_case: true}
+
+  - id: budget_settle
+    gate: budget_settle        # charge the real usage from the answer, release the rest of the reservation
+    pinned: true

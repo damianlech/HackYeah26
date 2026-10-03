@@ -1,0 +1,20 @@
+flowchart LR
+  AG["Agent<br/>Claude Code / SDK app<br/>base URL = our proxy"]
+  L1["L1 · decrypt<br/>TLS termination"]
+  subgraph L2["L2 · audit = the PIPELINE"]
+    direction TB
+    RUN["pipeline runner<br/>reads pipeline.yaml v12<br/>calls gates in order"]
+    subgraph GATES["gates = small FastAPI services"]
+      direction LR
+      G1["auth"] ~~~ G2["is_model_allowed"] ~~~ G3["budget"] ~~~ G4["word_filter ×3"] ~~~ G5["jev_eval"]
+    end
+    AUD[("audit log<br/>per-gate decisions")]
+    RUN <-->|"POST envelope → allow / deny / modify"| GATES
+    RUN --> AUD
+  end
+  L3["L3 · encrypt + send<br/>virtual key → real key"]
+  UP["Anthropic API<br/>(or mock / Ollama)"]
+  ADM["Admin<br/>Pipeline Builder"] -->|"save = new version"| YAML[["pipeline.yaml"]] -->|"hot reload"| RUN
+  AUD --> DASH["dashboard<br/>traces · per-gate stats"]
+  AG --> L1 --> RUN --> L3 --> UP
+  UP -.->|"answer → response gates"| RUN

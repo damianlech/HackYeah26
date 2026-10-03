@@ -1,0 +1,14 @@
+flowchart LR
+  subgraph NAIVE["naive: on modify, re-run EVERY gate from the top"]
+    direction TB
+    N1["auth ✓"] --> N2["budget_check<br/>reserves $0.005"] --> N3["mask_firm<br/>MODIFY"] -->|restart| N4["auth again"] --> N5["budget_check AGAIN<br/>reserves $0.005 twice ✗"] --> N6["jev called twice ✗<br/>(cost + 100 ms)"]
+    N7["system_prompt gate<br/>prepends a message"] -->|"MODIFY every time"| N8["restart"] -->|"never converges ✗"| N7
+  end
+  subgraph FIX["fix: 3 rules"]
+    direction TB
+    F1["1 · gates declare stateful: true<br/>(auth, budget, rate_limit)<br/>→ never re-run on restart"]
+    F2["2 · restart re-runs only content gates<br/>(filters, normalize, pii, jev)"]
+    F3["3 · stop when max_restarts is hit<br/>or the input hash didn't change (fixpoint)"]
+    F1 --> F2 --> F3
+  end
+  NAIVE ~~~ FIX
