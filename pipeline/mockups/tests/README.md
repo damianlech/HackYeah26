@@ -1,3 +1,3 @@
 Tests: from the repo root run `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers NODE_PATH=$(npm root -g) node pipeline/mockups/tests/tests.js` (uses the installed Chromium, no `playwright install` needed). It should end with "ALL PASSED".
-Screenshots: run `node pipeline/mockups/tests/shots.js` with the same variables. It rewrites overview.png, overview-pin.png, pipeline-builder.png and pipeline-trace.png (1440×900, light) next to pipeline-builder.html.
+Screenshots: run `node pipeline/mockups/tests/shots.js` with the same variables. It rewrites overview.png, overview-pin.png, pipeline-builder.png, pipeline-trace.png and audit-record.png (1440×900, light) next to pipeline-builder.html.
 Both scripts wrap a temp copy of the page in `<!doctype html>…<body>`, so the artifact file never gets those tags. Optional env: `PAGE`, `OUT_DIR`, and `FONTS_DIR` (a fonts.css plus woff2 files named by their fonts.gstatic.com path with `/`→`_`), for when Google Fonts can't be reached.

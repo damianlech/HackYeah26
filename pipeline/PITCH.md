@@ -2,6 +2,8 @@
 
 **Live mockup:** https://claude.ai/artifact/LFZfw2beasERryqkeCcoyE (private until you share it from the page's Share menu). It has clickable pins on every important module and a 60-second guided tour.
 
+**Slide deck (10 slides, for the HackTribe PDF):** https://claude.ai/artifact/Sijca5nHowZXGEMQJHa3Tm (private until shared; it downloads as PDF or PPTX). Fill in the team name and members on slides 1 and 10, and share the mockup link before submitting, because slide 10 points to it.
+
 ![Clearance overview](mockups/overview.png)
 
 ## The one-liner
@@ -65,9 +67,9 @@ The model's answer goes back through gates too.
 
 Or press **Take the 60-second tour**, which walks the same path with explanations.
 
-| Pipeline: one gate, three jobs | Simulate: masked before it left the firm |
-|---|---|
-| ![pipeline](mockups/pipeline-builder.png) | ![simulate](mockups/pipeline-trace.png) |
+| Pipeline: one gate, three jobs | Simulate: masked before it left the firm | Audit: every gate on one time scale, chained |
+|---|---|---|
+| ![pipeline](mockups/pipeline-builder.png) | ![simulate](mockups/pipeline-trace.png) | ![audit](mockups/audit-record.png) |
 
 ## Short answers to the questions judges will ask
 

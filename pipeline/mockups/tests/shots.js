@@ -1,6 +1,7 @@
 // Screenshots of pipeline-builder.html (Clearance mockup) at 1440x900, light theme, via Playwright + headless Chromium.
 // Usage: NODE_PATH=$(npm root -g) node shots.js   (optional: PAGE=..., OUT_DIR=..., FONTS_DIR=/dir/with/fonts.css)
-// Writes overview.png (at rest), overview-pin.png (pin o2 open), pipeline-builder.png (rail + pin p2 open), pipeline-trace.png (Goldman sample run).
+// Writes overview.png (at rest), overview-pin.png (pin o2 open), pipeline-builder.png (rail + pin p2 open), pipeline-trace.png (Goldman sample run),
+// audit-record.png (Audit tab after Verify, the Goldman record open).
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -72,6 +73,15 @@ function wrappedUrl() {
   await page.waitForFunction(() => !document.querySelector('#sim-result .token:not([hidden])') && !document.querySelector('#sim-result .wait'), null, { timeout: 15000 });
   await page.waitForTimeout(600);
   await shot('pipeline-trace.png');
+
+  // 4. Audit after Verify, with the newest record (the Goldman run) open: every gate on one time scale, fingerprint, JSON.
+  await page.click('#tab-audit');
+  await page.waitForTimeout(300);
+  await page.click('#chain-verify');
+  await page.click('#audit-body [data-act="audit-row"]');
+  await park();
+  await page.waitForTimeout(6000);                             // let the "Verified" toast fade out
+  await shot('audit-record.png');
 
   if (fontTrouble) console.warn('warning: Google Fonts could not be loaded, so the shots use fallback fonts; set FONTS_DIR to serve local copies');
   if (errors.length) { console.error('console errors:', errors); process.exitCode = 1; }
