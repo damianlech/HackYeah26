@@ -1,0 +1,30 @@
+# Central policy for the 3-layer Claude proxy. ONE file, read by L2 (decisions) and L3 (upstream).
+# Edit and save: the next request uses the new version, with no restart.
+
+jev:                              # harm evaluation (simulated for now, see jev_sim.py)
+  enabled: true
+  block_at: 70                    # % harm score at or above which the request is BLOCKED
+  flag_at: 40                     # % at or above which it is allowed but FLAGGED in the audit log
+  on_error: block                 # JEV unreachable: block (fail closed) | allow (fail open)
+  timeout_s: 2
+
+models:
+  allowed: [claude-opus-5-5, claude-sonnet-5-5, claude-haiku-4-5]
+
+pricing_usd_per_mtok:             # Anthropic first-party list prices
+  claude-fable-5-1:  {input: 10.00, output: 50.00}
+  claude-opus-5-5:   {input: 4.00,  output: 20.00}
+  claude-sonnet-5-5: {input: 2.00,  output: 10.00}
+  claude-haiku-4-5:  {input: 1.00,  output: 5.00}
+
+cost:
+  max_request_usd: 0.50           # worst case (estimated input + full max_tokens) above this -> block
+
+keys:                             # VIRTUAL keys handed to agents. The real Anthropic key lives only in L3.
+  sk-proxy-alice: {user: alice, team: payments, budget_usd: 0.50}
+  sk-proxy-bob:   {user: bob,   team: research, budget_usd: 0.013}
+
+upstream:
+  mode: mock                      # mock | live (demo.py --live overrides this)
+  mock_url: https://localhost:9443        # local stand-in for api.anthropic.com, real TLS
+  live_url: https://api.anthropic.com     # real key taken from L3's ANTHROPIC_API_KEY env var
