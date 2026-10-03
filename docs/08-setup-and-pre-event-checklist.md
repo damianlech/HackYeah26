@@ -35,7 +35,7 @@ Decide before the event if you can (the spec allows until H1): which Mac is the 
 | 1.3 | GitHub account with 2FA, SSH key or `gh auth login` | All | before the event | `gh auth status` shows you logged in; `ssh -T git@github.com` greets you. |
 | 1.4 | Repo owner and plan | L | before the event | Decide the owner (personal account or a free org) and the name (`aicl`, spec §3.9). L creates the repo at **H0:30**. Branch protection and rulesets on **private** repos need a paid plan on GitHub (verify); if we don't have one, rely on the working agreements and turn protection on at H20 when the repo goes public. Free private repos have a monthly Actions minutes cap (verify the number); use Ubuntu runners only. |
 | 1.5 | Visibility plan | L | before the event | **Private until H20, public at H20** after `gitleaks` is clean, `make licenses` passes and `NOTICE` is in place (spec §13.4 "Repo public", Q9 default). If a mentor needs access earlier, invite them as a read-only collaborator instead of flipping visibility. |
-| 1.6 | ONNX release assets | L | H0 (or before the event, see note) | The spec wants protectai-v2 and MiniLM-L12 INT8 ONNX as release assets (Apache-2.0, with NOTICE) so mentors don't need HF. Upload right after the repo exists: `gh release create models-v1 kit/models/protectai-v2-int8.tgz kit/models/minilm-l12-ml-int8.tgz kit/models/SHA256SUMS --notes "Converted to ONNX + INT8, see NOTICE"`. Creating the repo before the event just to hold assets is fine only if the HackYeah rules allow pre-created repos (verify); otherwise do it at H0:30 from the USB copy. **Never upload PG2 weights** anywhere public. |
+| 1.6 | ONNX release assets | L | H0 (or before the event, see note) | The spec wants protectai-v2 and MiniLM-L12 INT8 ONNX as release assets (Apache-2.0, with NOTICE) so mentors don't need HF. Upload right after the repo exists: `gh release create models-v1 ~/aicl-kit/models/protectai-v2-int8.tgz ~/aicl-kit/models/minilm-l12-ml-int8.tgz ~/aicl-kit/models/SHA256SUMS --notes "Converted to ONNX + INT8, see NOTICE"` (§3.3 builds these files). Creating the repo before the event just to hold assets is fine only if the HackYeah rules allow pre-created repos (verify); otherwise do it at H0:30 from the USB copy. **Never upload PG2 weights** anywhere public. |
 | 1.7 | HackTribe | All | before the event | Every member has a HackTribe account, the team exists with all six members, and the Goldman Sachs task is selected (verify how the platform does this). L reads the submission form: title, team, members, description, ≤ 10-slide PDF (`docs/00-task-analysis.md`), and whether edits after upload are allowed (Q2, confirmed again at H0). |
 | 1.8 | Docker Hub login | All | before the event | `docker login` with a free account on every laptop. Anonymous pulls are rate-limited **per IP**, and a hackathon puts hundreds of people behind one NAT address. The exact limits change; check docs.docker.com (verify). Pre-pull everything (§4.3) so it doesn't matter. |
 | 1.9 | Team chat channel `#setup-proof` + shared team drive | L | before the event | One place for proof posts and one copy of the offline kit (§4.7). |
@@ -353,23 +353,23 @@ uv add fastapi "uvicorn[standard]" uvloop httpx pydantic ruamel.yaml watchfiles 
 uv add --dev pytest pytest-xdist pytest-timeout pytest-html locust
 uv lock                                                          # uv.lock records sha256 for every artifact
 uv sync --frozen                                                 # fills ~/.cache/uv: host venvs can later use --offline
-uv export --frozen --no-dev --format requirements-txt -o requirements.txt        # hashes included by default
-uv export --frozen          --format requirements-txt -o requirements-dev.txt
+uv export --frozen --no-dev --no-emit-project --format requirements-txt -o requirements.txt      # hashes included by default
+uv export --frozen          --no-emit-project --format requirements-txt -o requirements-dev.txt  # (verify --no-emit-project)
 ```
 
 uv has no `pip download` equivalent as far as our research goes (verify with `uv pip --help`). Download wheels **inside the target container**, which matches the runtime platform exactly:
 
 ```bash
 # linux/arm64: what Docker Desktop runs on Apple Silicon
-docker run --rm -v "$PWD":/kit -w /kit python:3.12-slim \
-  pip download --only-binary=:all: --require-hashes -r requirements-dev.txt -d ../wheelhouse/linux-aarch64
+docker run --rm -v ~/aicl-kit:/kit -w /kit/pykit python:3.12-slim \
+  pip download --only-binary=:all: --require-hashes -r requirements-dev.txt -d /kit/wheelhouse/linux-aarch64
 # linux/amd64: mentors' x86 machines and CI (runs under emulation: slow, one-off)
-docker run --rm --platform linux/amd64 -v "$PWD":/kit -w /kit python:3.12-slim \
-  pip download --only-binary=:all: --require-hashes -r requirements-dev.txt -d ../wheelhouse/linux-x86_64
-ls ../wheelhouse/*/*.tar.gz 2>/dev/null && echo "SDIST FOUND: needs a compiler offline, fix it now"
+docker run --rm --platform linux/amd64 -v ~/aicl-kit:/kit -w /kit/pykit python:3.12-slim \
+  pip download --only-binary=:all: --require-hashes -r requirements-dev.txt -d /kit/wheelhouse/linux-x86_64
+ls ~/aicl-kit/wheelhouse/*/*.tar.gz 2>/dev/null && echo "SDIST FOUND: needs a compiler offline, fix it now"
 ```
 
-Note the bind mount: `-v "$PWD":/kit` mounts only `pykit/`, so `../wheelhouse` would land inside the container. Run it from `~/aicl-kit` with `-v ~/aicl-kit:/kit -w /kit/pykit` instead, or adjust `-d`. `--only-binary=:all:` fails loudly if a package (for example `google-re2` on some platform) has no wheel. That is exactly what we want to learn before the event.
+`--only-binary=:all:` fails loudly if a package (for example `google-re2` on some platform) has no wheel. That is exactly what we want to learn before the event.
 
 Two offline paths during the event:
 - **Host venvs:** `uv sync --frozen --offline` uses the uv cache filled above. Copy `~/.cache/uv` to the kit only if a teammate's machine needs it.

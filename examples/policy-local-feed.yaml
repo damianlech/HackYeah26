@@ -1,0 +1,78 @@
+# =====================================================================================================================
+# examples/policy-local-feed.yaml: annotated sample of `policy/feeds/local.yaml`
+# Canonical source: design/VISION-SPEC.md §6.1, §6.2 (LOCAL-0001), §8.3. If this file and the spec disagree, the spec wins.
+#
+# What this file is: the JUDGE-EDITABLE, UNSIGNED local rule feed. It sits next to the signed external feed (C19,
+# examples/feed/signatures.yaml) and is wired in by `feed.local_override` in policy.yaml:
+#     local_override: {path: /policy/feeds/local.yaml, mode: tighten_only}
+#
+# Rules of the game:
+#   * Hot reload: save the file and both gateway replicas apply it in < 2 s (same watcher and validator as policy.yaml).
+#   * TIGHTEN-ONLY: you may ADD rules or RAISE severity/action. You may not weaken or disable a signed rule; that needs
+#     `local_override.allow_disable: true` (demo deployment only) and is still audited as `control_weakened`.
+#   * Every decision that used a local rule is tagged `controls[].origin: local-unsigned` in the audit event.
+#   * While local rules are active the console header shows "unsigned local rules active" and the feed health
+#     sub-score drops to 0.9 (posture §9.3).
+#   * Same format as the signed feed (§8.1): id, name, type, applies_to, action, severity, match, metadata, tests.
+#     `type: regex` patterns are compiled with RE2: lookahead/lookbehind `(?=` `(?!` `(?<=` `(?<!`, backreferences
+#     `\1` and possessive quantifiers are REJECTED. Keyword rules match case-insensitively over the raw and the
+#     `folded` view (lowercase, leetspeak and Polish diacritics folded), so write keywords without diacritics.
+#   * Every rule MUST carry positive and negative test vectors (benign markers only). If any vector fails, or any
+#     pattern fails to compile, the WHOLE file is rejected and the last-known-good rules stay active (red header with
+#     the YAML path). Unknown rule types or `applies_to` values are skipped and listed, never fatal.
+#   * Rule ids: LOCAL-nnnn here; SIG-nnnn belongs to the signed feed (judges publishing a signed rule use
+#     feed/rules/90-judge.yaml + `make feed-publish`, e.g. SIG-9001).
+#
+# Judge workflow B (local, unsigned): edit this file → live in < 2 s with an "unsigned" label.
+# Judge workflow A (signed): edit feed/rules/90-judge.yaml → `make feed-publish` → header shows `feed #43 ✓` in < 5 s.
+# =====================================================================================================================
+
+rules:
+  # LOCAL-0001 (from the spec): a bank's own data-loss rule. The internal codename must never reach any model,
+  # neither in a prompt nor inside a tool call's arguments. Try it in the Playground: "status of Project Falcon?"
+  # → blocked, audit shows rule_id LOCAL-0001 with origin local-unsigned.
+  - id: LOCAL-0001
+    name: Block our internal codename leaking to any model
+    type: keyword                           # Aho-Corasick over the raw + folded views
+    applies_to: [prompt, tool_args]         # §8.1 vocabulary: prompt | response | tool_output | tool_description | tool_args | http_request | artifact | package
+    action: block                           # flag | redact | block | quarantine
+    severity: high                          # info | low | medium | high | critical (C09 acts at min_severity: medium and above)
+    match: {any: ["Project Falcon"]}
+    metadata: {control: C09, owasp: ["LLM02:2026"], atlas: ["AML.T0057"]}   # Sensitive Information Disclosure · LLM Data Leakage
+    tests: {positive: ["status of Project Falcon?"], negative: ["status of project alpha?"]}
+
+  # ---- More things to try (uncomment one block at a time and save) ------------------------------------------------
+  #
+  # (a) A valid RE2 regex rule: flag internal ticket references leaving in a model RESPONSE.
+  # - id: LOCAL-0002
+  #   name: Internal ticket ids in model output
+  #   type: regex
+  #   applies_to: [response, tool_output]
+  #   action: flag
+  #   severity: medium
+  #   match: {pattern: "\\bINC-[0-9]{6}\\b"}
+  #   metadata: {control: C09, owasp: ["LLM02:2026"], atlas: ["AML.T0057"]}
+  #   tests: {positive: ["see INC-004211 for details"], negative: ["see the incident page for details"]}
+  #
+  # (b) WILL BE REJECTED: a lookahead is not RE2. The reload fails, the header turns red with the YAML path
+  #     (rules[1].match.pattern) and LOCAL-0001 keeps working from the last-known-good version.
+  # - id: LOCAL-0003
+  #   name: Broken on purpose (lookahead)
+  #   type: regex
+  #   applies_to: [prompt]
+  #   action: block
+  #   severity: high
+  #   match: {pattern: "secret(?!ary)"}
+  #   metadata: {control: C09}
+  #   tests: {positive: ["the secret plan"], negative: ["the secretary"]}
+  #
+  # (c) WILL BE REJECTED: the rule's own negative vector matches, so the whole file is rejected (atomic, predictable).
+  # - id: LOCAL-0004
+  #   name: Broken on purpose (failing vector)
+  #   type: keyword
+  #   applies_to: [prompt]
+  #   action: block
+  #   severity: high
+  #   match: {any: ["falcon"]}
+  #   metadata: {control: C09}
+  #   tests: {positive: ["Project Falcon"], negative: ["falcon heavy launch"]}

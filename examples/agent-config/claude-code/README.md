@@ -24,4 +24,6 @@ Caveats:
 
 - Managed config is **UX, not a security boundary**: a local admin can edit it, and vendors say so. The real control is the network fence: the agent network has no route out except the gateway and Squid.
 - Anthropic does not officially support routing Claude Code to non-Claude models through a gateway. Ollama documents it and it works in practice. Keep the Python agent and the Playground as primary demo clients, and Claude Code as the "real agent" showcase.
-- On a Mac host without the container: set `ANTHROPIC_BASE_URL=http://localhost:8080` instead, and drop `HTTPS_PROXY`.
+- In the demo compose stack, `lb` is the only host reachable from the `agents` network, hence `http://lb:8080` (spec §3.3–§3.4). On a Mac host without the container, use `http://localhost:8080`.
+- The Anthropic `/v1/messages` route is **P1** in the spec (rank 10). Until it ships, Claude Code is a recorded clip, not a live beat.
+- Optional (P2): if the stock Squid shadow-AI sensor runs, add `HTTPS_PROXY=http://squid:3128` and `NO_PROXY=lb,localhost,127.0.0.1` to `env` so pip/git/web traffic goes through it.
