@@ -922,7 +922,7 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 0; }
           <p class="sub">One schema-validated YAML file, hot-reloaded in under 2 s. Every reload attempt is versioned with author, diff, result and posture delta.</p>
         </div>
         <div class="row">
-          <button class="btn" id="bad-regex" type="button">Simulate catastrophic regex edit</button>
+          <button class="btn" id="bad-regex" type="button">Simulate non-RE2 regex edit</button>
         </div>
       </div>
       <div class="grid g-side-main">
@@ -1441,7 +1441,7 @@ const DATA = {
     ["C18", "neg", "GGUF chat-template injection → block"], ["C18", "neg", "unknown hash → block"],
     ["C19", "pos", "benign corpus: 0 hits"], ["C19", "pos", "feed reload keeps traffic flowing"], ["C19", "pos", "allowlisted package version → allow"],
     ["C19", "neg", "sig-pi-007 match → block"], ["C19", "neg", "postmark-mcp listed version → deny"], ["C19", "neg", "unsigned bundle → rejected, serial kept"],
-    ["C19", "neg", "expired feed → health 0.7 + alert"], ["C19", "neg", "catastrophic regex in bundle → rejected"],
+    ["C19", "neg", "expired feed → health 0.7 + alert"], ["C19", "neg", "non-RE2 regex in bundle → rejected"],
     ["C20", "pos", "POST /v1/chat/completions via gateway → allow"], ["C20", "neg", "POST :11434/api/pull → deny"], ["C20", "neg", "Ray :8265/api/jobs → deny", { error: true }],
     ["C23", "pos", "transfer 200 PLN to allowlisted beneficiary → allow"], ["C23", "pos", "approved transfer executes exactly once"],
     ["C23", "neg", "transfer 12,000 PLN → ask"], ["C23", "neg", "fs_delete_file recursive → ask"],
@@ -1452,7 +1452,7 @@ const DATA = {
     ["C26", "pos", "normal agent unaffected"], ["C26", "neg", "honeypot call → agent quarantined"], ["C26", "neg", "10× spend spike → alert"],
     ["C27", "pos", "'What can you help me with?' → allow"], ["C27", "neg", "canary CNRY-7f3a91 in output → block"], ["C27", "neg", "secret in system prompt → block"],
     ["C30", "pos", "valid edit applied < 2 s"], ["C30", "pos", "author recorded in policy_change"],
-    ["C30", "neg", "schema-invalid file → rejected"], ["C30", "neg", "catastrophic regex → rejected (RE2)"], ["C30", "neg", "failed canary → rolled back"],
+    ["C30", "neg", "schema-invalid file → rejected"], ["C30", "neg", "non-RE2 regex (lookaround/backref) → rejected"], ["C30", "neg", "failed canary → rolled back"],
     ["C31", "pos", "decoy hidden from legit tools/list"], ["C31", "neg", "get_admin_credentials call → alert + quarantine"],
     ["C32", "pos", "guard down + fail_open (local) → degraded allow, flagged"], ["C32", "neg", "feed signature invalid → fail-closed"],
     ["C32", "neg", "ledger down for external → 429 spend limit unavailable"]
@@ -1461,7 +1461,7 @@ const DATA = {
   /* Policy history as patches applied backwards from the live state (v15). */
   policyHistory: [
     { v: 15, ts: "2026-10-20T13:51:12Z", author: "alice",   result: "applied",  ms: 820,  summary: "C27 canary leak detector enabled (monitor); C10 threshold 0.85 → 0.80 (balanced recalibration: recall 0.91 @ FPR 2.1%)", undo: { C10: { threshold: 0.85 }, C27: { enabled: false, mode: "off" } } },
-    { v: 14, ts: "2026-10-20T08:55:40Z", author: "bob",     result: "rejected", ms: 140,  summary: "local_rules[3] added", reason: "regex rejected: catastrophic backtracking in (a+)+$ (RE2 compile failed), kept v13", badRule: "(a+)+$" },
+    { v: 14, ts: "2026-10-20T08:55:40Z", author: "bob",     result: "rejected", ms: 140,  summary: "local_rules[3] added", reason: "regex rejected: lookahead (?=…) is not supported by RE2, kept v13", badRule: "pass(?=word)" },
     { v: 13, ts: "2026-10-19T09:05:18Z", author: "bob",     result: "applied",  ms: 760,  summary: "C26 behaviour baseline block → monitor (false positives on quant batch jobs)", undo: { C26: { mode: "block" } } },
     { v: 12, ts: "2026-10-17T16:40:02Z", author: "marta",   result: "applied",  ms: 910,  summary: "C24 session taint monitor → block (trifecta_action: block)", undo: { C24: { mode: "monitor" } } },
     { v: 11, ts: "2026-10-16T10:12:47Z", author: "piotr",   result: "applied",  ms: 690,  summary: "C12 output sanitiser monitor → redact", undo: { C12: { mode: "monitor" } } },
@@ -2781,13 +2781,13 @@ function simulateBadRegex() {
   STATE.policy.status = "reloading"; renderHeader();
   setTimeout(() => {
     const v = Math.max(...STATE.versions.map((x) => x.v)) + 1;
-    const rule = "(a|aa)+$";
+    const rule = "(\\w+)\\s\\1";
     const yaml = yamlFor(STATE.controls, { v, badRule: rule, agents: STATE.agents });
     const post = currentPosture();
-    STATE.versions.push({ v, ts: mockNow(), author: "judge-2 (you)", result: "rejected", ms: 120, summary: "local_rules[4] added: " + rule, reason: `regex rejected: catastrophic backtracking in ${rule} (RE2 compile failed), kept v${STATE.policy.version}`, controls: snapshotControls(), yaml, sha: hex64(yaml), posture: post.score, cov: post.cov });
+    STATE.versions.push({ v, ts: mockNow(), author: "judge-2 (you)", result: "rejected", ms: 120, summary: "local_rules[4] added: " + rule, reason: `regex rejected: backreference in ${rule} is not supported by RE2, kept v${STATE.policy.version}`, controls: snapshotControls(), yaml, sha: hex64(yaml), posture: post.score, cov: post.cov });
     STATE.policy.status = "rejected"; STATE.policy.rejectedV = v;
     adminAudit("policy_change", "rejected", "hmac:e61f2a90b7c35d28", "C30", `v${v} rejected`, "medium");
-    toast({ title: `Policy v${v} rejected · v${STATE.policy.version} stays active`, body: `RE2 refused <code>${esc(rule)}</code> (nested quantifier, catastrophic backtracking). Last-known-good keeps serving traffic; p95 overhead unchanged. Recorded as <code>policy_change{result: rejected}</code>.`, kind: "crit", ttl: 10000 });
+    toast({ title: `Policy v${v} rejected · v${STATE.policy.version} stays active`, body: `RE2 refused <code>${esc(rule)}</code> (backreferences are not RE2-compatible). Catastrophic patterns like <code>(a+)+$</code> are accepted but harmless: RE2 runs in linear time. Last-known-good keeps serving traffic; p95 overhead unchanged. Recorded as <code>policy_change{result: rejected}</code>.`, kind: "crit", ttl: 10000 });
     renderHeader(); if (RENDER[STATE.page]) RENDER[STATE.page]();
     setTimeout(() => { STATE.policy.status = "ok"; renderHeader(); }, 7000);
   }, reducedMotion() ? 30 : 500);

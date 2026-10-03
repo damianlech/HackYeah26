@@ -60,7 +60,7 @@ flowchart LR
   GW --> MCP
   GW --> OL
   POL -.-> GW
-  CT -.->|"reads audit, self-tests through lb"| GW
+  CT -.->|"self-tests through lb"| LB
 ```
 
 **Detection cascade** (spec §5). Every stage has a latency budget; the most restrictive verdict wins; detectors can only *add* restrictions:
@@ -74,7 +74,7 @@ flowchart LR
 | Types an ad-hoc jailbreak (Polish, base64, zero-width, Unicode tags) | Multi-view normaliser + signatures + classifier. The Playground shows every stage, score, threshold and ms. | §5.3, §12 beat 3 |
 | Pastes client data (PESEL, IBAN, card, AWS key) | Checksum-validated redaction (`[PL_PESEL]`, `[IBAN]`). Numbers with a bad checksum are left alone. | C06, C07 |
 | Edits `policy.yaml` (disable controls, change thresholds, `profile: strict`) | Applied on 2/2 replicas in < 2 s; posture delta; self-test GAP; `control_weakened` finding | §6.5, §6.6 |
-| Writes a broken edit (typo key, ReDoS regex) | Rejected; last-known-good config stays; red banner with the YAML path | C30 |
+| Writes a broken edit (typo key, regex with lookahead/backreference) | Rejected; last-known-good config stays; red banner with the YAML path. A catastrophic pattern like `(a+)+$` is accepted and **harmless**: RE2 runs in linear time, so ReDoS can't happen. | C30 |
 | Adds an attack signature to the feed | `make feed-publish` → signed, serial-checked, live in < 5 s; tampered bundle rejected | §8 |
 | Asks for telemetry | `Server-Timing` per stage, Prometheus, `reports/perf.md` (p50/p95 per stage) | §9.7, §10.6 |
 | Exhausts a budget | `429 billing_error`, `x-should-retry: false`, reset time. 200 concurrent requests → exactly 50 admitted across 2 replicas. | §7 |

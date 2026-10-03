@@ -70,10 +70,10 @@ flowchart LR
   IDP["SSO / OIDC<br/>(Keycloak, groups)"]
   CC & OW & PA -- "base_url + token" --> GW
   CC -- "pip / git / web via HTTPS_PROXY" --> SQ
-  SQ -- "may user U reach host H?" --> GW
+  SQ -. "may user U reach host H?" .-> GW
   GW --> OLL & MCP
   GW --- POL & LED & AUD
-  FEED -- "signed bundle" --> GW
+  GW -- "polls signed bundle" --> FEED
   GW -- "JWKS" --> IDP
 ```
 
