@@ -1,5 +1,5 @@
 gantt
-  title Mandate build plan, H0 = official start
+  title Mandate build plan, H0 = build start
   dateFormat HH:mm
   axisFormat H%H
   todayMarker off
@@ -17,49 +17,53 @@ gantt
   Final submission                    :milestone, m10, 21:00, 2m
   section L lead
   Repo contracts CI networks fence    :l1, 00:00, 120m
-  Case runner make test skeleton      :l2, 02:00, 180m
-  Control skeleton SSE header         :l3, 05:00, 120m
-  Playground endpoint                 :l7, 07:00, 60m
-  Live self-test                      :l5, 08:00, 150m
-  Invariant cases and gate buffer     :l4, 10:30, 90m
-  Posture coverage storyline test     :l6, 12:00, 240m
-  Clean room README PDF submit        :l9, 16:00, 330m
-  Sleep                               :crit, ls, 21:30, 150m
+  Case runner make test skeleton      :l2, 02:00, 150m
+  Control skeleton SSE header         :l3, 04:30, 120m
+  Playground endpoint                 :l7, 06:30, 60m
+  Live self-test                      :l5, 07:30, 150m
+  Invariant cases and gate buffer     :l4, 10:00, 120m
+  Posture coverage doctor storyline   :l6, 12:00, 240m
+  Clean room README PDF v1            :l9, 16:00, 120m
+  Nap                                 :crit, ls, 18:00, 90m
+  Repo public PDF v2 submit           :l10, 19:30, 90m
+  Rehearsals                          :l11, 21:00, 180m
   section A core
   App mock-llm policy engine          :a1, 01:00, 270m
   Identity runs lb basic stream       :a3, 05:30, 150m
   Pipeline holdback C12 tool hook     :a5, 08:00, 240m
   Canary P0 fixes P1 bench            :a7, 12:00, 240m
-  Clean-room fixes video              :a8, 16:00, 180m
-  Sleep                               :crit, as, 19:00, 150m
+  Clean-room fixes video              :a8, 16:00, 210m
+  Sleep                               :crit, as, 19:30, 150m
   section B guards feed audit
   Audit chain verify secrets          :b1, 01:00, 210m
-  Signatures normaliser destinations  :b3, 04:30, 270m
-  Threat queries feed service         :b5, 09:00, 180m
-  PII integrity exports P1 OCSF       :b6, 12:00, 240m
-  Sleep                               :crit, bs, 16:00, 180m
-  Cases docs rehearsal                :b8, 19:00, 120m
+  Signatures normaliser destinations  :b3, 04:30, 240m
+  C07 PII                             :b6, 08:30, 60m
+  Threat queries feed service         :b5, 09:30, 180m
+  Integrity exports policy history    :b7, 12:30, 180m
+  Sleep                               :crit, bs, 15:30, 150m
+  Cases docs rehearsal                :b8, 18:00, 180m
   section C models and money
-  Ledger Lua latency spike            :c1, 01:00, 240m
-  Hygiene doctor guard sidecar        :c2, 05:00, 240m
+  Ledger Lua latency guard stub       :c1, 01:00, 240m
+  Hygiene guard sidecar and client    :c2, 05:00, 240m
   kNN topic pack race test            :c4, 09:00, 180m
-  Artifact gate spend P1 guard LLM    :c5, 12:00, 240m
-  Clean-room fixes eval               :c7, 16:00, 180m
-  Sleep                               :crit, cs, 19:00, 150m
+  Artifact gate spend seed            :c5, 12:00, 240m
+  Clean-room fixes eval               :c7, 16:00, 210m
+  Sleep                               :crit, cs, 19:30, 150m
   section D agents and MCP
   MCP spike core demo servers         :d1, 01:00, 180m
   Tools core and MCP call path        :d3, 04:00, 240m
   Taint provenance run state          :d4, 08:00, 180m
   Gate buffer                         :d9, 11:00, 60m
-  Pins honeypot servers validators    :d5, 12:00, 180m
-  P1 approvals C34                    :d6, 15:00, 60m
-  Sleep                               :crit, ds, 16:00, 180m
-  Cases rehearsal                     :d8, 19:00, 120m
+  Pins honeypot validators CLI        :d5, 12:00, 210m
+  Sleep                               :crit, ds, 15:30, 150m
+  Cases rehearsal                     :d8, 18:00, 180m
   section F console
   Brief and Claude Design             :f1, 00:30, 90m
-  Scaffold header Threats live        :f2, 02:00, 210m
+  Scaffold header Threats live        :f2, 02:00, 120m
+  Playground on fixtures              :f5, 04:00, 90m
   Sleep                               :crit, fs, 05:30, 180m
-  Drawer and Playground               :f3, 08:30, 330m
-  Overview spend panel                :f6, 14:00, 60m
-  Controls and Self-test              :f7, 15:00, 60m
+  Drawer                              :f3, 08:30, 180m
+  Playground live call                :f5b, 11:30, 60m
+  Overview spend panel                :f6, 12:30, 120m
+  Controls table and Run button       :f7, 14:30, 60m
   CSS screenshots video slides        :f8, 16:00, 300m

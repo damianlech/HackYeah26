@@ -258,7 +258,7 @@ flowchart LR
         <li><span class="time">3:00 <span class="star">★</span></span><span>Judge switches off every AI detector in <code>policy.yaml</code>. The model now follows the injection, yet the mail is still denied. Detectors are evidence; authority is the guarantee. <span class="ctl">C30 C24</span></span></li>
         <li><span class="time">3:50</span><span>Judge relaxes C24 → "S4 EXPOSED"; typo key and non-RE2 regex → rejected, last-known-good kept; <code>(a+)+$</code> is harmless (RE2 is linear time). <span class="ctl">C30 C32</span></span></li>
         <li><span class="time">4:20</span><span>Poisoned MCP tool quarantined; rug pull shows a diff; honeypot call kills the run. <span class="ctl">C15 C31 C26</span></span></li>
-        <li><span class="time">4:50</span><span>Malicious pickle blocked, truncated pickle fails closed; Ray RCE request denied; new feed rule live in under 5 s; tampered bundle rejected. <span class="ctl">C18 C19 C20</span></span></li>
+        <li><span class="time">4:50 <span class="star">★</span></span><span><b>★ cut runs a 30 s "8-lite":</b> <code>aicl scan evil.pt</code> blocked + one feed rule published live. Full beat: malicious pickle blocked, truncated pickle fails closed; Ray RCE request denied; new feed rule live in under 5 s; tampered bundle rejected. <span class="ctl">C18 C19 C20</span></span></li>
         <li><span class="time">5:30</span><span>Runaway loop stopped; race tile: 200 fired, 50 admitted, 0% overshoot across 2 replicas. <span class="ctl">C03 C04 C05</span></span></li>
         <li><span class="time">6:00 <span class="star">★</span></span><span>Audit tamper caught at the exact seq; guard stopped → DEGRADED, exfiltration still denied; Run self-test. <span class="ctl">C25 C32</span></span></li>
         <li><span class="time">6:40 <span class="star">★</span></span><span>Adoption and scale: one base_url, one MCP URL, managed settings, K8s mapping, permissive licences, offline. Residual-risk slide.</span></li>
@@ -323,7 +323,7 @@ flowchart LR
         </div>
         <div class="panel">
           <h3>Never cut</h3>
-          <p>The guarantees (fence, taint + provenance, run tokens, admin isolation, detectors-off test); C01–C10, C12, C14–C17, C19, C20, C25, C26, C30, C32; hermetic <code>make test</code>; live self-test; header + Threats + Playground; storyline test; offline mode; two replicas and the race test.</p>
+          <p>The guarantees (fence, taint + provenance, run tokens, admin isolation, detectors-off test); C01–C10, C12, C14–C17, C19, C20, C25, C26, C30, C32; hermetic <code>make test</code>; live self-test; header + Threats + Playground; storyline test; offline mode; two replicas and the race test. Added after the final review so every formal requirement stays demonstrable: the C11 topic-pack floor, C18 lite (pickle allowlist, fail-closed), Overview KPI tiles with spend, the Controls table + Run self-test, and export + Verify.</p><p class="note">Short on time? <code>docs/09-plan-a-p0-lite.md</code> is a 54 h P0-lite plan that grows the team's <code>poc/</code> into the product.</p>
           <h3 style="margin-top:12px">Cut first</h3>
           <p>P1 items from the bottom of the ranked list, then console extras, then the guard-LLM lane, then obfuscation breadth, then artifact-gate depth.</p>
         </div>

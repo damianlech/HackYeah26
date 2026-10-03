@@ -1,7 +1,7 @@
 # Mandate: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
 
 > **Agents get mandates, not keys.**
-> This is a **brainstorm and vision repo**: research, design, mockups, examples and a build plan. The only runnable code is **[`poc/`](poc/)**, a minimal slice: one gateway, guard service and mock LLM, hot-reloaded policy, the shared signature feed and a 9-scenario demo. The real build follows the spec.
+> This is a **brainstorm and vision repo**: research, design, mockups, examples and a build plan. Runnable prototypes: **[`poc/`](poc/)** (gateway + guard + mock LLM, hot-reloaded policy, the shared feed, a 9-scenario demo) and **[`claude-proxy/`](claude-proxy/)** (3-layer proxy for Claude traffic). The real build follows the spec.
 > The canonical build contract is **[`design/VISION-SPEC.md`](design/VISION-SPEC.md)**. If anything here disagrees with it, the spec wins.
 > **Mandate** is a working name. The code namespace is `aicl`, so a rename is a string replace in docs and UI.
 > Visual briefing: open `mockups/vision.html` locally · Console mockup: `mockups/dashboard.html` (owner-only artifact links, share before using: https://claude.ai/artifact/NG9SugZGzpss3vUFUXCpAQ, https://claude.ai/artifact/UaYuSmfY1PiRhrtHtshxod)
@@ -87,6 +87,7 @@ flowchart LR
 | Who | Read (in order) | Time |
 |---|---|---|
 | **Everyone** | this README → [`docs/00-task-analysis.md`](docs/00-task-analysis.md) → [`docs/01-review-of-our-first-idea.md`](docs/01-review-of-our-first-idea.md) → [`design/VISION-SPEC.md`](design/VISION-SPEC.md) §0–§2 → your card in [`docs/04-lane-cards.md`](docs/04-lane-cards.md) → [`docs/08`](docs/08-setup-and-pre-event-checklist.md) §0 "Before the event" + your rows | ≈ 60 min, before H0 |
+| **Everyone, if the deadline is 11:00** | [`docs/09-plan-a-p0-lite.md`](docs/09-plan-a-p0-lite.md): a 54 h P0-lite plan that evolves `poc/`, with per-lane tables. It overrides the WP times in the cards. | 15 min |
 | **L** (lead / integrator) | spec §3, §10–§13, [`docs/06-open-questions.md`](docs/06-open-questions.md), [`docs/05-pitch-and-submission.md`](docs/05-pitch-and-submission.md) | |
 | **A** (gateway core, streaming) | spec §3, §5, §5.7 wire contract, §6.5 hot reload, [`research/R7`](research/R7-budget-streaming-performance.md) | |
 | **B** (deterministic detection, feed, audit) | spec §5.3, §5.6, §6.6, §8, §9.1-9.2, §9.6, §11.3 (B rows); [`examples/feed/signatures.yaml`](examples/feed/signatures.yaml), [`examples/audit/`](examples/audit/). Reference later, not in the first hour: [`research/R2`](research/R2-historical-attacks.md) §2.3-2.6 (rule provenance); [`research/R9`](research/R9-reporting-audit-dashboards.md) (old control numbering, see FACT-CHECK E4) | |
@@ -96,7 +97,15 @@ flowchart LR
 
 Skip in the first hour: `design/proposals`, `design/judging`, `docs/03`, `docs/07`, `research/R1-R9`, `poc/WALKTHROUGH.md`, and any spec section not on your row.
 
-**Where the code goes.** This repo is pre-event research; leave it as is. Product code starts at H0 in the new `aicl` repo that L creates at H0:30 (spec §3.9, Q16). `CLAUDE.md` and `contracts/` appear there between H0:30 and H1; L posts the contract drafts in team chat before H0, so producers can read their own files before sign-off. `poc/` is the lead's pre-event exploration: read it to see the request flow. Whether any of its code may be reused depends on the organisers' answer to A4/Q16 and the lead's call at H0; never port its deliberate shortcuts (Python `re`, plaintext keys, in-memory check-then-charge budgets, 403 blocks). Data seeds you may copy: `examples/audit/aicl-audit-v1.schema.json` (already has the H1 + v1.1 deltas), `examples/feed/signatures.yaml` → `feed/rules/`, `examples/tests/c07_pii.yaml`, `examples/policy.yaml`.
+**Where the code goes.** This repo holds the research and design; keep it as the reference. Product code goes into a clean tree with the spec §3.9 layout, either a new `aicl` repo or an `aicl/` directory here. L decides at H0:30. `CLAUDE.md` and `contracts/` are created there between H0:30 and H1. Two prototypes already exist here:
+- [`poc/`](poc/): a minimal slice with a gateway, guard service and mock LLM, hot reload, the shared feed and a 9-scenario demo.
+- [`claude-proxy/`](claude-proxy/): a 3-layer proxy for Claude's Anthropic `/v1/messages` traffic. It terminates TLS at our endpoint, runs an audit and policy step with a harm-score service (simulated "JEV"), and swaps the virtual key for the real one on egress.
+
+**If the deadline is 11:00 Oct 4** (plan (a)), [`docs/09-plan-a-p0-lite.md`](docs/09-plan-a-p0-lite.md) recommends growing `poc/` into the product rather than starting from scratch, subject to the organisers' answer on reusing prior work (A4/Q16). Never port the prototypes' deliberate shortcuts: Python `re`, plaintext keys, in-memory check-then-charge budgets, and 403 instead of the spec's error contract. Data seeds you may copy as-is:
+- `examples/audit/aicl-audit-v1.schema.json`
+- `examples/feed/signatures.yaml` (into `feed/rules/`)
+- `examples/tests/c07_pii.yaml`
+- `examples/policy.yaml`
 
 ## 5. Repo map
 
@@ -117,6 +126,7 @@ docs/
   06-open-questions.md            questions for organizers, team decisions, checkpoint decisions
   07-ideas-parking-lot.md         every good idea not in P0, with value/cost, and a post-hackathon roadmap
   08-setup-and-pre-event-checklist.md  laptops, models to pre-pull, offline kit, licences, demo-day checklist
+  09-plan-a-p0-lite.md            if the deadline is 11:00 Oct 4: 54 h P0-lite plan built by evolving poc/, per-lane tables
   dashboard-design-brief.md       brief + API contract + Claude Design prompt for the console
 examples/
   policy.yaml                     documented sample policy: profiles permissive/balanced/strict, budgets, tools, destinations
@@ -125,6 +135,7 @@ examples/
   tests/c07_pii.yaml              data-driven test cases (positive = allowed, negative = blocked/redacted)
   audit/                          aicl.audit/v1 JSON Schema + example event (validates)
   agent-config/                   Claude Code managed settings + MCP, Codex, Python SDK, Open WebUI, Squid shadow-AI sensor (P2)
+claude-proxy/                     prototype: 3-layer Claude (/v1/messages) proxy: TLS termination, audit + harm-score (simulated JEV), key-swapping egress
 poc/                              runnable minimal slice (gateway + guard-svc + mock LLM, ./poc/run.sh + ./poc/demo.sh); no streaming, in-memory budgets
 mockups/dashboard.html            clickable 11-page console mockup (real client-side detectors in the Playground); P0 builds 4:
                                   Overview (+ spend panel from #spend), Threats, Controls & Self-test (#controls read-only
