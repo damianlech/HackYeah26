@@ -12,7 +12,7 @@
 > Files in this folder:
 > - [`contract.md`](contract.md): the gate API, 1 page.
 > - [`pipeline.example.yaml`](pipeline.example.yaml): your word-filter example, written out.
-> - [`mockups/pipeline-builder.html`](mockups/pipeline-builder.html): admin builder plus request simulator.
+> - [`mockups/pipeline-builder.html`](mockups/pipeline-builder.html): admin builder plus request simulator, published at https://claude.ai/artifact/LFZfw2beasERryqkeCcoyE (private; share it from the page's Share menu).
 > - [`bench/RESULTS.md`](bench/RESULTS.md): latency numbers.
 > - [`diagrams/`](diagrams/): the diagrams below.
 
@@ -41,6 +41,7 @@
 | 4 | **Gate down = undefined** | JEV times out: is that allow or deny? Today each gate would decide differently | Per gate: `timeout_ms` + `on_error: deny / allow / skip`, default **deny**. The audit records `error` and what was done. Judges will kill a service to test this | 20 min |
 | 5 | **Only the request is checked** | The model can output PII, "Goldman Sachs", a markdown-image exfiltration link or a dangerous tool call, and nothing sees it. The budget can't be settled either | A `response:` gate list with the same contract (`phase: response`). For now, buffer streamed answers, as `claude-proxy` already does | 1 h |
 | 6 | **Budget is check-then-charge** | `claude-proxy/l2_audit.py` checks `spent + worst > budget` and charges after the answer. Ten parallel requests all pass the check and overspend together | budget_check **reserves** with an atomic increment (a dict + `asyncio.Lock` for the demo, Redis/Valkey later); budget_settle fixes it to the real usage | 1 h |
+| 6b | **A deny on the answer leaks the reservation** (found while building the mockup) | If a response gate (e.g. a leak filter) denies before `budget_settle` runs, that request's reservation is never released, and the user's budget shrinks by money that was never spent | The runner calls `budget_settle` (and writes the audit record) in a `finally` block, whatever happened before it: deny, gate error or upstream error | 15 min |
 | 7 | **Admin can build a broken pipeline** | Remove auth: everything is anonymous. budget_check before auth: no user to charge. JEV before the cheap filters: you pay JEV for requests a regex would deny. A normalizer after the filters: `S​LUR` with a zero-width space walks through | `pinned` gates (auth first, budget_settle last). Gates declare `needs` / `provides` in `/describe`, and the builder validates the order and shows warnings. See the mockup | 1 h |
 | 8 | **A modify can rewrite anything** | A buggy or compromised gate returns a body with another `model`, extra `tools`, a new `system` prompt, or invalid JSON that the upstream rejects | Validate `output` against the API schema and diff it against `input`. A gate may only change the paths it declares (`messages[*].content`). Store the diff in the audit record | 45 min |
 | 9 | **Filters run on raw JSON** | A regex over the serialized body can match keys, tool schemas or the system prompt, can break JSON escaping when masking, and rescans the whole history every turn | Gates work on the **text segments** of the messages, with role and path; the pipeline writes changes back. Optional `scope: [user, tool]` | 1 h |
@@ -74,7 +75,8 @@ Each gate instance can carry its own `tests` (deny lines / allow lines) that the
 
 1. Gates declare `stateful: true` in `/describe` (auth, budget, rate_limit). The runner **never re-runs** them on a restart.
 2. A restart re-runs only the **content** gates (filters, normalize, pii, jev).
-3. Stop at `max_restarts`, or when the input hash didn't change (fixpoint). Recommended default: `on_modify: continue`, and put `normalize` early so restarts are rarely needed.
+3. Stop at `max_restarts`, or when the input hash didn't change (fixpoint). Decide what hitting the cap means:
+   carry on with the latest input (the mockup does this), or deny under a strict policy. Recommended default: `on_modify: continue`, and put `normalize` early so restarts are rarely needed.
 
 ## 5. Latency: measured, not guessed
 

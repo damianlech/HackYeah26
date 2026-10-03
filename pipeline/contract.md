@@ -127,3 +127,5 @@ async def run(pipe, phase, body, ctx):
 `Answer(decision="deny"|"allow", reason="gate error: ...")` according to `g.on_error`, and `skip` behaves like `allow`.
 The full trail (instance id, type, decision, reason, ms, diff) goes into **one audit record per request**, together with
 `pipeline.version`. That record is what the judges asked to see.
+Wrap the whole request in `try / finally`: `budget_settle` and the audit write run in `finally`, so a deny, a gate error or an upstream
+error never leaks a budget reservation or loses an audit record.
