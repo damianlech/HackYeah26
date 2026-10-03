@@ -1,0 +1,11 @@
+python 3.11.15 x86_64 x86_64
+ReDoS ^(a+)+$ n=18: python re      12.4 ms | google-re2  0.190 ms
+ReDoS ^(a+)+$ n=20: python re      48.5 ms | google-re2  0.124 ms
+ReDoS ^(a+)+$ n=22: python re     201.8 ms | google-re2  0.129 ms
+ReDoS ^(a+)+$ n=24: python re     737.1 ms | google-re2  0.147 ms
+ReDoS ^(a|a)*$ n=22: python re     380.2 ms | google-re2  0.196 ms
+regex module ^(a|a)*$ n=40 with timeout=50ms: TimeoutError after 50.8 ms
+48 patterns over 2k chars: py-re loop    0.56 ms | re2 loop    0.20 ms | py-re union findall    0.69 ms | hyperscan   0.00 ms (median)
+48 patterns over 20k chars: py-re loop    5.53 ms | re2 loop    1.14 ms | py-re union findall    7.49 ms | hyperscan   0.01 ms (median)
+48 patterns over 200k chars: py-re loop   55.72 ms | re2 loop   10.67 ms | py-re union findall   69.47 ms | hyperscan   0.06 ms (median)
+20k keywords over 20k chars: python 'in' loop    174.0 ms | pyahocorasick   0.34 ms

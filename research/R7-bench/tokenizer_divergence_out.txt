@@ -1,0 +1,6 @@
+text        chars chars/4 claude-legacy mistral-sp32k tekken131k max/min  chars/4 err vs tekken
+english       247      62            54            58         54    1.07                    15%
+polish        258      64           115           107         82    1.40                   -22%
+python        232      58            61            75         59    1.27                    -2%
+json_tool     173      43            68            88         82    1.29                   -48%
+pesel_iban    103      26            38            79         77    2.08                   -66%

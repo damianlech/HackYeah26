@@ -1,0 +1,6 @@
+{"url": "http://127.0.0.1:9101", "mode": "pass", "n": 40, "c": 1, "max_tokens": 50, "delay": 0.02, "rps": 0.97, "ttfb_p50": 2.11, "ttfb_p99": 4.51, "total_p50": 1025.91, "total_p99": 1032.27, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "pass", "n": 40, "c": 1, "max_tokens": 50, "delay": 0.02, "rps": 0.97, "ttfb_p50": 3.99, "ttfb_p99": 5.11, "total_p50": 1026.31, "total_p99": 1036.77, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "scan", "n": 40, "c": 1, "max_tokens": 50, "delay": 0.02, "rps": 0.97, "ttfb_p50": 208.67, "ttfb_p99": 211.74, "total_p50": 1026.34, "total_p99": 1036.48, "blocked": 0}
+{"url": "http://127.0.0.1:9101", "mode": "pass", "n": 640, "c": 64, "max_tokens": 50, "delay": 0.02, "rps": 57.37, "ttfb_p50": 6.49, "ttfb_p99": 615.36, "total_p50": 1028.06, "total_p99": 1631.22, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "pass", "n": 640, "c": 64, "max_tokens": 50, "delay": 0.02, "rps": 57.74, "ttfb_p50": 9.66, "ttfb_p99": 615.98, "total_p50": 1032.07, "total_p99": 1632.96, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "scan", "n": 640, "c": 64, "max_tokens": 50, "delay": 0.02, "rps": 57.15, "ttfb_p50": 215.48, "ttfb_p99": 855.25, "total_p50": 1032.29, "total_p99": 1669.54, "blocked": 0}

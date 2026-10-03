@@ -1,0 +1,35 @@
+onnxruntime 1.30.0, cpus=4
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+## MiniLM-L6 (all-MiniLM-L6-v2 class): params~22.4M, fp32 file 89 MB, int8 file 22 MB
+threads=4 seq=64: fp32 p50=7.9ms p95=11.0ms | int8 p50=3.1ms p95=4.0ms
+threads=4 seq=200: fp32 p50=15.6ms p95=25.4ms | int8 p50=10.3ms p95=25.3ms
+threads=4 seq=512: fp32 p50=39.6ms p95=67.3ms | int8 p50=33.8ms p95=58.4ms
+threads=1 seq=64: fp32 p50=15.8ms p95=18.6ms | int8 p50=7.5ms p95=9.9ms
+threads=1 seq=200: fp32 p50=46.2ms p95=54.6ms | int8 p50=24.4ms p95=26.8ms
+threads=1 seq=512: fp32 p50=153.7ms p95=172.3ms | int8 p50=89.6ms p95=102.8ms
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+## BERT-small-12L-384 (bge-small class): params~33.0M, fp32 file 132 MB, int8 file 33 MB
+threads=4 seq=64: fp32 p50=14.9ms p95=26.4ms | int8 p50=6.7ms p95=14.1ms
+threads=4 seq=200: fp32 p50=43.4ms p95=66.9ms | int8 p50=20.9ms p95=34.5ms
+threads=4 seq=512: fp32 p50=103.5ms p95=153.5ms | int8 p50=54.7ms p95=139.6ms
+threads=1 seq=64: fp32 p50=34.4ms p95=43.1ms | int8 p50=14.7ms p95=22.4ms
+threads=1 seq=200: fp32 p50=92.6ms p95=102.1ms | int8 p50=54.7ms p95=69.9ms
+threads=1 seq=512: fp32 p50=294.3ms p95=327.1ms | int8 p50=185.4ms p95=209.6ms
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+## DeBERTa-v3-xsmall (Prompt Guard 2 22M class): params~74.2M, fp32 file 297 MB, int8 file 75 MB
+threads=4 seq=64: fp32 p50=18.3ms p95=30.0ms | int8 p50=13.2ms p95=18.6ms
+threads=4 seq=200: fp32 p50=57.8ms p95=78.9ms | int8 p50=39.7ms p95=61.8ms
+threads=4 seq=512: fp32 p50=199.9ms p95=257.0ms | int8 p50=117.2ms p95=160.2ms
+threads=1 seq=64: fp32 p50=39.0ms p95=44.1ms | int8 p50=23.0ms p95=24.7ms
+threads=1 seq=200: fp32 p50=111.8ms p95=138.6ms | int8 p50=72.9ms p95=82.3ms
+threads=1 seq=512: fp32 p50=337.3ms p95=349.2ms | int8 p50=256.7ms p95=289.5ms
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+
+## DeBERTa-v3-base (PG2 86M / protectai v2 class): params~198.0M, fp32 file 792 MB, int8 file 199 MB
+threads=4 seq=64: fp32 p50=67.1ms p95=86.2ms | int8 p50=31.2ms p95=39.5ms
+threads=4 seq=200: fp32 p50=164.5ms p95=262.2ms | int8 p50=92.0ms p95=144.0ms
+threads=4 seq=512: fp32 p50=406.1ms p95=475.7ms | int8 p50=234.0ms p95=267.6ms
+threads=1 seq=64: fp32 p50=135.6ms p95=153.3ms | int8 p50=59.6ms p95=66.3ms

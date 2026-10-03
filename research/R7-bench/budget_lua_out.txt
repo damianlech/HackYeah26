@@ -1,0 +1,5 @@
+reserve+settle pairs: 5000 @ concurrency 1: 2,660 pairs/s; per pair p50 0.30 ms p99 1.24 ms; denied=0
+reserve+settle pairs: 20000 @ concurrency 16: 4,009 pairs/s; per pair p50 3.09 ms p99 7.03 ms; denied=0
+reserve+settle pairs: 20000 @ concurrency 64: 4,293 pairs/s; per pair p50 11.30 ms p99 22.91 ms; denied=0
+user counter after run (micro-USD): b'30000000' limit 50000000
+race test: allowed 50 of 200 (expected 50)

@@ -1,0 +1,6 @@
+{"url": "http://127.0.0.1:9101", "mode": "pass", "n": 300, "c": 1, "rps": 183.01, "ttfb_p50": 1.36, "ttfb_p99": 4.58, "total_p50": 4.9, "total_p99": 11.13, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "pass", "n": 300, "c": 1, "rps": 121.85, "ttfb_p50": 2.99, "ttfb_p99": 4.72, "total_p50": 7.61, "total_p99": 16.77, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "scan", "n": 300, "c": 1, "rps": 68.28, "ttfb_p50": 4.27, "ttfb_p99": 8.41, "total_p50": 13.9, "total_p99": 23.03, "blocked": 0}
+{"url": "http://127.0.0.1:9101", "mode": "pass", "n": 2000, "c": 32, "rps": 170.38, "ttfb_p50": 118.93, "ttfb_p99": 707.31, "total_p50": 129.32, "total_p99": 715.18, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "pass", "n": 2000, "c": 32, "rps": 116.84, "ttfb_p50": 185.02, "ttfb_p99": 1022.3, "total_p50": 203.44, "total_p99": 1043.85, "blocked": 0}
+{"url": "http://127.0.0.1:9100", "mode": "scan", "n": 2000, "c": 32, "rps": 86.93, "ttfb_p50": 301.41, "ttfb_p99": 418.43, "total_p50": 359.45, "total_p99": 501.2, "blocked": 0}

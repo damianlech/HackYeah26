@@ -1,0 +1,52 @@
+quantized gguf/lg3-1b-q8.gguf: 872M
+quantized gguf/lg3-1b-q4km.gguf: 548M
+quantized gguf/qwen3-4b-q4km.gguf: 2.4G
+quantized gguf/llama-8b-q4km.gguf: 4.6G
+/dev/vda        252G   20G   20G  51% /
+== llama-bench qwen3-0.6b-q4km 11:47:55
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| qwen3 0.6B Q4_K - Medium       | 372.65 MiB |   596.05 M | CPU        |       4 |           pp128 |       297.97 ± 12.20 |
+| qwen3 0.6B Q4_K - Medium       | 372.65 MiB |   596.05 M | CPU        |       4 |           pp512 |        279.37 ± 3.38 |
+| qwen3 0.6B Q4_K - Medium       | 372.65 MiB |   596.05 M | CPU        |       4 |            tg32 |         41.55 ± 2.06 |
+== llama-bench lg3-1b-q8 11:48:04
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| llama ?B Q8_0                  | 871.98 MiB |   860.41 M | CPU        |       4 |           pp128 |       187.09 ± 27.84 |
+| llama ?B Q8_0                  | 871.98 MiB |   860.41 M | CPU        |       4 |           pp512 |       211.38 ± 24.68 |
+| llama ?B Q8_0                  | 871.98 MiB |   860.41 M | CPU        |       4 |            tg32 |         29.01 ± 2.88 |
+== llama-bench lg3-1b-q4km 11:48:18
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| llama ?B Q4_K - Medium         | 547.19 MiB |   860.41 M | CPU        |       4 |           pp128 |       278.49 ± 23.87 |
+| llama ?B Q4_K - Medium         | 547.19 MiB |   860.41 M | CPU        |       4 |           pp512 |        290.74 ± 8.78 |
+| llama ?B Q4_K - Medium         | 547.19 MiB |   860.41 M | CPU        |       4 |            tg32 |         37.29 ± 3.74 |
+== llama-bench qwen3-4b-q4km 11:48:29
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | CPU        |       4 |           pp128 |         48.98 ± 0.71 |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | CPU        |       4 |           pp512 |         46.52 ± 3.16 |
+| qwen3 4B Q4_K - Medium         |   2.32 GiB |     4.02 B | CPU        |       4 |            tg32 |          8.03 ± 0.31 |
+== llama-bench llama-8b-q4km 11:49:32
+| model                          |       size |     params | backend    | threads |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | --------------: | -------------------: |
+| llama 8B Q4_K - Medium         |   4.58 GiB |     8.03 B | CPU        |       4 |           pp128 |         22.27 ± 0.61 |
+| llama 8B Q4_K - Medium         |   4.58 GiB |     8.03 B | CPU        |       4 |           pp512 |         23.54 ± 0.51 |
+| llama 8B Q4_K - Medium         |   4.58 GiB |     8.03 B | CPU        |       4 |            tg32 |          4.82 ± 0.19 |
+== encoder re-run 11:51:23
+## DeBERTa-v3-base (PG2 86M / protectai v2 class)
+threads=4 seq=64: fp32 p50=62.2ms p95=74.7ms | int8 p50=28.9ms p95=45.2ms
+threads=4 seq=200: fp32 p50=161.6ms p95=213.8ms | int8 p50=100.4ms p95=171.6ms
+threads=4 seq=512: fp32 p50=472.0ms p95=632.7ms | int8 p50=278.7ms p95=331.3ms
+threads=1 seq=64: fp32 p50=130.6ms p95=142.4ms | int8 p50=61.1ms p95=64.7ms
+threads=1 seq=200: fp32 p50=376.7ms p95=397.7ms | int8 p50=197.9ms p95=205.0ms
+threads=1 seq=512: fp32 p50=1137.0ms p95=1263.3ms | int8 p50=649.9ms p95=683.8ms
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+## mDeBERTa-v3-base (PG2 86M multilingual / GLiNER-multi class)
+threads=4 seq=64: fp32 p50=57.6ms p95=89.6ms | int8 p50=31.0ms p95=70.7ms
+threads=4 seq=200: fp32 p50=173.7ms p95=221.5ms | int8 p50=75.2ms p95=107.1ms
+threads=4 seq=512: fp32 p50=451.0ms p95=557.0ms | int8 p50=244.1ms p95=304.6ms
+threads=1 seq=64: fp32 p50=131.8ms p95=167.2ms | int8 p50=59.8ms p95=65.3ms
+threads=1 seq=200: fp32 p50=395.5ms p95=428.6ms | int8 p50=195.3ms p95=213.7ms
+threads=1 seq=512: fp32 p50=1146.4ms p95=1238.7ms | int8 p50=620.4ms p95=670.6ms
+== ALL DONE Sat Oct  3 11:56:36 UTC 2026

@@ -1,0 +1,4 @@
+port 9100 mode pass: gateway CPU 6.68s for 1001 streams of 200 chunks -> 6.67 ms CPU/stream (33 us/chunk); driver rps 144.24
+port 9100 mode scan: gateway CPU 11.24s for 1001 streams of 200 chunks -> 11.23 ms CPU/stream (56 us/chunk); driver rps 87.6
+port 9102 mode pass: gateway CPU 3.79s for 1001 streams of 200 chunks -> 3.79 ms CPU/stream (19 us/chunk); driver rps 174.43
+port 9102 mode scan: gateway CPU 7.30s for 1001 streams of 200 chunks -> 7.29 ms CPU/stream (36 us/chunk); driver rps 159.47
