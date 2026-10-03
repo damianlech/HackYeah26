@@ -1,10 +1,13 @@
-# Warden POC — the ONE policy source. Edit and save: the gateway hot-reloads on the next request.
+# Mandate POC — the ONE policy source. Edit and save: the gateway hot-reloads on the next request.
 # A broken edit is rejected and the last-known-good policy stays active (see GET /control/status).
-schema: warden.policy/v0-poc
+schema: mandate.policy/v0-poc
 
 upstreams:                       # model prefix -> OpenAI-compatible base URL
   mock:   http://127.0.0.1:9000/v1
   ollama: http://127.0.0.1:11434/v1   # works if you run Ollama locally
+
+output:                          # hosts the model's answer may link/embed (feed rule SIG-0002, control C12)
+  url_allowlist: [intranet.bank.example, cdn.bank.example]
 
 identities:                      # virtual keys (POC: plaintext; real thing: sha256 / OIDC)
   sk-alice: { user: alice, groups: [support] }
@@ -36,6 +39,7 @@ controls:
     enabled: true
     feed: ../examples/feed/signatures.yaml
     disabled_rules: []                           # e.g. [SIG-0002]
+    action_overrides: {}                         # e.g. {SIG-0002: block} = strict profile (feed default: redact)
 
   guard:                                         # semantic check, REMOTE service (guard_svc.py)
     enabled: true

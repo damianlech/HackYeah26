@@ -1,4 +1,4 @@
-# Warden POC: a minimal slice of the AI Control Layer
+# Mandate POC: a minimal slice of the AI Control Layer
 
 One gateway that takes an OpenAI-style request, runs it through a configurable pipeline of controls,
 modifies or blocks it, and forwards it upstream. The model's answer then goes through the same
@@ -27,8 +27,9 @@ Diagrams of the flow and 16 step-by-step test scenarios: **[WALKTHROUGH.md](WALK
 | Claim | How to see it |
 |---|---|
 | The gateway **modifies** requests before forwarding | The mock LLM echoes what it received: injected system prompt, `max_tokens` clamped, PII replaced by `[EMAIL]`, `[PL_PESEL]`, `[CARD]` |
-| It **blocks** requests | Prompt injection (guard), s1ngularity prompt (SIG-0012 from `examples/feed/signatures.yaml`), disallowed model |
-| It governs the **response** too | `"leak"` makes the mock return PII and a markdown-image exfil link: SIG-0002 blocks it, or PII gets redacted |
+| It **blocks** requests | Prompt injection EN+PL (guard), s1ngularity prompt (SIG-0012), investment-advice topic pack (SIG-0018), disallowed model |
+| It governs the **response** too | `"leak"` makes the mock return PII and a markdown-image exfil link: SIG-0002 strips the link and PII is redacted. In the strict profile (`action_overrides`) the answer is blocked |
+| The external **feed** is shared, not copied | Rules come from the team's `examples/feed/signatures.yaml`. Each compiled rule's own test vectors run on load, and unsupported rule types are listed in `/control/status` |
 | Controls are **separate services** | `guard` is a remote HTTP service. `on_error: closed` blocks if it's down |
 | One **policy source**, live control | `PATCH /control/controls/{name}` or edit `policy.yaml` by hand. The next request uses the new policy. A broken edit is rejected and the last-known-good policy stays active |
 | Pipeline is **configurable** | Reorder or remove steps under `pipeline:` in `policy.yaml` |

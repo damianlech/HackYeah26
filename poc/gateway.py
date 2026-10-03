@@ -1,4 +1,4 @@
-"""Warden POC gateway: one OpenAI-compatible endpoint that runs every request and response
+"""Mandate POC gateway: one OpenAI-compatible endpoint that runs every request and response
 through a pipeline of controls defined in policy.yaml, then forwards it upstream.
 
 Data plane:    POST /v1/chat/completions, GET /v1/models
@@ -12,10 +12,12 @@ import os
 import re
 import threading
 import time
+import unicodedata
 import uuid
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 import yaml
@@ -24,8 +26,8 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 HERE = Path(__file__).parent
-POLICY_PATH = Path(os.environ.get("WARDEN_POLICY", HERE / "policy.yaml"))
-AUDIT_PATH = Path(os.environ.get("WARDEN_AUDIT", HERE / "audit.jsonl"))
+POLICY_PATH = Path(os.environ.get("MANDATE_POLICY", HERE / "policy.yaml"))
+AUDIT_PATH = Path(os.environ.get("MANDATE_AUDIT", HERE / "audit.jsonl"))
 
 
 # ---------------------------------------------------------------- policy store (hot reload)
@@ -41,6 +43,7 @@ class PolicyStore:
         self.sha = None
         self.loaded_at = None
         self.signatures = []
+        self.feed_report = {}
         self.error = None
 
     def get(self):
@@ -62,32 +65,82 @@ class PolicyStore:
             for step in policy["pipeline"]["request"] + policy["pipeline"]["response"]:
                 if step not in STEPS:
                     raise ValueError(f"unknown pipeline step '{step}'")
-            signatures = load_signatures(policy)
+            signatures, feed_report = load_signatures(policy)
         except Exception as e:  # keep last-known-good
             self.error = f"{type(e).__name__}: {e}"
             print(f"[policy] REJECTED edit, keeping {self.sha}: {self.error}")
             if self.policy is None:
                 raise
             return
-        self.policy, self.signatures, self.error = policy, signatures, None
+        self.policy, self.signatures, self.feed_report, self.error = policy, signatures, feed_report, None
         self.sha = hashlib.sha256(raw).hexdigest()[:12]
         self.loaded_at = time.strftime("%H:%M:%S")
-        print(f"[policy] loaded {self.sha} ({len(signatures)} signatures)")
+        print(f"[policy] loaded {self.sha} ({len(signatures)} signatures, "
+              f"{len(feed_report['skipped'])} skipped, {len(feed_report['selftest_failed'])} failed self-test)")
+
+
+LEET = str.maketrans("013457@$", "oieastas")
+
+
+def fold(text):
+    """The spec's `folded` view (VISION-SPEC §5.3, simplified): lowercase, Polish diacritics, leetspeak."""
+    text = unicodedata.normalize("NFKD", text.lower().replace("ł", "l"))
+    return "".join(c for c in text if not unicodedata.combining(c)).translate(LEET)
+
+
+# markdown image/link, <img src>/<a href>, <autolink>
+URL_SPAN = re.compile(r"!?\[[^\]]*\]\((?P<md>[^)\s]+)[^)]*\)"
+                      r"|<(?:img|a)\b[^>]*?(?:src|href)=[\"']?(?P<html>[^\"'\s>]+)[^>]*>"
+                      r"|<(?P<auto>https?://[^>\s]+)>")
+
+
+def compile_rule(rule, policy):
+    """Return find(text) -> [(span or None, label)], or None if the POC can't evaluate this rule type."""
+    kind, match = rule["type"], rule.get("match", {})
+    if kind == "regex":
+        # feed patterns are RE2: translate \x{E0000} escapes to Python's \U000E0000
+        rx = re.compile(re.sub(r"\\x\{([0-9A-Fa-f]+)\}", lambda m: "\\U%08X" % int(m.group(1), 16), match["pattern"]))
+        return lambda text: [(m.span(), None) for m in rx.finditer(text)]
+    if kind == "keyword":
+        groups = match.get("topics") or {None: match["any"]}
+        compiled = {topic: re.compile("|".join(re.escape(fold(w)) for w in words)) for topic, words in groups.items()}
+        return lambda text: [(None, topic) for topic, rx in compiled.items() if rx.search(fold(text))]
+    if kind == "url_ioc" and "extract" in match:
+        allow = policy.get("output", {}).get("url_allowlist", [])
+
+        def find(text):
+            hits = []
+            for m in URL_SPAN.finditer(text):
+                host = urlsplit(m.group("md") or m.group("html") or m.group("auto")).hostname
+                if host and not any(host == a or host.endswith("." + a) for a in allow):
+                    hits.append((m.span(), host))
+            return hits
+        return find
+    return None
 
 
 def load_signatures(policy):
+    """Compile the feed and run every rule's own test vectors. Rules whose vectors fail are dropped."""
     cfg = policy["controls"].get("signatures", {})
+    report = {"loaded": [], "skipped": {}, "selftest_failed": {}}
     if not cfg.get("feed"):
-        return []
+        return [], report
     feed = yaml.safe_load((POLICY_PATH.parent / cfg["feed"]).read_text())["feed"]
     rules = []
     for r in feed["rules"]:
-        if r["type"] == "regex":
-            rules.append({**r, "_re": re.compile(r["match"]["pattern"])})
-        elif r["type"] == "keyword":
-            words = [re.escape(w) for w in r["match"]["any"]]
-            rules.append({**r, "_re": re.compile("|".join(words), re.IGNORECASE)})
-    return rules
+        find = compile_rule(r, policy)
+        if find is None:
+            report["skipped"][r["id"]] = r["type"]
+            continue
+        tests = r.get("tests", {})
+        bad = [t for t in tests.get("positive", []) if not find(t)] + [t for t in tests.get("negative", []) if find(t)]
+        if bad:
+            report["selftest_failed"][r["id"]] = bad
+            continue
+        rules.append({**r, "_find": find})
+        report["loaded"].append(r["id"])
+    report["feed"] = {k: str(feed.get(k)) for k in ("name", "serial", "expires")}
+    return rules, report
 
 
 store = PolicyStore(POLICY_PATH)
@@ -215,17 +268,25 @@ def step_pii(ctx, cfg):
 def step_signatures(ctx, cfg):
     surface = "prompt" if ctx.direction == "request" else "response"
     disabled = set(cfg.get("disabled_rules", []))
+    overrides = cfg.get("action_overrides", {})  # e.g. {SIG-0002: block} = the "strict" profile
     for rule in store.signatures:
         if surface not in rule["applies_to"] or rule["id"] in disabled:
             continue
+        action = overrides.get(rule["id"], rule["action"])
         for get, set_ in texts(ctx):
-            if not rule["_re"].search(get()):
+            hits = rule["_find"](get())
+            if not hits:
                 continue
-            detail = f"{rule['id']} {rule['name']} ({surface})"
-            if rule["action"] == "redact":
-                set_(rule["_re"].sub("", get()))
+            labels = sorted({label for _, label in hits if label})
+            detail = f"{rule['id']} {rule['name']} ({surface}{': ' + ', '.join(labels) if labels else ''})"
+            spans = [span for span, _ in hits if span]
+            if action == "redact" and spans:
+                text = get()
+                for start, end in sorted(spans, reverse=True):
+                    text = text[:start] + text[end:]
+                set_(text)
                 ctx.note("signatures", "modify", detail)
-            elif rule["action"] == "block":
+            elif action in ("block", "redact", "quarantine"):  # redact without spans can't strip: block
                 ctx.note("signatures", "block", detail)
             else:
                 ctx.note("signatures", "monitor", detail)
@@ -280,7 +341,7 @@ def audit(event):
 
 # ---------------------------------------------------------------- data plane
 
-app = FastAPI(title="Warden POC gateway")
+app = FastAPI(title="Mandate POC gateway")
 
 
 @app.post("/v1/chat/completions")
@@ -320,9 +381,9 @@ async def chat(request: Request):
     event.update(user=(req.principal or {}).get("user"), decision=decision, status=status,
                  ms=ms, findings=req.findings)
     audit(event)
-    headers = {"X-Warden-Decision": decision, "X-Warden-Policy": store.sha or "", "X-Warden-Event": event["id"]}
+    headers = {"X-Mandate-Decision": decision, "X-Mandate-Policy": store.sha or "", "X-Mandate-Event": event["id"]}
     if status == 200:
-        out["warden"] = {"decision": decision, "findings": req.findings, "forwarded_request": body}
+        out["mandate"] = {"decision": decision, "findings": req.findings, "forwarded_request": body}
     return JSONResponse(out, status_code=status, headers=headers)
 
 
@@ -345,7 +406,7 @@ def status():
         "policy_sha": store.sha, "loaded_at": store.loaded_at, "last_reload_error": store.error,
         "pipeline": policy["pipeline"],
         "controls": {k: {kk: vv for kk, vv in v.items() if kk != "text"} for k, v in policy["controls"].items()},
-        "signatures_loaded": [r["id"] for r in store.signatures],
+        "feed": store.feed_report,
         "budget_used": budget_used,
     }
 
@@ -364,7 +425,7 @@ async def patch_control(name: str, request: Request):
     if name not in policy["controls"]:
         raise HTTPException(404, f"unknown control '{name}'")
     policy["controls"][name].update(patch)
-    header = "# Warden POC policy (last written by PATCH /control/controls/%s)\n" % name
+    header = "# Mandate POC policy (last written by PATCH /control/controls/%s)\n" % name
     POLICY_PATH.write_text(header + yaml.safe_dump(policy, sort_keys=False, allow_unicode=True))
     store.get()
     return {"policy_sha": store.sha, "control": name, "config": store.policy["controls"][name]}
