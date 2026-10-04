@@ -308,10 +308,6 @@ main { max-width: 1320px; margin: 0 auto; padding-inline: 28px; padding-block: 3
 .ans.deny { color: var(--deny); } .ans.deny .ans-k { color: var(--deny); }
 .ans.modify { color: var(--modify); } .ans.modify .ans-k { color: var(--modify); }
 .ans.flag { color: var(--flag); } .ans.flag .ans-k { color: var(--flag); }
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 4px 0; }
-.facts div { min-width: 0; }
-.facts dt { font: 720 21px/1.15 var(--font-ui); font-stretch: 108%; }
-.facts dd { margin: 4px 0 0; font-size: 13px; color: var(--ink-3); line-height: 1.4; }
 .ov-flow { position: relative; margin: 34px 0 0; padding: 8px 18px 4px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow); border: 1px solid var(--card-border); }
 .flow-box { position: relative; }
 .flow-box svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -493,8 +489,10 @@ details > summary::-webkit-details-marker { display: none; }
 .cat .btn { grid-column: 3; grid-row: 1; }
 
 /* ---------- simulate ---------- */
-.sim { display: grid; grid-template-columns: minmax(320px, 360px) minmax(0, 1fr); gap: 32px; align-items: start; }
-.composer { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.sim { display: flex; flex-direction: column; gap: 28px; }
+.composer { display: flex; flex-direction: column; gap: 18px; min-width: 0; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.comp-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 32px; align-items: start; }
+.comp-main, .comp-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .scen-wrap { padding: 2px; }
 .scen-wrap > .pin { top: -10px; right: -6px; }
 .scen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -505,7 +503,7 @@ details > summary::-webkit-details-marker { display: none; }
 .comp-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .opts > summary { font-size: 14px; color: var(--ink-2); }
 .opts .field { margin-top: 10px; }
-.run { width: 100%; }
+.run { align-self: flex-start; }
 .adv { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--card-border); }
 .adv > summary { padding: 13px 16px; font-size: 14.5px; }
 .adv > summary .chev { margin-left: auto; color: var(--ink-3); }
@@ -632,6 +630,37 @@ tbody tr.broken td { background: var(--deny-soft); }
 .rowbtn:hover { color: var(--accent); }
 .sample-tag { font: 600 10px/1 var(--font-mono); color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: 999px; padding: 2px 6px; margin-left: 8px; }
 .audit-adv { margin-top: 20px; }
+.a-dash { margin-top: 28px; }
+.a-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.a-stat { padding: 14px 16px 14px 0; }
+.a-stat + .a-stat { padding-left: 16px; border-left: 1px solid var(--line); }
+.a-stat b { display: block; font: 650 26px/1.1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.a-stat span { font-size: 13px; color: var(--ink-3); }
+.a-charts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; margin-top: 24px; }
+.a-chart h3 { font: 600 14px/1.3 var(--font-ui); margin-bottom: 14px; }
+.a-chart h3 span { font-weight: 400; color: var(--ink-3); }
+.split { display: flex; gap: 2px; height: 14px; }
+.split i { min-width: 3px; border-radius: 2px; }
+.split i.allow, .cols i.allow, .lg-dot.allow { background: var(--allow); }
+.split i.deny, .cols i.deny, .lg-dot.deny { background: var(--deny); }
+.split i.modify, .cols i.modify, .lg-dot.modify { background: var(--modify); }
+.split i.flag, .cols i.flag, .lg-dot.flag { background: var(--flag); }
+.a-legend { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.a-legend li { display: flex; align-items: center; gap: 8px; }
+.a-legend .n { margin-left: auto; font-family: var(--font-mono); color: var(--ink-2); }
+.lg-dot { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto; }
+.cols { position: relative; display: flex; align-items: flex-end; gap: 2px; height: 140px; margin-left: 52px; border-bottom: 1px solid var(--line-strong); }
+.cols .c { position: relative; z-index: 1; flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.cols i { display: block; width: min(100%, 36px); min-height: 2px; border-radius: 2px 2px 0 0; }
+.cols .gl { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line); pointer-events: none; }
+.cols .gl span { position: absolute; right: calc(100% + 8px); top: -7px; white-space: nowrap; font: 500 11px var(--font-mono); color: var(--ink-3); }
+.cols-x { display: flex; justify-content: space-between; margin: 6px 0 0 52px; font: 500 11px var(--font-mono); color: var(--ink-3); }
+.hbars { display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; }
+.hb-l { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.hb-l span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-l span:last-child { font-family: var(--font-mono); color: var(--ink-2); }
+.hb-t { height: 6px; }
+.hb-t i { display: block; height: 100%; min-width: 3px; border-radius: 0 2px 2px 0; background: var(--ink-3); }
 .tamper { display: flex; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; align-items: center; }
 .tamper > div:first-child { flex: 1 1 280px; }
 .wf { display: grid; grid-template-columns: minmax(90px, 160px) minmax(0, 1fr) 52px; gap: 5px 10px; align-items: center; font-size: 13px; }
@@ -670,7 +699,7 @@ tbody tr.broken td { background: var(--deny-soft); }
   .pl-body.with-insp { grid-template-columns: minmax(0, 1fr); }
   .insp { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 70; max-height: 86vh; border-radius: var(--r-lg) 22px 0 0; box-shadow: var(--shadow-lg); animation: sheet-in 0.22s ease-out; }
   @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-  .sim { grid-template-columns: minmax(0, 1fr); }
+  .comp-grid { grid-template-columns: minmax(0, 1fr); }
   .ov-hero { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }
 @media (max-width: 899px) {
@@ -681,13 +710,15 @@ tbody tr.broken td { background: var(--deny-soft); }
   .ov-sub { font-size: 16.5px; }
   .ov-steps { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .io-grid { grid-template-columns: minmax(0, 1fr); }
+  .a-charts { grid-template-columns: minmax(0, 1fr); }
+  .a-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .a-stat + .a-stat { padding-left: 0; border-left: 0; }
   .flow-h { display: none !important; }
   .flow-v { display: block !important; max-width: 380px; margin: 0 auto; }
 }
 @media (max-width: 1279px) { .wide-only { display: none; } }
 @media (max-width: 599px) {
   .mock-tag { font-size: 10.5px; padding: 4px 8px; }
-  .facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .ans-grid { grid-template-columns: minmax(0, 1fr); }
   .rail-box { padding-right: 30px; }
   .rail { padding-left: 34px; }
@@ -807,7 +838,6 @@ tbody tr.broken td { background: var(--deny-soft); }
             <li class="ans flag"><span class="ans-k"><svg class="ic"><use href="#i-flag"/></svg>Flag</span><span class="ans-d">passes, marked for review</span></li>
           </ul>
         </section>
-        <dl class="facts" id="facts"></dl>
       </div>
     </div>
     <figure class="ov-flow" id="ov-flow">
@@ -909,39 +939,45 @@ tbody tr.broken td { background: var(--deny-soft); }
     <div class="sim">
       <section class="composer" aria-labelledby="comp-h">
         <h2 class="h-page" id="comp-h">Try a request</h2>
-        <div class="scen-wrap pin-host" data-pin-host="s1">
-          <p class="kicker" id="scen-h">Scenarios</p>
-          <div class="scen" id="samples" role="group" aria-labelledby="scen-h"></div>
-        </div>
-        <div class="comp-row">
-          <div class="field"><label for="sim-key">Agent key<code>x-api-key</code></label><select class="select" id="sim-key"></select></div>
-          <div class="field"><label for="sim-model">Model<code>model</code></label><select class="select" id="sim-model"></select></div>
-        </div>
-        <details class="opts" id="sim-opts">
-          <summary>Options<svg class="ic chev"><use href="#i-chev"/></svg></summary>
-          <div class="field"><label for="sim-max">Longest answer allowed, tokens<code>max_tokens</code></label><input class="input" id="sim-max" type="number" min="1" max="64000" step="1"></div>
-        </details>
-        <div class="field">
-          <label for="sim-msg">Message from the agent</label>
-          <textarea class="textarea" id="sim-msg" rows="4" spellcheck="false"></textarea>
-          <p class="hint" id="sim-meta" aria-live="polite"></p>
-        </div>
-        <button type="button" class="btn primary lg run" id="sim-run"><svg class="ic fill"><use href="#i-play"/></svg>Run through the pipeline</button>
-        <div class="adv-wrap pin-host" data-pin-host="s6">
-          <details class="adv" id="adv-break">
-            <summary><svg class="ic"><use href="#i-warn"/></svg>Advanced: break things<svg class="ic chev"><use href="#i-chev"/></svg></summary>
-            <div class="adv-body">
-              <div class="field"><label for="sim-down">Mark a gate as down<code>simulate gate down</code></label><select class="select" id="sim-down"></select></div>
-              <div class="field"><label for="sim-onmodify">After a gate rewrites the request<code>on_modify</code></label><select class="select" id="sim-onmodify"><option value="continue">Continue with the new text</option><option value="restart">Re-check it from the top</option></select></div>
-              <label class="check"><input type="checkbox" id="sim-naive"><span>Naive restart: re-run every gate<code>naive</code></span></label>
-              <p class="hint" id="sim-naive-note"></p>
+        <div class="comp-grid">
+          <div class="comp-main">
+            <div class="scen-wrap pin-host" data-pin-host="s1">
+              <p class="kicker" id="scen-h">Scenarios</p>
+              <div class="scen" id="samples" role="group" aria-labelledby="scen-h"></div>
             </div>
-          </details>
+            <div class="field">
+              <label for="sim-msg">Message from the agent</label>
+              <textarea class="textarea" id="sim-msg" rows="4" spellcheck="false"></textarea>
+              <p class="hint" id="sim-meta" aria-live="polite"></p>
+            </div>
+            <button type="button" class="btn primary lg run" id="sim-run"><svg class="ic fill"><use href="#i-play"/></svg>Run through the pipeline</button>
+          </div>
+          <div class="comp-side">
+            <div class="comp-row">
+              <div class="field"><label for="sim-key">Agent key<code>x-api-key</code></label><select class="select" id="sim-key"></select></div>
+              <div class="field"><label for="sim-model">Model<code>model</code></label><select class="select" id="sim-model"></select></div>
+            </div>
+            <details class="opts" id="sim-opts">
+              <summary>Options<svg class="ic chev"><use href="#i-chev"/></svg></summary>
+              <div class="field"><label for="sim-max">Longest answer allowed, tokens<code>max_tokens</code></label><input class="input" id="sim-max" type="number" min="1" max="64000" step="1"></div>
+            </details>
+            <div class="adv-wrap pin-host" data-pin-host="s6">
+              <details class="adv" id="adv-break">
+                <summary><svg class="ic"><use href="#i-warn"/></svg>Advanced: break things<svg class="ic chev"><use href="#i-chev"/></svg></summary>
+                <div class="adv-body">
+                  <div class="field"><label for="sim-down">Mark a gate as down<code>simulate gate down</code></label><select class="select" id="sim-down"></select></div>
+                  <div class="field"><label for="sim-onmodify">After a gate rewrites the request<code>on_modify</code></label><select class="select" id="sim-onmodify"><option value="continue">Continue with the new text</option><option value="restart">Re-check it from the top</option></select></div>
+                  <label class="check"><input type="checkbox" id="sim-naive"><span>Naive restart: re-run every gate<code>naive</code></span></label>
+                  <p class="hint" id="sim-naive-note"></p>
+                </div>
+              </details>
+            </div>
+            <section class="budgets pin-host" aria-labelledby="bud-h" data-pin-host="s5">
+              <div class="bud-head"><h3 class="h-small" id="bud-h">Budgets</h3><button type="button" class="btn ghost sm" id="sim-reset">Reset</button></div>
+              <div id="budgets"></div>
+            </section>
+          </div>
         </div>
-        <section class="budgets pin-host" aria-labelledby="bud-h" data-pin-host="s5">
-          <div class="bud-head"><h3 class="h-small" id="bud-h">Budgets</h3><button type="button" class="btn ghost sm" id="sim-reset">Reset</button></div>
-          <div id="budgets"></div>
-        </section>
       </section>
       <section class="results" id="sim-result" aria-labelledby="res-title"></section>
     </div>
@@ -965,6 +1001,7 @@ tbody tr.broken td { background: var(--deny-soft); }
         </div>
       </div>
     </div>
+    <section class="a-dash" id="audit-dash" aria-label="Summary of the audit trail"></section>
     <div class="export card" id="export" hidden>
       <div class="ex-head"><h3 class="h-small" id="export-title">Export preview</h3><span class="muted small">preview only, nothing is downloaded</span>
         <span class="grow"></span><button type="button" class="btn sm" id="export-copy"><svg class="ic sm"><use href="#i-copy"/></svg><span>Copy</span></button><button type="button" class="btn sm ghost" id="export-close">Close</button></div>
@@ -2571,26 +2608,26 @@ function endTour(toComposer) {
 }
 
 /* =====================================================================================
-   11. OVERVIEW: the flow drawing (inline SVG, horizontal and stacked), facts
+   11. OVERVIEW: the flow drawing (inline SVG, horizontal and stacked)
    ===================================================================================== */
 function flowSVG(vertical) {
   const T = (x, y, cls, txt, anchor = 'middle') => `<text x="${x}" y="${y}" class="${cls}" text-anchor="${anchor}">${esc(txt)}</text>`;
   const I = (name, x, y, s = 20) => `<use href="#i-${name}" x="${x - s / 2}" y="${y - s / 2}" width="${s}" height="${s}" class="fl-ic"/>`;
-  const chipsData = [['identity', 'id', 96], ['model', 'cpu', 84], ['budget', 'coin', 92], ['filters ×3', 'filter', 120], ['AI judge', 'scale', 104]];
+  const chipsData = [['identity', 'id', 96], ['model garden', 'cpu', 140], ['budget', 'coin', 92], ['filters ×3', 'filter', 120], ['AI judge', 'scale', 104]];
   const chip = (label, ic, x, y, w, stack) => `<g class="fl-chip"${stack ? ' data-anchor="chip-filters"' : ''}>${stack ? `<rect class="stack" x="${x + 8}" y="${y - 8}" width="${w}" height="40" rx="12"/><rect class="stack" x="${x + 4}" y="${y - 4}" width="${w}" height="40" rx="12"/>` : ''}<rect x="${x}" y="${y}" width="${w}" height="40" rx="12"/>${I(ic, x + 22, y + 20, 18)}${T(x + 38, y + 25, '', label, 'start')}</g>`;
   if (!vertical) {
     const cy = 120;
-    let s = `<svg class="flow-h" viewBox="0 24 1200 196" role="img" aria-labelledby="flow-t-h"><title id="flow-t-h">Agent to L1 decrypt, L2 pipeline of gates, L3 encrypt and send, AI model</title>`;
-    s += `<path class="fl-line" d="M116 ${cy}H1104"/>`;
-    for (const x of [164, 342, 910, 1102]) s += `<path class="fl-head" d="M${x - 10} ${cy - 6}L${x} ${cy}L${x - 10} ${cy + 6}z"/>`;
+    let s = `<svg class="flow-h" viewBox="0 24 1260 196" role="img" aria-labelledby="flow-t-h"><title id="flow-t-h">Agent to L1 decrypt, L2 pipeline of gates, L3 encrypt and send, AI model</title>`;
+    s += `<path class="fl-line" d="M116 ${cy}H1164"/>`;
+    for (const x of [164, 342, 970, 1162]) s += `<path class="fl-head" d="M${x - 10} ${cy - 6}L${x} ${cy}L${x - 10} ${cy + 6}z"/>`;
     s += `<g data-anchor="agent"><rect class="fl-end" x="20" y="${cy - 42}" width="96" height="84" rx="22"/>${I('term', 68, cy - 14, 22)}${T(68, cy + 22, 'fl-t', 'Agent')}</g>${T(68, cy + 70, 'fl-s', 'Claude Code, SDKs')}`;
     s += `<g data-anchor="l1"><rect class="fl-box" x="166" y="${cy - 42}" width="140" height="84" rx="18"/>${T(236, cy - 10, 'fl-k', 'L1')}${T(236, cy + 18, 'fl-t', 'Decrypt')}</g>${T(236, cy + 70, 'fl-s', 'TLS terminated')}`;
-    s += `<g data-anchor="l2"><rect class="fl-l2" x="344" y="${cy - 88}" width="562" height="176" rx="26"/>${T(370, cy - 58, 'fl-k', 'L2 · THE PIPELINE', 'start')}</g>`;
-    let x = 344 + (562 - (chipsData.reduce((a, c) => a + c[2], 0) + 4 * 12)) / 2;
+    s += `<g data-anchor="l2"><rect class="fl-l2" x="344" y="${cy - 88}" width="622" height="176" rx="26"/>${T(370, cy - 58, 'fl-k', 'L2 · THE PIPELINE', 'start')}</g>`;
+    let x = 344 + (622 - (chipsData.reduce((a, c) => a + c[2], 0) + 4 * 12)) / 2;
     chipsData.forEach(([l, ic, w]) => { s += chip(l, ic, x, cy - 20, w, l.includes('×')); x += w + 12; });
-    s += T(625, cy + 66, 'fl-s', 'each gate answers allow · deny · modify · flag');
-    s += `<g data-anchor="l3"><rect class="fl-box" x="912" y="${cy - 42}" width="150" height="84" rx="18"/>${T(987, cy - 10, 'fl-k', 'L3')}${T(987, cy + 18, 'fl-t', 'Encrypt & send')}</g>${T(987, cy + 70, 'fl-s', 'real key · fresh TLS')}`;
-    s += `<g data-anchor="model"><rect class="fl-end" x="1104" y="${cy - 42}" width="86" height="84" rx="42"/>${I('spark', 1147, cy - 14, 22)}${T(1147, cy + 22, 'fl-t', 'AI model')}</g>${T(1147, cy + 70, 'fl-s', 'provider')}`;
+    s += T(655, cy + 66, 'fl-s', 'each gate answers allow · deny · modify · flag');
+    s += `<g data-anchor="l3"><rect class="fl-box" x="972" y="${cy - 42}" width="150" height="84" rx="18"/>${T(1047, cy - 10, 'fl-k', 'L3')}${T(1047, cy + 18, 'fl-t', 'Encrypt & send')}</g>${T(1047, cy + 70, 'fl-s', 'real key · fresh TLS')}`;
+    s += `<g data-anchor="model"><rect class="fl-end" x="1164" y="${cy - 42}" width="86" height="84" rx="42"/>${I('spark', 1207, cy - 14, 22)}${T(1207, cy + 22, 'fl-t', 'AI model')}</g>${T(1207, cy + 70, 'fl-s', 'provider')}`;
     s += `<g class="fl-dot-g" transform="translate(116 ${cy})" opacity="0"><circle class="fl-dot-halo" r="13"/><circle class="fl-dot" r="7"/></g>`;
     return s + '</svg>';
   }
@@ -2633,7 +2670,7 @@ function animateFlowDot() {
   const svg = $(vertical ? '.flow-v' : '.flow-h');
   if (!svg || svg.getBoundingClientRect().width === 0) return;
   const dot = svg.querySelector('.fl-dot-g'), chips = [...svg.querySelectorAll('.fl-chip')];
-  const [a, b] = vertical ? [92, 728] : [116, 1104];
+  const [a, b] = vertical ? [92, 728] : [116, 1164];
   const centers = chips.map(c => { const r = c.querySelector('rect:not(.stack)'); return vertical ? +r.getAttribute('y') + 20 : +r.getAttribute('x') + (+r.getAttribute('width')) / 2; });
   const lit = new Set(), dur = 2600;
   let t0 = null;
@@ -2647,11 +2684,6 @@ function animateFlowDot() {
     else { flowRAF = null; setTimeout(() => dot.setAttribute('opacity', '0'), 500); }
   };
   flowRAF = requestAnimationFrame(step);
-}
-function renderFacts() {
-  const n = allGates().length, req = S.pl.request, j = req.findIndex(g => g.gate === 'jev_eval');
-  const judge = j < 0 ? ['No AI judge', 'add one from the catalogue'] : j === req.length - 1 ? ['AI judge runs last', 'cheap rules go first'] : [`AI judge is #${j + 1} of ${req.length}`, 'move it last: cheap rules first'];
-  $('#facts').innerHTML = `<div><dt>${n} gates</dt><dd>in this pipeline</dd></div><div><dt>~2 ms</dt><dd>per gate hop, measured in our benchmark</dd></div><div><dt>${judge[0]}</dt><dd>${judge[1]}</dd></div>`;
 }
 
 /* =====================================================================================
@@ -2698,7 +2730,6 @@ function renderPipeline() {
       : `<li class="rail-empty">No gates ${phase === 'request' ? 'on the way in' : 'on the way back'}. Use “Add gate”.</li>`;
   }
   positionBrackets();
-  renderFacts();
 }
 function positionBrackets() {
   for (const phase of ['request', 'response']) {
@@ -3449,6 +3480,39 @@ function renderAuditTable() {
       <td class="r mono">${fmtMs(r.gateMs)}</td>
     </tr>`;
   }).join('');
+  renderAuditDash();
+}
+function renderAuditDash() {
+  const runs = S.audit.map(en => en.run), n = runs.length;
+  const box = $('#audit-dash');
+  if (!n) { box.innerHTML = ''; return; }
+  const kinds = ['allow', 'modify', 'flag', 'deny'];
+  const count = Object.fromEntries(kinds.map(k => [k, runs.filter(r => r.final === k).length]));
+  const pct = v => Math.round((v / n) * 100) + '%';
+  const ms = runs.map(r => r.gateMs).sort((a, b) => a - b), median = ms[Math.floor((ms.length - 1) / 2)];
+  const spend = runs.reduce((a, r) => a + (r.charged || 0), 0);
+  const stats = [[n, 'requests'], [`${count.deny} · ${pct(count.deny)}`, 'stopped'], [count.modify, 'rewritten'], [`${fmtMs(median)} ms`, 'median time in gates'], [usd(spend), 'charged to budgets']];
+
+  const split = `<div class="split" role="img" aria-label="${kinds.map(k => `${DL[k]} ${count[k]}`).join(', ')}">${kinds.filter(k => count[k])
+    .map(k => `<i class="${k}" style="flex:${count[k]}" data-tip="${DL[k]}: ${count[k]} of ${n}"></i>`).join('')}</div>`;
+  const legend = `<ul class="a-legend">${kinds.map(k => `<li><span class="lg-dot ${k}"></span>${DL[k]}<span class="n">${count[k]}</span></li>`).join('')}</ul>`;
+
+  const top = niceTicks(Math.max(...ms, 1)), max = top[top.length - 1], mid = top[Math.floor(top.length / 2)];
+  const cols = `<div class="cols">${[mid, max].map(v => `<div class="gl" style="bottom:${(v / max) * 100}%"><span>${v} ms</span></div>`).join('')}${runs.map(r =>
+    `<div class="c"><i class="${r.final}" style="height:${(r.gateMs / max) * 100}%" tabindex="0" data-tip="${hhmmss(r.at)} · ${esc(userLabel(r))} · ${DL[r.final]} · ${fmtMs(r.gateMs)} ms"></i></div>`).join('')}</div>
+    <div class="cols-x"><span>${hhmm(runs[0].at)}</span><span>${hhmm(runs[n - 1].at)}</span></div>`;
+
+  const by = new Map();
+  runs.forEach(r => { const k = r.decider ? r.decider.name : 'Passed every gate'; by.set(k, (by.get(k) || 0) + 1); });
+  const dec = [...by.entries()].sort((a, b) => b[1] - a[1]), dmax = dec[0][1];
+  const hbars = `<div class="hbars">${dec.map(([k, v]) => `<div><div class="hb-l"><span>${esc(k)}</span><span>${v}</span></div><div class="hb-t"><i style="width:${(v / dmax) * 100}%"></i></div></div>`).join('')}</div>`;
+
+  box.innerHTML = `<div class="a-stats">${stats.map(([v, l]) => `<div class="a-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+    <div class="a-charts">
+      <div class="a-chart"><h3>Verdicts</h3>${split}${legend}</div>
+      <div class="a-chart"><h3>Time in gates <span>per request, oldest first</span></h3>${cols}</div>
+      <div class="a-chart"><h3>Where requests were decided</h3>${hbars}</div>
+    </div>`;
 }
 function niceTicks(max) {
   const raw = max / 5, p = Math.pow(10, Math.floor(Math.log10(raw || 1)));
