@@ -2,14 +2,18 @@
 
 > **No AI request leaves the firm without clearance.** Admins build a pipeline of gates: identity, budget, personal data,
 > attack signatures, an AI judge. Every agent request is checked, rewritten or stopped, and every decision is on the record.
+>
+> **Clearance enforces, Visdom improves.** Built with [Visdom](https://visdom.virtuslab.com/), VirtusLab's AI-native SDLC platform.
+> A Visdom flow reads the gateway's real traffic and proposes reviewed fixes to the gates
+> ([how it works](1-solution/README.md#keeping-the-gates-good-the-visdom-feedback-loop)).
 
 ## Submission (Goldman Sachs template)
 
 | Folder | What's inside |
 |---|---|
-| [`1-solution/`](1-solution/) | Overview and approach, the implemented guardrails, configuration, and three strictness profiles |
+| [`1-solution/`](1-solution/) | Overview and approach, the implemented guardrails, configuration, three strictness profiles, and the Visdom feedback loop that keeps the gates good |
 | [`2-architecture/`](2-architecture/) | Architecture diagram, components, measured latency of deterministic vs AI-based enforcement |
-| [`3-reporting/`](3-reporting/) | Dashboard screenshots, the implemented metrics, a metrics report built from real logs |
+| [`3-reporting/`](3-reporting/) | Screenshots of the demo chat, Langfuse and the dashboard, the implemented metrics, a metrics report from real logs, and Visdom's gate-quality report |
 | [`4-testing/`](4-testing/) | 76 automated tests plus 120 browser checks, and 18 showcase cases that block or rewrite traffic |
 | [`5-implementation/`](5-implementation/) | Code map, how to run it, deployment into Claude Code, SDK and OpenAI-compatible agents and Kubernetes, limits and next steps |
 

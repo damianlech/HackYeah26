@@ -20,6 +20,9 @@ Detailed flows: [request flow](../pipeline/diagrams/request-flow.png) ·
 | Signature feed | file, outside the gateway | 21 versioned rules (serial 42, with an expiry date), each with positive and negative test vectors. The gateway compiles the 10 it can evaluate on chat traffic | [`examples/feed/signatures.yaml`](../examples/feed/signatures.yaml) |
 | Policy | one YAML file per gateway | Re-read on the next request. A broken edit is rejected | [`poc/policy.yaml`](../poc/policy.yaml), [`claude-proxy/policy.yaml`](../claude-proxy/policy.yaml) |
 | Admin builder | browser | Add, order and configure gates; Simulate; audit trail with Verify | [`pipeline/mockups/`](../pipeline/mockups/) (mockup) |
+| Tracing | Langfuse (live build) | Every request, blocked ones included. Each gate check is a span next to the model call, with cost and tokens | live demo build |
+| Masked export | `make export-langfuse` (live build) | Writes the traffic to `analytics/langfuse-export.json` in the repository, with personal data masked again | live demo build |
+| **Visdom `gateway-advisor`** | a flow in the Visdom Orchestrator | An analyst agent proposes gate fixes; up to 3 review rounds check them; GitHub issues are filed only after approval. Runs outside the request path | [Visdom](https://visdom.virtuslab.com/) |
 
 ## One request, step by step
 
@@ -30,6 +33,11 @@ Detailed flows: [request flow](../pipeline/diagrams/request-flow.png) ·
 4. **L3** swaps in the real key, re-encrypts, and checks the provider's certificate.
 5. The answer runs through the **response gates**: exfiltration links stripped, personal data redacted, real cost charged. It then goes back through L1.
 6. **One audit record** is written per request: every gate's decision and reason, the time taken, and the policy version.
+
+Over many requests, the traces feed the loop in the diagram's bottom lane. Langfuse traces are exported with personal data
+masked. Visdom's `gateway-advisor` flow analyses every gate decision and files reviewed GitHub issues, and the admin changes
+the pipeline. The next request uses the new version. Details and the first run's findings are in
+[`1-solution`](../1-solution/README.md#keeping-the-gates-good-the-visdom-feedback-loop).
 
 ## Design choices
 
@@ -42,6 +50,7 @@ Detailed flows: [request flow](../pipeline/diagrams/request-flow.png) ·
 | Policy is data, re-read on the next request | Admins change behaviour in seconds without a restart. The last good version stays live if an edit is broken |
 | Response gates as well as request gates | The model can leak too: personal data, exfiltration links, risky tool calls |
 | The audit record is written by the runner, not by a gate | An admin cannot remove the log by editing the pipeline |
+| A second system checks the gates | Rules drift as traffic changes. Visdom reviews real traffic outside the request path, so improving the gates never slows a request |
 
 ## Performance
 
@@ -84,6 +93,13 @@ What this means:
 - In the prototypes, about **40 ms per hop is HTTP client set-up**, not enforcement. Each call opens a new `httpx` client, and that builds a TLS context.
   The same overhead appears in `poc/` end to end: allowed in 43.7 ms with deterministic gates only, 88.1 ms with the semantic service.
   Of that, the gates themselves take 78 µs. The fix is the first row below.
+
+### On real traffic
+
+Visdom's advisor measured the live demo build's gates on 59 real requests. The two AI-based checks took **99.4 % of all gate time**
+(`classifier` 82.8 %, `jev_checker` 16.6 %); the three rule-based gates (`access`, `pii_filter`, `word_filter`) took the remaining 0.6 %.
+That matches the measurements above, and it is why the AI checks run last. The advisor also proposed caching repeated prompts,
+because 57 % of the classifier's time went to duplicates.
 
 ### Optimisations, with measured gains
 

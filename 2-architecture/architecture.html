@@ -9,7 +9,7 @@
   :root { --ink:#0f1420; --ink2:#3a4252; --ink3:#5b6578; --line:#c5cbd6; --soft:#f7f8fa; --accent:#5b3fd1; --accent2:#4a2fbd; --asoft:#eeeafd; --aline:#c2b6f5; }
   * { box-sizing: border-box; margin: 0; }
   body { background: #f3f4f7; font-family: "Archivo", Arial, sans-serif; color: var(--ink); }
-  #canvas { position: relative; width: 1800px; height: 1000px; padding: 36px 44px; background: #f3f4f7; }
+  #canvas { position: relative; width: 1800px; height: 1190px; padding: 36px 44px; background: #f3f4f7; }
   h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
   .sub { font-size: 16px; color: var(--ink3); margin-top: 6px; }
   .mono { font-family: "IBM Plex Mono", monospace; }
@@ -35,7 +35,7 @@
   .d { font-weight: 700; padding: 3px 8px; border-radius: 6px; }
   .allow { background: #e2f4e9; color: #11793f; } .deny { background: #fce3e5; color: #b4202d; }
   .modify { background: #e2ecfc; color: #1c63c9; } .flag { background: #fdf0d4; color: #975800; }
-  svg#wires { position: absolute; left: 0; top: 0; width: 1800px; height: 1000px; pointer-events: none; overflow: visible; }
+  svg#wires { position: absolute; left: 0; top: 0; width: 1800px; height: 1190px; pointer-events: none; overflow: visible; }
   .wl { position: absolute; font-size: 12.5px; color: var(--ink3); background: #f3f4f7; padding: 1px 6px; border-radius: 6px; white-space: nowrap; }
   .legend { position: absolute; right: 44px; top: 40px; font-size: 13px; color: var(--ink3); text-align: right; line-height: 1.6; }
 </style>
@@ -43,7 +43,7 @@
 <body>
 <div id="canvas">
   <h1>Clearance: architecture</h1>
-  <div class="sub">Every agent request crosses three layers. L2 runs the gates an admin chose, in order; each answers allow, deny, modify or flag, with a reason.</div>
+  <div class="sub">Every agent request crosses three layers. L2 runs the gates an admin chose, in order; each answers allow, deny, modify or flag, with a reason. Visdom reviews the traffic and proposes fixes to the gates.</div>
   <div class="legend"><span class="mono" style="color:#4a2fbd">file.py</span> = runs today in this repo<br>purple = the AI-based (semantic) check</div>
 
   <div class="band" style="left:640px; top:118px">Services the gates call</div>
@@ -99,8 +99,17 @@
   <div class="card svc" id="aud" style="left:1080px; top:820px; width:280px">
     <h3>Audit log</h3><p>One record per request: every gate's decision, reason, time, policy version.</p></div>
   <div class="card svc" id="met" style="left:1460px; top:820px; width:296px">
-    <h3>metrics.py</h3><p>Management and security views, for a dashboard or a SIEM.</p>
+    <h3>Traces and metrics</h3><p>Langfuse traces every request, each gate check a span. metrics.py builds the management and security views.</p>
     <div class="file">3-reporting/metrics.py</div></div>
+
+  <div class="band" style="left:400px; top:975px">Feedback loop: Visdom keeps the gates good</div>
+  <div class="card svc" id="gi" style="left:400px; top:1005px; width:330px">
+    <h3>Reviewed GitHub issues</h3><p>Filed only if the final review round approves. A person adds <span class="mono">agent-ready</span>.</p></div>
+  <div class="card layer" id="va" style="left:800px; top:1005px; width:560px">
+    <div class="tag">VISDOM · gateway-advisor flow</div><h3>Analyse every gate decision, review, report</h3>
+    <p>An analyst agent proposes up to 5 changes on a branch. Up to 3 review rounds: a reviewer recomputes every number from the data, a fixer corrects.</p></div>
+  <div class="card svc" id="fx" style="left:1460px; top:1005px; width:296px">
+    <h3>Masked export</h3><p><span class="mono">make export-langfuse</span> writes the traffic to the repo, personal data masked again.</p></div>
 
   <svg id="wires"><defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a93a6"/></marker>
@@ -126,6 +135,7 @@ function draw() {
   }
   const cc = r('cc'), oa = r('oa'), l1 = r('l1'), l2 = r('l2'), l3 = r('l3'), anth = r('anth'), oss = r('oss');
   const back = r('back'), sem = r('sem'), feed = r('feed'), bud = r('bud'), adm = r('adm'), pol = r('pol'), aud = r('aud'), met = r('met');
+  const gi = r('gi'), va = r('va'), fx = r('fx');
   const mx = (cc.r + l1.l) / 2;
   wire(`M${cc.r},${cc.cy} H${mx} V${l1.cy - 10} H${l1.l}`, { purple: true });
   wire(`M${oa.r},${oa.cy} H${mx} V${l1.cy + 10} H${l1.l}`, { purple: true });
@@ -140,6 +150,10 @@ function draw() {
   wire(`M${aud.cx},${l2.b} V${aud.t}`, { label: 'every decision', lx: aud.cx + 10, ly: (aud.t + l2.b) / 2 - 10 });
   wire(`M${adm.r},${adm.cy} H${pol.l}`, { label: 'Save = new version', lx: adm.r + 40, ly: adm.cy - 30 });
   wire(`M${aud.r},${aud.cy} H${met.l}`, {});
+  wire(`M${met.cx},${met.b} V${fx.t}`, { label: 'every request', lx: met.cx + 10, ly: (met.b + fx.t) / 2 - 10 });
+  wire(`M${fx.l},${fx.cy} H${va.r}`, { purple: true });
+  wire(`M${va.l},${va.cy} H${gi.r}`, { purple: true });
+  wire(`M${gi.l},${gi.cy} H${adm.cx} V${adm.b}`, { purple: true, label: 'the admin applies the fix', lx: adm.cx + 10, ly: gi.cy - 28 });
   document.body.dataset.ready = '1';
 }
 document.fonts.ready.then(draw);

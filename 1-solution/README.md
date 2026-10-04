@@ -24,11 +24,16 @@ and says why. The model's answer goes back through gates too, and every decision
 4. **Both directions.** Response gates check the model's answer: PII, exfiltration links, the real cost.
 5. **Fail closed, explain everything.** By default, a gate that errors or times out means deny. Admins can
    change this per gate. Every decision carries a reason.
+6. **A feedback loop keeps the gates good.** Rules age: a filter starts blocking innocent questions, and new
+   kinds of personal data slip through. [Visdom](https://visdom.virtuslab.com/), VirtusLab's AI-native SDLC
+   platform, reads the gateway's traced traffic, analyses every gate decision, and proposes reviewed fixes
+   ([below](#keeping-the-gates-good-the-visdom-feedback-loop)).
 
-## What exists in this repo
+## What we built
 
 | Part | What it is | State |
 |---|---|---|
+| Live demo build (shown in the demo video) | A demo chat whose every message passes the gateway: `access` → `pii_filter` → `word_filter` → `classifier` (an AI judge for prompt injection) → `jev_checker` (an open model run locally). An admin panel configures and reorders the gates. Langfuse traces every request. The Visdom `gateway-advisor` flow closes the loop | **Runs.** It lives in the team's working repository, not in this one. Screenshots in [`3-reporting/`](../3-reporting/) |
 | [`claude-proxy/`](../claude-proxy/) | The 3-layer proxy for Claude traffic. L1 TLS interception; L2 audit (identity, model allowlist, worst-case cost, budget, AI judge "JEV"); L3 key swap and verified TLS | **Runs.** 13 scenarios pass. The JEV judge is simulated |
 | [`poc/`](../poc/) | The L2 gate pipeline for OpenAI-compatible traffic. 9 gates in policy order, a separate semantic-check service, the external signature feed, a live control plane, an audit log | **Runs.** Every gate is tested |
 | [`pipeline/`](../pipeline/) | The gate contract (JSON envelope), an example pipeline, a latency benchmark, and the admin **pipeline builder** (16 gate types, Simulate, audit chain) | Contract and benchmark run. The builder is an interactive mockup |
@@ -60,9 +65,10 @@ All of these run in Python today. The **Test** column names the automated test i
 | 13 | **Live policy with last-known-good** | Edits apply to the next request. A broken edit or an unknown gate is rejected, and the previous policy stays active | n/a | both | `test_broken_policy_edit_keeps_the_last_good_policy` |
 | 14 | **Audit record per request** | Every gate's decision and reason, timing, policy version | n/a | both | `test_every_request_leaves_one_audit_record` |
 
-\* **Honest status.** `guard_svc.py` scores weighted phrases, and `jev_sim.py` simulates the AI judge. Both stand in for a
-classifier and expose the same HTTP contract. Swapping in a real model (for example Llama Prompt Guard, Qwen3Guard or a
-hosted judge) only changes the URL.
+\* **Honest status.** In this repo's prototypes, `guard_svc.py` scores weighted phrases, and `jev_sim.py` simulates the AI judge.
+Both stand in for a classifier and expose the same HTTP contract. Swapping in a real model (for example Llama Prompt Guard,
+Qwen3Guard or a hosted judge) only changes the URL. The live demo build already runs real models: `classifier` is an AI
+judge (in the demo it stops a prompt injection at 97 % and says why), and `jev_checker` runs an open model locally.
 
 **Designed and shown in the admin mockup, not yet in Python:**
 - `normalize`: invisible characters, look-alike letters, leetspeak.
@@ -134,16 +140,55 @@ request:
 
 The contract (JSON envelope in, allow / deny / modify / flag plus a reason out) is in [`pipeline/contract.md`](../pipeline/contract.md).
 
+## Keeping the gates good: the Visdom feedback loop
+
+Gates are only as good as their rules, and traffic keeps changing. A filter starts blocking innocent questions, or a new
+kind of personal data slips through. Tests can't catch that, because they only check the rules someone already wrote.
+So a second system supervises Clearance: [Visdom](https://visdom.virtuslab.com/), VirtusLab's AI-native SDLC platform.
+It reads the gateway's traced traffic, analyses every gate decision, and proposes reviewed fixes to the team.
+
+1. **Trace.** The gateway traces every request in Langfuse, blocked ones included. Each gate check is its own span,
+   next to the model call, with cost and tokens.
+2. **Export.** `make export-langfuse` writes the traffic to `analytics/langfuse-export.json` in the repository. Each record
+   holds the outcome, every gate's verdict, the user's prompt and the prompt as sent. Personal data is masked again
+   on the way out, so the file holds no raw PESEL, e-mail or IBAN.
+3. **Analyse.** The Visdom flow `gateway-advisor` starts. An analyst agent (Opus) reads the export and proposes up to
+   five changes on a branch.
+4. **Review.** Up to three review rounds follow. A reviewer agent recomputes every number from the data, and a fixer
+   agent (Sonnet) corrects what doesn't hold. A round that approves ends the loop early.
+5. **Report.** Only an approved final round files GitHub issues, labelled `gateway-advisor`. A person adds `agent-ready`
+   before anyone acts on one. The admin then applies the fix in the admin panel, and the next request uses it.
+
+Visdom works on the exported traffic, outside the request path, so it never slows a request down.
+
+![The gateway-advisor run: flow, analyst summary, proposals under review](../3-reporting/screenshots/visdom-advisor-findings.jpg)
+
+**The first run, on our own traffic.** 59 gateway calls and 360 gate verdicts (46 passed, 13 stopped), 38 minutes from trigger to result:
+
+| Proposal | What the analyst found |
+|---|---|
+| fix `pii_filter` | A Polish ID card number and a NIP (tax number) reached the model |
+| fix `word_filter` | 3 of its 6 blocks were innocent words: matching on word prefixes gives 50 % false alarms |
+| add `output_guard` | No gate checks the model's answers. None of the 46 answers was checked |
+| tune `classifier` | It takes 82.8 % of gate time. Lower its threshold from 50 to 25, and cache repeated prompts: 57 % of its time goes to duplicates |
+| tune `jev_checker` | It never fired: its p(yes) stayed at 0.01–0.05 even on obvious prompt injections, while it took 16.6 % of gate time |
+
+The reviewers did their job too. Each of the three rounds found a real problem in the analyst's own proposals:
+a count that did not reproduce, an either/or remedy, and a regex that missed its own criterion. The fixer corrected
+each one. No round approved the final set, so no issue was filed and nothing unreviewed reached the team. A resume
+flow re-reviews the branch and files the issues once a round approves.
+
 ## How this answers the brief
 
 | The task asks for | Where |
 |---|---|
 | Centralised policy engine: thresholds, block vs redact, models, budgets | one policy file per gateway, hot-reloaded; [three profiles](profiles/) |
 | Deterministic controls (PII, secrets, authentication, access) | guardrails 1–7, 11, 12 above (secrets scanning: mockup only so far) |
-| Semantic, AI-based controls | guardrails 8–10 (simulated models behind real service contracts) |
+| Semantic, AI-based controls | guardrails 8–10: simulated models behind real service contracts in the prototypes; an AI judge and a local open model in the live build |
 | Budgets for commercial APIs and local models | guardrails 3–5; `upstreams` routes local models (Ollama) through the same gates |
 | Historical attacks from an externally managed feed | guardrail 7: [`examples/feed/signatures.yaml`](../examples/feed/signatures.yaml), each rule self-tested on load |
-| Reporting for management and security | [`3-reporting/`](../3-reporting/) |
+| Reporting for management and security | [`3-reporting/`](../3-reporting/): audit records, metrics, Langfuse traces |
 | Self-testing suite | [`4-testing/`](../4-testing/): 76 + 120 checks |
+| Guardrails that stay right as traffic changes (beyond the brief) | the [Visdom feedback loop](#keeping-the-gates-good-the-visdom-feedback-loop) |
 | Architecture and performance | [`2-architecture/`](../2-architecture/) |
 | Deployment into existing agent ecosystems | [`5-implementation/`](../5-implementation/README.md#deploying-into-existing-agent-ecosystems) |

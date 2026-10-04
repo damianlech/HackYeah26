@@ -76,8 +76,26 @@ an unknown gate name is rejected · the gate order is configuration · three str
 **Evidence:** one audit record per request with policy version, user, decision, time and findings · every block carries a reason ·
 both TLS sessions are recorded · L2 scores everything the model will read (system prompt, tool results, tool descriptions).
 
+## Testing on live traffic: the Visdom loop
+
+The tests above prove that each gate does what it is configured to do. They can't tell whether the configuration is still right for
+real traffic. That is the job of Visdom's `gateway-advisor` flow ([how it works](../1-solution/README.md#keeping-the-gates-good-the-visdom-feedback-loop)).
+It reads the traced traffic of the live demo build and reports where the gates are wrong. Its reviewer agent recomputes every number
+from the data before anything reaches the team, so the report itself is checked: on the first run, the reviewers caught three
+mistakes in the analyst's own proposals.
+
+That first run found gaps that no test covered. Each one becomes a test case once it is fixed:
+
+| Finding on live traffic | Test case it adds |
+|---|---|
+| A Polish ID card number and a NIP (tax number) passed `pii_filter` | both are masked before the model sees them, and numbers that fail their checksum stay untouched (the rule `poc/` already tests for PESEL and cards) |
+| `word_filter` blocked innocent words that only share a prefix with a blocked word | the innocent words pass and the blocked word is still stopped (whole-word matching) |
+| No gate checked the model's answers | an answer with personal data or an exfiltration link is cleaned before it returns (what `poc/`'s response gates do, tested above) |
+| `jev_checker` never fired, even on obvious prompt injections | known prompt injections score above its threshold (the gate stays; the advisor proposed tuning it) |
+
 ## Not covered yet
 
 - Load and soak tests. Latency is measured separately in [`2-architecture/perf`](../2-architecture/perf/RESULTS.md).
 - Concurrency races on the budget. The current budgets are per-process and check-then-charge; the fix is designed in [`pipeline/README.md`](../pipeline/README.md) §2.
-- Gates that so far exist only in the mockup (normalize, word filter, secrets scan, tool guard). They are covered by the 120 browser checks, not by Python tests.
+- Gates that this repo has only in the mockup (normalize, word filter, secrets scan, tool guard). They are covered by the 120 browser checks, not by Python tests.
+  The live build's own gates are checked on real traffic by Visdom (above).

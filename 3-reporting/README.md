@@ -4,10 +4,41 @@ Every request leaves **one audit record** with every gate's decision and reason.
 - **Management** sees volume, spend, block rate and latency.
 - **Security** sees what was stopped and by which gate: attack-signature hits, personal data, flags to review, outages, and which policy version decided.
 
-The admin dashboard (a mockup) shows both. The two prototypes write the records as JSON Lines, and
-[`metrics.py`](metrics.py) turns real logs into both views.
+In the live demo build, the chat shows every gate's verdict under each answer, and Langfuse traces every request.
+The admin dashboard (a mockup) shows both views. The two prototypes in this repo write the records as JSON Lines, and
+[`metrics.py`](metrics.py) turns real logs into both views. A third report, from [Visdom](https://visdom.virtuslab.com/),
+tells the gate owners where the gates themselves are wrong.
 
-## The dashboard
+## The live demo build
+
+| Demo chat: every message passes the gateway |
+|---|
+| ![demo chat](screenshots/demo-chat.jpg) |
+| The strip under the answer shows each gate's verdict. **What the model received** shows what changed ("Goldman Sachs" → "Client"). A blocked message names the gate and the reason: `word_filter` for a blocked word, `classifier` at 97 % for a prompt injection |
+
+| Langfuse: traces, cost and tokens for every request | Masked export of the gateway traffic |
+|---|---|
+| ![Langfuse](screenshots/langfuse.jpg) | ![export](screenshots/langfuse-export.jpg) |
+| Every request is traced, blocked ones included, with each gate check as its own span. Over one day: 85 traces (chat, gateway, classify), $1.26 of model cost, 431K tokens | `make export-langfuse`: 59 gateway calls, 46 passed, 13 stopped on the way in, verdict counts per gate, and 0 raw PESEL, e-mail or IBAN in the file |
+
+## Gate-quality report (Visdom)
+
+Visdom's `gateway-advisor` flow reads the masked export and reports where the gates are wrong. An analyst agent writes the proposals,
+and up to three review rounds check every number against the data before anything is filed as a GitHub issue
+([how it works](../1-solution/README.md#keeping-the-gates-good-the-visdom-feedback-loop)).
+
+![Visdom run](screenshots/visdom-run.jpg)
+
+The first run on our own traffic made five proposals:
+- fix `pii_filter`: ID card and NIP numbers got through;
+- fix `word_filter`: 3 of its 6 blocks were innocent words;
+- add `output_guard`: none of the 46 answers was checked;
+- tune `classifier`: 82.8 % of gate time;
+- tune `jev_checker`: it never fired.
+
+The review rounds also caught three mistakes in the analyst's own work, so no unreviewed issue reached the team.
+
+## The admin dashboard (mockup)
 
 Interactive mockup, with gates simulated in the browser: [GitHub Pages](https://damianlech.github.io/HackYeah26/) (branch `page`), or open
 [`pipeline/mockups/pipeline-builder.html`](../pipeline/mockups/pipeline-builder.html). Pins on every module explain what it does,
@@ -75,6 +106,14 @@ The full report also has per-user activity, signature hits by rule and action, p
 | Tamper evidence: hash chain and Verify | security | SHA-256 of previous hash + record | mockup only | Audit tab |
 | Exports | security | JSONL (both prototypes), `metrics.py --json` | yes | JSONL, CSV |
 
+In the live demo build:
+
+| Metric | For | Comes from |
+|---|---|---|
+| Every request traced, blocked ones included; each gate check as a span; cost and tokens per model | both | Langfuse |
+| Verdict counts per gate: allow, modify, deny, error | security | the masked export |
+| Gate quality: false-alarm rate, personal data that got through, answers nobody checked, each gate's share of gate time | gate owners | Visdom `gateway-advisor` |
+
 In real time, every response also carries its decision in headers:
 - `poc`: `X-Mandate-Decision`, `X-Mandate-Policy`, `X-Mandate-Event` (the audit id).
 - `claude-proxy`: `x-proxy-decision`, `x-proxy-jev`, `x-proxy-cost-usd`.
@@ -117,5 +156,6 @@ Records hold decisions, reasons and counts. They never hold the prompt or the pe
 | | `PATCH /control/controls/{gate}`, `POST /control/budget/reset` | live changes, written back to `policy.yaml` |
 | `claude-proxy` (8601) | `GET /status` | spend per key, judge thresholds, allowed models |
 
-**Not done yet:** the mockup dashboard shows simulated data. Its record shape is close to the prototypes', and wiring
-`metrics.py --json` into it is the next step. `claude-proxy` records don't carry a policy version yet. The hash chain exists only in the mockup.
+**Not done yet:** the mockup dashboard shows simulated data, while the live build's numbers come from Langfuse and the export.
+The mockup's record shape is close to the prototypes', and wiring `metrics.py --json` into it is the next step. `claude-proxy` records
+don't carry a policy version yet. The hash chain exists only in the mockup.

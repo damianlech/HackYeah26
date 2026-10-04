@@ -1,4 +1,4 @@
-// Renders architecture.html to architecture.png (1800x1000 at 2x) with Playwright + Chromium.
+// Renders architecture.html to architecture.png (1800x1190 at 2x) with Playwright + Chromium.
 // Usage from the repo root: NODE_PATH=$(npm root -g) node 2-architecture/render.js
 // Optional FONTS_DIR=/dir/with/fonts.css serves local font copies when Google Fonts can't be reached.
 const fs = require('fs');
@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1800, height: 1000 }, deviceScaleFactor: 2 });
+  const page = await browser.newPage({ viewport: { width: 1800, height: 1200 }, deviceScaleFactor: 2 });
   const fonts = process.env.FONTS_DIR;
   if (fonts) {
     await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: fs.readFileSync(path.join(fonts, 'fonts.css'), 'utf8') }));

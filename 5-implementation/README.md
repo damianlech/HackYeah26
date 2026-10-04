@@ -14,6 +14,7 @@
 | [`2-architecture/perf/`](../2-architecture/perf/) | Python | ~250 | Deterministic vs AI-based enforcement latency on the prototypes |
 | [`3-reporting/`](../3-reporting/) | Python | ~220 | `metrics.py` (management and security metrics from audit logs) and `sample_traffic.py` |
 | [`4-testing/`](../4-testing/), [`pipeline/mockups/tests/`](../pipeline/mockups/tests/) | Python (pytest), JS (Playwright) | ~1,100 | 76 + 120 automated checks |
+| Live demo build | | | Demo chat, gateway with five gates, admin panel, Langfuse tracing, the masked export and the Visdom flow. It lives in the team's working repository, not in this one, and the demo video shows it end to end |
 
 ## Run it
 
@@ -38,6 +39,21 @@ Point a real agent at the 3-layer proxy: `python3 claude-proxy/demo.py --keep`, 
 ANTHROPIC_BASE_URL=https://localhost:8443 NODE_EXTRA_CA_CERTS=claude-proxy/.runtime/certs/interception-ca.pem \
 ANTHROPIC_API_KEY=sk-proxy-alice claude
 ```
+
+## Built with Visdom
+
+The live demo build closes its feedback loop with [Visdom](https://visdom.virtuslab.com/), VirtusLab's AI-native SDLC platform.
+The loop works on exported traffic, outside the request path, so it adds no latency to any request.
+
+| Piece | What it is |
+|---|---|
+| Tracing | The gateway sends every request to Langfuse: each gate check is a span next to the model call, with cost and tokens |
+| Export | `make export-langfuse` writes `analytics/langfuse-export.json` and commits it to the repository, with personal data masked again |
+| Flow | `gateway-advisor` (version 3) in the Visdom Orchestrator. Its inputs are the repository and the export path |
+| Steps | trigger → `analyst` agent (Opus, at most 5 proposals, written to a branch) → up to three review sub-flows (a reviewer recomputes every number, a fixer on Sonnet corrects, and an approving round stops early) → `file-issues` task (`gh`, label `gateway-advisor`) |
+| People | Nothing is filed without an approved review round. A person adds the `agent-ready` label before anyone acts on an issue |
+
+![Visdom run](../3-reporting/screenshots/visdom-run.jpg)
 
 ## Deploying into existing agent ecosystems
 
@@ -100,9 +116,14 @@ On **Kubernetes**:
 | Tool calls (MCP) and agent-to-agent traffic are not governed yet | | an MCP entry point that runs the same gates; `tool_guard` on answers |
 
 **Next, in order:**
-1. Shared HTTP clients.
-2. The gate runner over the contract, with the response phase and the restart guard.
-3. Atomic budgets in Valkey.
-4. Real semantic models.
-5. The hash-chained audit, with the dashboard fed by `metrics.py --json`.
-6. MCP and `tool_guard`.
+1. Act on the advisor's first findings in the live build:
+   - ID card and NIP numbers in `pii_filter`;
+   - whole-word matching in `word_filter`;
+   - an `output_guard` for answers, ported from `poc/`'s response gates;
+   - caching in `classifier`.
+2. Shared HTTP clients.
+3. The gate runner over the contract, with the response phase and the restart guard.
+4. Atomic budgets in Valkey.
+5. Real semantic models in the prototypes (the live build already runs them).
+6. The hash-chained audit, with the dashboard fed by `metrics.py --json`.
+7. MCP and `tool_guard`.
