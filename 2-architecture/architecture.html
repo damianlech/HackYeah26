@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clearance architecture</title>
+<!-- Source of architecture.png. Edit, then: node 2-architecture/render.js -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root { --ink:#0f1420; --ink2:#3a4252; --ink3:#5b6578; --line:#c5cbd6; --soft:#f7f8fa; --accent:#5b3fd1; --accent2:#4a2fbd; --asoft:#eeeafd; --aline:#c2b6f5; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #f3f4f7; font-family: "Archivo", Arial, sans-serif; color: var(--ink); }
+  #canvas { position: relative; width: 1800px; height: 1000px; padding: 36px 44px; background: #f3f4f7; }
+  h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+  .sub { font-size: 16px; color: var(--ink3); margin-top: 6px; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+  .file { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--accent2); margin-top: 8px; white-space: nowrap; }
+  .band { position: absolute; font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); }
+  .card { position: absolute; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(16,20,32,.05), 0 6px 18px rgba(16,20,32,.05); }
+  .card h3 { font-size: 17px; font-weight: 700; }
+  .card p { font-size: 14px; color: var(--ink2); line-height: 1.4; margin-top: 4px; }
+  .layer { background: var(--asoft); border: 1.5px solid var(--accent); }
+  .layer .tag { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; color: var(--accent); }
+  .layer h3 { font-size: 20px; margin-top: 2px; }
+  .svc { background: var(--soft); }
+  #l2 { border: 2px solid var(--accent); border-radius: 18px; padding: 16px 18px; background: #fff; }
+  #l2 .tag { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase; }
+  #l2 h3 { font-size: 20px; margin-top: 2px; }
+  .phase { margin-top: 12px; border-radius: 12px; padding: 10px 12px; background: var(--soft); border: 1px solid #e2e5eb; }
+  .phase .lbl { font-size: 13px; font-weight: 700; color: var(--ink2); margin-bottom: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { font-family: "IBM Plex Mono", monospace; font-size: 13px; padding: 5px 9px; border-radius: 8px; background: #fff; border: 1px solid var(--aline); color: var(--accent2); white-space: nowrap; }
+  .chip.sem { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .arr { color: var(--ink3); font-size: 13px; }
+  .answers { display: flex; gap: 6px; margin-top: 12px; font-size: 13px; align-items: center; color: var(--ink2); }
+  .d { font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+  .allow { background: #e2f4e9; color: #11793f; } .deny { background: #fce3e5; color: #b4202d; }
+  .modify { background: #e2ecfc; color: #1c63c9; } .flag { background: #fdf0d4; color: #975800; }
+  svg#wires { position: absolute; left: 0; top: 0; width: 1800px; height: 1000px; pointer-events: none; overflow: visible; }
+  .wl { position: absolute; font-size: 12.5px; color: var(--ink3); background: #f3f4f7; padding: 1px 6px; border-radius: 6px; white-space: nowrap; }
+  .legend { position: absolute; right: 44px; top: 40px; font-size: 13px; color: var(--ink3); text-align: right; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div id="canvas">
+  <h1>Clearance: architecture</h1>
+  <div class="sub">Every agent request crosses three layers. L2 runs the gates an admin chose, in order; each answers allow, deny, modify or flag, with a reason.</div>
+  <div class="legend"><span class="mono" style="color:#4a2fbd">file.py</span> = runs today in this repo<br>purple = the AI-based (semantic) check</div>
+
+  <div class="band" style="left:640px; top:118px">Services the gates call</div>
+  <div class="card svc" id="sem" style="left:640px; top:146px; width:260px">
+    <h3>Semantic checks</h3><p>Guard service and the JEV AI judge. Own process, timeout, <span class="mono">on_error</span>.</p>
+    <div class="file">poc/guard_svc.py<br>claude-proxy/jev_sim.py</div></div>
+  <div class="card svc" id="feed" style="left:920px; top:146px; width:270px">
+    <h3>External signature feed</h3><p>Versioned attack rules, each with its own test vectors.</p>
+    <div class="file">examples/feed/signatures.yaml</div></div>
+  <div class="card svc" id="bud" style="left:1210px; top:146px; width:230px">
+    <h3>Budget store</h3><p>Spend per user and key. In memory today, Valkey next.</p></div>
+
+  <div class="band" style="left:44px; top:300px">Agents, unchanged</div>
+  <div class="card" id="cc" style="left:44px; top:330px; width:250px">
+    <h3>Claude Code, Anthropic SDK</h3><p><span class="mono">ANTHROPIC_BASE_URL</span> = Clearance. Holds a virtual key only.</p></div>
+  <div class="card" id="oa" style="left:44px; top:478px; width:250px">
+    <h3>OpenAI-compatible agents</h3><p>LangChain, CrewAI, OpenAI SDK: <span class="mono">base_url</span> = Clearance.</p></div>
+
+  <div class="card layer" id="l1" style="left:316px; top:360px; width:250px">
+    <div class="tag">L1</div><h3>Decrypt</h3><p>TLS termination. The agent trusts the firm's CA.</p>
+    <div class="file">claude-proxy/l1_intercept.py</div></div>
+
+  <div class="card" id="l2" style="left:630px; top:300px; width:810px">
+    <div class="tag">L2 · the pipeline of gates</div>
+    <h3>Order and settings come from the policy</h3>
+    <div class="phase" id="inway"><div class="lbl">On the way in</div>
+      <div class="chips">
+        <span class="chip">identity</span><span class="arr">→</span><span class="chip">model allowlist</span><span class="arr">→</span>
+        <span class="chip">budget · cost cap</span><span class="arr">→</span><span class="chip">clamp max_tokens</span><span class="arr">→</span>
+        <span class="chip">attack signatures</span><span class="arr">→</span><span class="chip">personal data</span><span class="arr">→</span>
+        <span class="chip sem">semantic check</span><span class="arr">→</span><span class="chip">governance prompt</span>
+      </div></div>
+    <div class="phase" id="back"><div class="lbl">On the way back</div>
+      <div class="chips"><span class="chip">attack signatures</span><span class="arr">→</span><span class="chip">personal data</span><span class="arr">→</span><span class="chip">budget settle</span></div></div>
+    <div class="answers">Each gate answers <span class="d allow">allow</span><span class="d deny">deny</span><span class="d modify">modify</span><span class="d flag">flag</span> with a reason.
+      <span class="file" style="margin:0 0 0 auto">poc/gateway.py · claude-proxy/l2_audit.py</span></div>
+  </div>
+
+  <div class="card layer" id="l3" style="left:1500px; top:330px; width:256px">
+    <div class="tag">L3</div><h3>Encrypt and send</h3><p>Swaps in the real key, opens new TLS, verifies the certificate.</p>
+    <div class="file">claude-proxy/l3_egress.py</div></div>
+
+  <div class="band" style="left:1500px; top:562px">Model providers</div>
+  <div class="card" id="anth" style="left:1500px; top:590px; width:256px"><h3>Anthropic API</h3></div>
+  <div class="card" id="oss" style="left:1500px; top:672px; width:256px"><h3>OpenAI-compatible, local</h3><p>Ollama, vLLM</p></div>
+
+  <div class="band" style="left:44px; top:790px">Control and evidence</div>
+  <div class="card svc" id="adm" style="left:44px; top:820px; width:300px">
+    <h3>Admin pipeline builder</h3><p>Add, order and configure gates. Simulate before Save.</p>
+    <div class="file">pipeline/mockups (mockup)</div></div>
+  <div class="card svc" id="pol" style="left:640px; top:820px; width:280px">
+    <h3>policy.yaml</h3><p>Hot reload. A broken edit is rejected; the last good version stays live.</p></div>
+  <div class="card svc" id="aud" style="left:1080px; top:820px; width:280px">
+    <h3>Audit log</h3><p>One record per request: every gate's decision, reason, time, policy version.</p></div>
+  <div class="card svc" id="met" style="left:1460px; top:820px; width:296px">
+    <h3>metrics.py</h3><p>Management and security views, for a dashboard or a SIEM.</p>
+    <div class="file">3-reporting/metrics.py</div></div>
+
+  <svg id="wires"><defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a93a6"/></marker>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5b3fd1"/></marker>
+  </defs></svg>
+</div>
+<script>
+function draw() {
+  const C = document.getElementById('canvas').getBoundingClientRect();
+  const r = id => { const b = document.getElementById(id).getBoundingClientRect();
+    return { l: b.left - C.left, r: b.right - C.left, t: b.top - C.top, b: b.bottom - C.top, cx: (b.left + b.right) / 2 - C.left, cy: (b.top + b.bottom) / 2 - C.top }; };
+  const svg = document.getElementById('wires');
+  function wire(d, { dashed = false, purple = false, both = false, label, lx, ly } = {}) {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', d); p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', purple ? '#5b3fd1' : '#8a93a6'); p.setAttribute('stroke-width', purple ? 2.2 : 1.6);
+    if (dashed) p.setAttribute('stroke-dasharray', '6 5');
+    p.setAttribute('marker-end', `url(#${purple ? 'p' : 'a'})`);
+    if (both) p.setAttribute('marker-start', `url(#${purple ? 'p' : 'a'})`);
+    svg.appendChild(p);
+    if (label) { const s = document.createElement('div'); s.className = 'wl'; s.textContent = label;
+      s.style.left = lx + 'px'; s.style.top = ly + 'px'; document.getElementById('canvas').appendChild(s); }
+  }
+  const cc = r('cc'), oa = r('oa'), l1 = r('l1'), l2 = r('l2'), l3 = r('l3'), anth = r('anth'), oss = r('oss');
+  const back = r('back'), sem = r('sem'), feed = r('feed'), bud = r('bud'), adm = r('adm'), pol = r('pol'), aud = r('aud'), met = r('met');
+  const mx = (cc.r + l1.l) / 2;
+  wire(`M${cc.r},${cc.cy} H${mx} V${l1.cy - 10} H${l1.l}`, { purple: true });
+  wire(`M${oa.r},${oa.cy} H${mx} V${l1.cy + 10} H${l1.l}`, { purple: true });
+  wire(`M${l1.r},${l1.cy - 20} H${l2.l}`, { purple: true, label: 'request', lx: l1.r + 2, ly: l1.cy - 44 });
+  wire(`M${l2.r},${l3.cy} H${l3.l}`, { purple: true, label: 'allowed', lx: l2.r + 4, ly: l3.cy - 28 });
+  wire(`M${l3.r - 40},${l3.b} V${anth.t}`, {});
+  wire(`M${l3.r},${l3.b - 24} H${l3.r + 20} V${oss.cy} H${oss.r}`, {});
+  wire(`M${anth.l},${anth.cy} H${l2.r + 24} V${back.cy} H${back.r}`, { dashed: true, label: 'answer', lx: l2.r + 30, ly: back.cy - 26 });
+  wire(`M${back.l},${back.cy} H${(l1.l + l1.r) / 2} V${l1.b}`, { dashed: true, label: 'back to the agent', lx: (l1.l + l1.r) / 2 + 6, ly: back.cy + 6 });
+  for (const s of [sem, feed, bud]) wire(`M${s.cx},${s.b} V${l2.t}`, { both: true });
+  wire(`M${pol.cx},${pol.t} V${l2.b}`, { label: 'the next request uses it', lx: pol.cx + 10, ly: (pol.t + l2.b) / 2 - 10 });
+  wire(`M${aud.cx},${l2.b} V${aud.t}`, { label: 'every decision', lx: aud.cx + 10, ly: (aud.t + l2.b) / 2 - 10 });
+  wire(`M${adm.r},${adm.cy} H${pol.l}`, { label: 'Save = new version', lx: adm.r + 40, ly: adm.cy - 30 });
+  wire(`M${aud.r},${aud.cy} H${met.l}`, {});
+  document.body.dataset.ready = '1';
+}
+document.fonts.ready.then(draw);
+</script>
+</body>
+</html>

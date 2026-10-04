@@ -1,4 +1,23 @@
-# Mandate: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
+# Clearance: AI Control Layer (HackYeah 2026 · Goldman Sachs partner task)
+
+> **No AI request leaves the firm without clearance.** Admins build a pipeline of gates: identity, budget, personal data,
+> attack signatures, an AI judge. Every agent request is checked, rewritten or stopped, and every decision is on the record.
+
+## Submission (Goldman Sachs template)
+
+| Folder | What's inside |
+|---|---|
+| [`1-solution/`](1-solution/) | Overview and approach, the implemented guardrails, configuration, and three strictness profiles |
+| [`2-architecture/`](2-architecture/) | Architecture diagram, components, measured latency of deterministic vs AI-based enforcement |
+| [`3-reporting/`](3-reporting/) | Dashboard screenshots, the implemented metrics, a metrics report built from real logs |
+| [`4-testing/`](4-testing/) | 76 automated tests plus 120 browser checks, and 18 showcase cases that block or rewrite traffic |
+| [`5-implementation/`](5-implementation/) | Code map, how to run it, deployment into Claude Code, SDK and OpenAI-compatible agents and Kubernetes, limits and next steps |
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate && pip install -r 5-implementation/requirements.txt
+./4-testing/run_all.sh          # every automated check (Python 3.11+, no API key, no network)
+python3 claude-proxy/demo.py    # the 3-layer proxy, 13 scenarios
+```
 
 > **Current direction (after talking to the judges):** the 3-layer proxy, with L2 as an admin-built **pipeline of gates** (allow / deny / modify).
 > Pitch kit (one-liner, judge summary, demo click path): **[`pipeline/PITCH.md`](pipeline/PITCH.md)**. 10-slide deck: https://claude.ai/artifact/Sijca5nHowZXGEMQJHa3Tm (private until shared). Review: **[`pipeline/README.md`](pipeline/README.md)**: a one-sitting review with holes, fixes, the gate list, diagrams, the latency benchmark and a builder mockup.
